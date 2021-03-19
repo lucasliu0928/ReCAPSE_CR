@@ -239,6 +239,25 @@ equal4_6_idxes <- which(updated_PrimaryBC_date_df[,"Fourth_Primary_BC_Date"]  ==
 equal5_6_idxes <- which(updated_PrimaryBC_date_df[,"Fifth_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Six_Primary_BC_Date"])
 
 
+#1st = recur cases,
+equal1_recur_idxes <- which(updated_PrimaryBC_date_df[,"First_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Date_1Recur"])
+equal2_recur_idxes <- which(updated_PrimaryBC_date_df[,"Second_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Date_1Recur"])
+for (i in 1:length(equal2_recur_idxes)){
+  curr_idx <- equal2_recur_idxes[i]
+  updated_PrimaryBC_date_df[curr_idx,"Second_Primary_BC_Date"] <- NA #only keep recur
+}
+
+equal3_recur_idxes <- which(updated_PrimaryBC_date_df[,"Third_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Date_1Recur"])
+for (i in 1:length(equal3_recur_idxes)){
+  curr_idx <- equal3_recur_idxes[i]
+  updated_PrimaryBC_date_df[curr_idx,"Third_Primary_BC_Date"] <- NA #only keep recur
+}
+
+equal4_recur_idxes <- which(updated_PrimaryBC_date_df[,"Fourth_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Date_1Recur"])
+equal5_recur_idxes <- which(updated_PrimaryBC_date_df[,"Fifth_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Date_1Recur"])
+equal6_recur_idxes <- which(updated_PrimaryBC_date_df[,"Six_Primary_BC_Date"]  == updated_PrimaryBC_date_df[,"Date_1Recur"])
+
+
 write.csv(updated_PrimaryBC_date_df,paste0(out_dir,"updated_PrimaryBC_date.csv"),row.names = F)
 
 
@@ -317,7 +336,7 @@ for (p in 1:length(updated_analysis_ID)){
     
   #recurrence date
   curr_recurrence_date <- curr_updated_PrimaryBC_date_df[,"Date_1Recur"]
-  curr_recurrence_df <- cbind.data.frame("NA",curr_recurrence_date) #create a df so we can merge this with other dates df
+  curr_recurrence_df <- cbind.data.frame("1Recur",curr_recurrence_date) #create a df so we can merge this with other dates df
   colnames(curr_recurrence_df) <- c("Site","Date")
   rownames(curr_recurrence_df) <- "1Recur"
   curr_recurrence_df[] <- lapply(curr_recurrence_df, as.character) #unfacter the columns
@@ -326,7 +345,7 @@ for (p in 1:length(updated_analysis_ID)){
   #other cancer
   curr_other_df <- get_othercaner_dates_site_func(all_othercancer_df,curr_id)
   curr_other_df <- curr_other_df[,-which(colnames(curr_other_df)=="ID")] #  #remove the ID col
-
+  
   #Combine all dates
   curr_all_dates_df <- rbind(curr_all_primary_df,curr_other_df,curr_recurrence_df)
 
@@ -376,9 +395,24 @@ for (p in 1:length(updated_analysis_ID)){
   }else{
     #Order all_dates_df by dates
     ordered_curr_all_dates_df <- curr_all_dates_df[order(mdy(curr_all_dates_df[,"Date"])),]
-    #remove the first and end event row
-    idxes12 <- which(ordered_curr_all_dates_df[,"Date"] %in% c(first_event_date,second_event_date))
-    ordered_curr_all_dates_df <- ordered_curr_all_dates_df[-idxes12,]
+    
+    #remove everything before the 2nd event (including the 2nd)
+    endidxs_toremove <- which(ordered_curr_all_dates_df$Date == second_event_date)
+    
+    #If two same dates, always keep priamry or 1recur, remove others
+    if (length(endidxs_toremove) >1 ){
+      equal_df <- ordered_curr_all_dates_df[endidxs_toremove,]
+      to_remove <- equal_df[which(rownames(equal_df) != "1Recur" 
+                             & grepl("Primary",rownames(equal_df)) == F),]
+      idx_toremove <- which(rownames(ordered_curr_all_dates_df) == rownames(to_remove))
+      ordered_curr_all_dates_df <- ordered_curr_all_dates_df[-idx_toremove, ]
+      
+      #update end index to remove
+      endidxs_toremove <- which(ordered_curr_all_dates_df$Date == second_event_date)
+    }
+    
+    ordered_curr_all_dates_df <- ordered_curr_all_dates_df[-c(1:endidxs_toremove), ]
+    
     #Then the first one is the 3rd event or NA
     third_event_date <- ordered_curr_all_dates_df[1,"Date"]
     third_event_site <- ordered_curr_all_dates_df[1,"Site"]
@@ -400,7 +434,7 @@ for (p in 1:length(updated_analysis_ID)){
 }
 write.csv(All_event_df,paste0(out_dir,"All_event_df.csv"),row.names = F)
 
-#'@Report Next time , Check which 1st event and 2nd event happend different time, but same site
+#'@Question1 Next time , Check which 1st event and 2nd event happend different time, but same site
 equal12_idxes <- which(All_event_df$Site_1st_Event == All_event_df$Site_2nd_Event )
 check12 <- All_event_df[equal12_idxes,]
 
@@ -464,8 +498,18 @@ for (i in 1:length(analysis_IDs)){
   
 }
 
-table(All_event_df$BC_related_Death) #    0 :34561, 1: 6813 
+table(All_event_df$BC_related_Death) #    0 :34561, 1: 6813 , morethan 1 codes1
 table(All_event_df$First_Primary_BC_related_Death) #0:39631 1:1743 
+
+#Add a flag to see if the 3rd event is other cancer or breast cancer event (recur or primary)
+All_event_df$Event3_Flag <- NA
+no3rd_idxes <- which(is.na(All_event_df[,"Site_3rd_Event"])==T)
+All_event_df$Event3_Flag[no3rd_idxes] <- "No 3rd"
+priBC_3rd_idxes <- which(grepl("Primary",All_event_df[,"Site_3rd_Event"])==T)
+All_event_df[priBC_3rd_idxes,"Event3_Flag"] <- "Primary BC"
+recurBC_3rd_idxes <- which(All_event_df[,"Site_3rd_Event"]== "1Recur")
+All_event_df[recurBC_3rd_idxes,"Event3_Flag"] <- "1Recur"
+All_event_df[-c(no3rd_idxes,priBC_3rd_idxes,recurBC_3rd_idxes),"Event3_Flag"] <- "Other Cancer"
 
 #report number of patients who has 2nd event
 All_event_df$SBCE <- 0
@@ -477,42 +521,48 @@ All_event_df$Died_And_Recur <- NA
 both_died_andRecur_idxes <- which(All_event_df[,"First_Primary_BC_related_Death"] == 1 & All_event_df[,"SBCE"] == 1)
 All_event_df[both_died_andRecur_idxes,"Died_And_Recur"] <- 1
 All_event_df[-both_died_andRecur_idxes,"Died_And_Recur"] <- 0
-table(All_event_df$Died_And_Recur)     #0     1  38752  2202 
+table(All_event_df$Died_And_Recur)     #0     1  41076   299  
 
 #first primary died without SBCE 
 died_noRecur_idxes <- which(All_event_df[,"First_Primary_BC_related_Death"] == 1 & All_event_df[,"SBCE"] == 0)
 length(died_noRecur_idxes)
 
 
-#TODO:
-#2nd event
-length(which(is.na(evnet_flat_df[,"Site_Event2"])==T)) #36558 has no 2nd event
-length(which(is.na(evnet_flat_df[,"Site_Event2"])==F)) #4396 has 2nd event
 
-#4247  has 2nd event, no 3rd
-only2nd_no3rd_idxes <- which(is.na(evnet_flat_df[,"Site_Event2"])==F & is.na(evnet_flat_df[,"Site_Event3"])==T)
-length(only2nd_no3rd_idxes)
-only2nd_no3rd_evnet_flat_df <- evnet_flat_df[only2nd_no3rd_idxes,]
-length(which(only2nd_no3rd_evnet_flat_df[,"Site_Event2"]== "1Recur"))  #1st->Recur  #3046
-length(which(only2nd_no3rd_evnet_flat_df[,"Site_Event2"] %in% bc_codes))  #1st->2nd Primary #1201
+#has 2nd event, no 3rd
+only2nd_no3rd_idxes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F & is.na(All_event_df[,"Date_3rd_Event"])==T)
+length(only2nd_no3rd_idxes) #3932
+only2nd_no3rd_df <- All_event_df[only2nd_no3rd_idxes,]
+length(which(only2nd_no3rd_df[,"Site_2nd_Event"]== "1Recur"))  #1st->Recur  #2964
+length(which(grepl("Primary",only2nd_no3rd_df[,"Site_2nd_Event"]) == T))  #1st->2nd Primary #1104
 
 
 #149  both 2nd and 3rd
-both23_idxes <- which(is.na(evnet_flat_df[,"Site_Event2"])==F & is.na(evnet_flat_df[,"Site_Event3"])==F)
-length(both23_idxes)
-both23_evnet_flat_df <- evnet_flat_df[both23_idxes,]
-length(which(both23_evnet_flat_df[,"Site_Event2"]== "1Recur" & 
-             both23_evnet_flat_df[,"Site_Event3"] %in% bc_codes))  #1st->Recur->2nd Primary #45
-length(which(both23_evnet_flat_df[,"Site_Event2"]== "1Recur" & 
-            !both23_evnet_flat_df[,"Site_Event3"] %in% bc_codes))  #1st->Recur->other #3
-length(which(both23_evnet_flat_df[,"Site_Event2"] %in% bc_codes & 
-             both23_evnet_flat_df[,"Site_Event3"] == "1Recur"))  #1st->2nd Primary -> Recur #78
-length(which(both23_evnet_flat_df[,"Site_Event2"] %in% bc_codes & 
-             both23_evnet_flat_df[,"Site_Event3"] !="1Recur"))  #1st-> 2nd Primary -> 3rd Primary #23
-length(which(both23_evnet_flat_df[,"Site_Event2"] %in% bc_codes & 
-             both23_evnet_flat_df[,"Site_Event3"] !="1Recur" & 
-             !both23_evnet_flat_df[,"Site_Event3"] %in% bc_codes)) #1st-> 2nd Primary -> others #23
+both23_idxes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F & is.na(All_event_df[,"Date_3rd_Event"])==F)
+length(both23_idxes) #352
+both23_df <- All_event_df[both23_idxes,]
 
 
-check <- both23_evnet_flat_df[which(both23_evnet_flat_df[,"Site_Event2"] %in% bc_codes & 
-                  both23_evnet_flat_df[,"Site_Event3"] !="1Recur"),]
+####2nd event = recur ( 154)
+event2_recur_idxes <- which(both23_df[,"Site_2nd_Event"]== "1Recur")
+both23_event2_recur_df <- both23_df[event2_recur_idxes,]
+#Recur->2nd Primary #44
+length(which(grepl("Primary",both23_event2_recur_df[,"Site_3rd_Event"])==T)) 
+#1st->Recur->other #110
+length(which(grepl("Primary",both23_event2_recur_df[,"Site_3rd_Event"])==F)) 
+
+####2nd event = 2nd Primary (202)
+event2_pri_idxes <- which(grepl("Primary",both23_df[,"Site_2nd_Event"])==T)
+both23_event2_pri_df <- both23_df[event2_pri_idxes,]
+#1st-> 2nd Primary -> Primary Breast cancer #21
+length(which(grepl("Primary",both23_event2_pri_df[,"Site_3rd_Event"])==T)) 
+#1st->2nd Primary -> Recur #78
+length(which(both23_event2_pri_df[,"Site_3rd_Event"] == "1Recur"))
+
+#1st-> 2nd Primary -> others #99
+length(which(both23_event2_pri_df[,"Site_3rd_Event"] != "1Recur" & 
+            grepl("Primary",both23_event2_pri_df[,"Site_3rd_Event"])==F))
+
+write.csv(All_event_df,paste0(out_dir,"updated_All_event_df.csv"),row.names = F)
+
+
