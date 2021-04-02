@@ -1,11 +1,13 @@
 clean_code_func <-function(analysis_grp_df,code_col){
-  # analysis_grp_df <- HCUP_comb
-  # code_col <- "Code"
+  #analysis_grp_df <- chuback_group_df
+  #code_col <- "Code"
+  
   #omitting any codes with non-alphanumeric characters,
   analysis_grp_df[,code_col] <- gsub("[^[:alnum:]]", " ", analysis_grp_df[,code_col])
   
   #space
   analysis_grp_df[,code_col] <- trimws(analysis_grp_df[,code_col], which = c("both"), whitespace = "[ \t\r\n]")
+  
   #decimal
   analysis_grp_df[,code_col] <- gsub("\\.","",analysis_grp_df[,code_col])
  
