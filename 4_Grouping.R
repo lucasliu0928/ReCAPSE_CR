@@ -185,8 +185,11 @@ unique_all_diag_df <-as.data.frame(unique_all_diag)
 colnames(unique_all_diag_df) <- "Code"
 unique_all_diag_df <- clean_code_func(unique_all_diag_df,"Code")
 
+#data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0318_21/For_Both_Data/"
+#unique_all_diag_df <- read.csv(paste0(data_dir,"All_unique_Diag_codes.csv"),stringsAsFactors = F)
+
 #Find groups
-res <- grouping_func(unique_all_diag_df$Code,"Diag")
+res <- grouping_func(unique_all_diag,"Diag")
 diag_group_df <- res[[1]]
 problem_list_chubak <- res[[2]]
 problem_list_ritz <- res[[3]]
