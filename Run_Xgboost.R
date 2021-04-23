@@ -20,7 +20,6 @@ for (j in 4:length(analysis_data)){
    perc_pts[j] <- n_pts/nrow(analysis_data)
 }
 
-round(perc_pts,3)
 ccol_indexes1 <- which(perc_pts > 0.05)
 
 perc_pts <- NA
@@ -37,12 +36,21 @@ comb_indexes <- unique(ccol_indexes1,ccol_indexes2)
 comb_filtered_data <- month_data[,c(1,2,3,comb_indexes)]
 
 
+
+
+
+
 ##########START HERE##########
 ######################################################################################################## 
 ###############              Data preprocessing
 ###############     Note: Make sure label range: [0,num_class-1]
 ######################################################################################################## 
-data_input <- comb_filtered_data
+data_input1 <- recurrent_pts_data[sample(nrow(recurrent_pts_data), 200, replace = FALSE),]
+data_input2 <- nonrecurrent_pts_data[sample(nrow(nonrecurrent_pts_data), 200, replace = FALSE),]
+
+table(data_input$outcome)
+
+
 #split train and test
 set.seed(123)   
 library(caTools)
