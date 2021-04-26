@@ -1,3 +1,5 @@
+source("XGBUtilities.R")
+
 proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/"
 data_dir <- paste0(proj_dir,"/ReCAPSE_Intermediate_Data/0318_21/For_Both_Data/")
 month_data <- read.csv(paste0(data_dir, "diag_monthly_df.csv"))
@@ -20,6 +22,8 @@ for (j in 4:length(analysis_data)){
    perc_pts[j] <- n_pts/nrow(analysis_data)
 }
 
+mean(perc_pts,na.rm = T)
+
 ccol_indexes1 <- which(perc_pts > 0.05)
 
 perc_pts <- NA
@@ -29,6 +33,7 @@ for (j in 4:length(analysis_data)){
   n_pts <- length(which(curr_col >= 1)) #n of pts have at least one code in this group
   perc_pts[j] <- n_pts/nrow(analysis_data)
 }
+mean(perc_pts,na.rm = T)
 
 ccol_indexes2 <- which(perc_pts > 0.05)
 comb_indexes <- unique(ccol_indexes1,ccol_indexes2)
@@ -45,62 +50,83 @@ comb_filtered_data <- month_data[,c(1,2,3,comb_indexes)]
 ###############              Data preprocessing
 ###############     Note: Make sure label range: [0,num_class-1]
 ######################################################################################################## 
-data_input1 <- recurrent_pts_data[sample(nrow(recurrent_pts_data), 200, replace = FALSE),]
-data_input2 <- nonrecurrent_pts_data[sample(nrow(nonrecurrent_pts_data), 200, replace = FALSE),]
+data_input1 <- recurrent_pts_data[sample(nrow(recurrent_pts_data), nrow(recurrent_pts_data), replace = FALSE),]
+data_input2 <- nonrecurrent_pts_data[sample(nrow(nonrecurrent_pts_data), nrow(recurrent_pts_data), replace = FALSE),]
+comb_data_input <- rbind(data_input1,data_input2)
+table(comb_data_input$outcome)
 
-table(data_input$outcome)
+#remove all Na columns
+comb_data_input <- comb_data_input[,colSums(is.na(comb_data_input))<nrow(comb_data_input)]
 
 
 #split train and test
 set.seed(123)   
 library(caTools)
-sample <- sample.split(data_input,SplitRatio = 0.8) # 0.8 for training
-train_data <- subset(data_input,sample ==TRUE) 
-external_validation_data <- subset(data_input, sample==FALSE)
+sample <- sample.split(comb_data_input,SplitRatio = 0.8) # 0.8 for training
+train_data <- subset(comb_data_input,sample ==TRUE) 
+external_validation_data <- subset(comb_data_input, sample==FALSE)
 table(train_data$outcome)
 table(external_validation_data$outcome)
 
-######################################################################################################## 
-############               Final run                                          
-######################################################################################################## 
-##User input Pamameters
-label_col_name <- "outcome"
-features_to_select <- colnames(data_input)[3:6]
-n_class <- 2
-important_weight_threshold <- 0.2
-top_feature_flag <- 1 
-upsample_flag <- 1
-num_rounds <- 10
-num_sampling <- 5
+# ######################################################################################################## 
+#           Teresa's code
+# ######################################################################################################## 
+library(rBayesianOptimization) 
+library(xgboost) 
+library(Matrix)
 
-#For multi-class classification #for multi-class, num_class needs to be specified:
-#xgb_params <- list(booster = "gbtree","objective" = "multi:softmax",num_class = n_class) 
-#For binary classification:
-xgb_params <- list(booster = "gbtree","objective" = "reg:logistic")
+train_label <- train_data[,"outcome"]
+train_label <- as.numeric(train_label)
+train_data_part<-train_data[,!(names(train_data) %in% c("ID","Month_Start","outcome"))]
+dtrain <- xgb.DMatrix(data = as.matrix(train_data_part), label = train_label)
+
+test_label <- external_validation_data[,"outcome"]
+test_label <- as.numeric(test_label)
+test_data_part<-external_validation_data[,!(names(external_validation_data) %in% c("ID","Month_Start","outcome"))]
+dtest <- xgb.DMatrix(data = as.matrix(test_data_part), label = test_label)
 
 
-##LOOCV
-LOOCV_res<-main_func(train_data,features_to_select,label_col_name, top_feature_flag,important_weight_threshold,upsample_flag,num_sampling,xgb_params,num_rounds)
-importantce_Matrix<-LOOCV_res[[1]]
-LOOCV_AVG_performance<-round(LOOCV_res[[2]],2)
-critical_features <- LOOCV_res[[3]]
-#Print LOOCV performance
-print(LOOCV_AVG_performance)
 
-#Plot top feature importance
-final_top_p <- Plot_FeatureImportance_func(importantce_Matrix,1,critical_features)
-print(final_top_p)
-#Plot all feature importance
-final_p <- Plot_FeatureImportance_func(importantce_Matrix,0,critical_features)
-print(final_p)
+xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_by_tree){
+   print(paste("eta:", eta))
+   print(paste("max_depth:", max_depth))
+   print(paste("min_child_weight:", min_child_weight)) 
+   print(paste("subsample:", subsample))
+   print(paste("colsample_by_tree:", colsample_by_tree))
+   cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
+                            min_child_weight=min_child_weight,
+                            subsample=subsample,
+                            olsample_by_tree=colsample_by_tree,
+                            lambda=1, alpha=0,
+                            #nthread=ncores, n_jobs=ncores,
+                            objective="binary:logistic", eval_metric="auc"),
+                            data=dtrain, nround=5,nfold = 10,
+                            prediction=TRUE, showsd=TRUE, early_stopping_rounds=100,
+                            stratified=FALSE, maximize=TRUE)
+   print(paste("cv:", cv))
+   list(Score=cv$evaluation_log[, max(test_auc_mean)], Pred=cv$pred)
+}
 
-#External Validation
-external_res<-main_external_func(train_data,external_validation_data,features_to_select,label_col_name, top_feature_flag,critical_features,upsample_flag,num_sampling,xgb_params,num_rounds)
-external_AVG_performance<-round(external_res[[1]],2)
-external_predicted_list <- external_res[[2]] #this variable contains list of tables of predicted values in each sampling 
-#Print external performance
-print(external_AVG_performance)
-#Print external predicted values
-example_prediction <- external_predicted_list[[1]]
-print(example_prediction)
+optimal_results <- BayesianOptimization(xgb_cv_bayes, 
+                                        bounds=list(eta=c(0.001, 0.3),
+                                                    max_depth=c(3L, 10L),
+                                                    min_child_weight=c(0L, 20L),
+                                                    subsample=c(0.3, 0.9), colsample_by_tree=c(0.2, 0.8)),
+                                        init_points=10,
+                                        n_iter=10)
 
+
+current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']), 
+                     max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
+                     min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
+                     subsample = as.numeric(optimal_results$Best_Par['subsample']),
+                     colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']))
+watchlist <- list(train = dtrain, eval = dtest)
+
+mod_optimal <- xgb.train(objective="binary:logistic", 
+                         params=current_best, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
+                         watchlist=watchlist, verbose=TRUE, print_every_n=10, eval_metric="error", eval_metric="error@0.2", eval_metric="auc")
+
+pred <- predict(mod_optimal, dtest)
+actual <-test_label
+compute_binaryclass_perf_func(pred,actual)
