@@ -22,17 +22,24 @@ Valid_Month_df <- read.csv(paste0(outdir,"All_Final_Valid_month.csv"),stringsAsF
 
 
 #load group file of codes
-diag_df <- read.csv(paste0(data_dir,"Code_FreqTable/diag_codes_freq.csv"),stringsAsFactors = F)
-Proc_df <- read.csv(paste0(data_dir,"Code_FreqTable/proc_codes_freq.csv"),stringsAsFactors = F)
-Drug_df <- read.csv(paste0(data_dir,"Code_FreqTable/drug_codes_freq.csv"),stringsAsFactors = F)
+diag_df <- read.csv(paste0(data_dir,"Grouped_Diag_codes.csv"),stringsAsFactors = F)
+Proc_df <- read.csv(paste0(data_dir,"Grouped_Proc_codes.csv"),stringsAsFactors = F)
+Drug_df <- read.csv(paste0(data_dir,"Grouped_Drug_codes.csv"),stringsAsFactors = F)
 
+#Use CCS catogory type
+group_name <- "CCS_catogory"
 code_type <- "Diag_Codes"
+unique_groups <- unique(diag_df[,group_name])
+length(unique_groups)
 analysis_df <- diag_df
-group_name <- "Chubak_type"
-frac_thres <- 0.1
-analysis_df <- analysis_df[which(analysis_df$Frac_PTS_HASCODE >= 0.1),]
-unique_groups <- unique(analysis_df[,group_name])
-unique_groups <- unique(unlist(strsplit(unique_groups,split = "$$$$",fixed = T))) #multiple grp situtation
+
+# code_type <- "Diag_Codes"
+# analysis_df <- diag_df
+# group_name <- "Chubak_type"
+# frac_thres <- 0.1
+# analysis_df <- analysis_df[which(analysis_df$Frac_PTS_HASCODE >= 0.1),]
+# unique_groups <- unique(analysis_df[,group_name])
+# unique_groups <- unique(unlist(strsplit(unique_groups,split = "$$$$",fixed = T))) #multiple grp situtation
 
 library(lubridate)
 month_df_list <- list()
@@ -62,7 +69,6 @@ for (i in  1: length(analysis_Ids)){
      
       #find each codes group
       matched_groups <- analysis_df[which(analysis_df$Code %in% curr_month_codes),group_name]
-      matched_groups <- unlist(strsplit(matched_groups,split = "$$$$",fixed = T))
       na_indxes <- which(is.na(matched_groups)==T)
       if (length(na_indxes) > 0){
           matched_groups <- matched_groups[-na_indxes]
