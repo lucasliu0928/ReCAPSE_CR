@@ -85,7 +85,6 @@ for (i in 1:length(analysis_IDs)){
   
 }
 
-#'@Question1: what to do witht the patients has no successive enrollment months?
 all_perday_df <- do.call(rbind,per_day_table_list)
 length(unique(all_perday_df$study_id)) # 13021
 write.csv(all_perday_df,paste0(out_dir,"All_PerDay_Data_Medicaid.csv"),row.names = F)
