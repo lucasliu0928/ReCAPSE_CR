@@ -50,6 +50,24 @@ comb_filtered_data <- month_data[,c(1,2,3,comb_indexes)]
 
 ##########START HERE##########
 ######################################################################################################## 
+#### Data reprocessing 0521
+######################################################################################################## 
+#1. Training
+#1.1 Random select 4500 monthdata from no SBCE
+#1.2 Random select 500 from SBCE
+#1.3 Record all orignal IDs in training 
+
+#2.Validtion
+#2.1 Exclude original IDs in Trainng from the pool
+#2.2 random select 560 for no SBCE
+#2.3 random select 60 for no SBCE
+
+#3.Validtion
+#3.1 Exclude original IDs in Training and Validation from the pool
+#3.2 random select 560 for no SBCE
+#3.3 random select 60 for no SBCE
+
+######################################################################################################## 
 ###############              Data preprocessing
 ###############     Note: Make sure label range: [0,num_class-1]
 ######################################################################################################## 
