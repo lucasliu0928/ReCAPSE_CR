@@ -2,15 +2,21 @@ library(openxlsx)
 
 count_ptsFrac_perCode_func <- function(per_pts_data_df,code_col_name,uniuqe_code_df){
   #per_pts_data_df <- per_pts_data
-  #uniuqe_code_df <- unique_Drug_Grp_df
-  #code_col_name <- "Unique_Drug_Codes_inAllValidMonth"
+  #uniuqe_code_df <- unique_Diag_Grp_df
+  #code_col_name <- "Unique_Diag_Codes_inAllValidMonth"
   
   uniuqe_code_df$N_PtsHasCode <- NA
   uniuqe_code_df$Fraction_PtsHasCode <- NA
+  
+  #check_codes <- uniuqe_code_df[1:500,"Code"]
+  #check_codes <- paste0("\\b",check_codes,"\\b")
+  #codes_binary_df <- sapply(check_codes, grepl, per_pts_data_df[,"Unique_Diag_Codes_inAllValidMonth"])
+  #colSums(check)
+  
   for (i in 1:nrow(uniuqe_code_df)){
     if (i %% 500 == 0){print(i)}
     curr_code <- uniuqe_code_df[i,"Code"]
-    uniuqe_code_df[i,"N_PtsHasCode"] <- length(which(grepl(paste0("\\b",curr_code,"\\b"),per_pts_data[,code_col_name]) == T))
+    uniuqe_code_df[i,"N_PtsHasCode"] <- length(which(grepl(paste0("\\b",curr_code,"\\b"),per_pts_data_df[,code_col_name]) == T))
     uniuqe_code_df[i,"Fraction_PtsHasCode"]  <- uniuqe_code_df[i,"N_PtsHasCode"]/nrow(per_pts_data_df)
   }
   
@@ -69,13 +75,10 @@ yesSBCE_per_pts_data <- per_pts_data[-noSBCE_indxes,]
 ################################################################################ 
 ### Count For SBCE group
 ################################################################################ 
-#1.diag code
-start_time <- Sys.time()
+#1.diag code #2hours for this
 diag_codes_freq_SBCE1 <- count_ptsFrac_perCode_func(yesSBCE_per_pts_data,
                                              "Unique_Diag_Codes_inAllValidMonth",
                                               unique_Diag_Grp_df)
-end_time <- Sys.time()
-
 #2.proc code
 proc_codes_freq_SBCE1 <-count_ptsFrac_perCode_func(yesSBCE_per_pts_data,
                                                    "Unique_Proc_Codes_inAllValidMonth",
