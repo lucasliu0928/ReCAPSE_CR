@@ -173,7 +173,7 @@ length(unique(DM3_df[,"general_group"])) #14
 #2Load drug unique codes
 unique_all_drugs_df <- read.csv(paste0(intermediate_dir,"All_unique_Drug_codes_Cleaned.csv"),stringsAsFactors = F)
 
-#'TODO: Group Drugs
+#Group Drugs
 grouped_df_drug <- unique_all_drugs_df
 grouped_df_drug$specific_group <- NA
 grouped_df_drug$general_group <- NA
@@ -191,18 +191,20 @@ for (i in 1:nrow(unique_all_drugs_df)){
   
 }
 
+colnames(grouped_df_drug)[1] <- "Code"
+
 ###Report has group type numbers
-length(which(is.na(grouped_df_drug[,"specific_group"])==F)) #19349 has  specific_group
-length(which(is.na(grouped_df_drug[,"general_group"])==F)) #19349 has  general_group
+length(which(is.na(grouped_df_drug[,"specific_group"])==F)) #16041 has  specific_group
+length(which(is.na(grouped_df_drug[,"general_group"])==F)) #16041 has  general_group
 
 ###Report no group type numbers
-length(which(is.na(grouped_df_drug[,"specific_group"])==T)) #29593 has no  specific_group
-length(which(is.na(grouped_df_drug[,"general_group"])==T)) #29592 has no general_group
+length(which(is.na(grouped_df_drug[,"specific_group"])==T)) #25230 has no  specific_group
+length(which(is.na(grouped_df_drug[,"general_group"])==T)) #25230 has no general_group
 
 
 #Report unique group type numbers
-length(unique(grouped_df_drug[,"specific_group"])) #19349 codes -> 58 groups
-length(unique(grouped_df_drug[,"general_group"])) #19349 codes -> 14 groups
+length(unique(grouped_df_drug[,"specific_group"])) #16041 codes -> 58 groups
+length(unique(grouped_df_drug[,"general_group"])) #16041 codes -> 14 groups
 
 #'@Note: It is possible that one code mapped into two type or category, use $$$$ to cacatenate
 #check which code grouped into two catogory
@@ -221,8 +223,8 @@ g_diag_df <- read.csv(paste0(outdir,"Grouped_Diag_codes.csv"),stringsAsFactors =
 g_proc_df <- read.csv(paste0(outdir,"Grouped_Proc_codes.csv"),stringsAsFactors = F)
 g_drug_df <- read.csv(paste0(outdir,"Grouped_Drug_codes.csv"),stringsAsFactors = F)
 
-
-chuback_type_diag <- strsplit(g_drug_df$general_group,split = "$$$$",fixed = T)
-unique_chuback_type_diag <- unlist(chuback_type_diag)
-unique_chuback_type_diag <- unique_chuback_type_diag[-which(is.na(unique_chuback_type_diag)==T)]
-length(unique(unique_chuback_type_diag))
+# 
+# chuback_type_diag <- strsplit(g_drug_df$general_group,split = "$$$$",fixed = T)
+# unique_chuback_type_diag <- unlist(chuback_type_diag)
+# unique_chuback_type_diag <- unique_chuback_type_diag[-which(is.na(unique_chuback_type_diag)==T)]
+# length(unique(unique_chuback_type_diag))
