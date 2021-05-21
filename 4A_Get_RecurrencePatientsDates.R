@@ -73,6 +73,7 @@ uh3_kcr_df[which(uh3_kcr_df[,"site_o1"] %in% bc_codes),"site_o1"] <- NA
 # uh3_kcr_df[which(uh3_kcr_df[,"site_o5"] %in% bc_codes),"site_o5"]
 # uh3_kcr_df[which(uh3_kcr_df[,"site_o6"] %in% bc_codes),"site_o6"]
 
+
 ###########################################################################
 ###########   2. Analysis IDs                                   ###########  
 ###########################################################################
@@ -262,7 +263,7 @@ write.csv(updated_PrimaryBC_date_df,paste0(out_dir,"updated_PrimaryBC_date.csv")
 
 
 ############################################################################################
-#5. Get All other primary cancer dates
+#5. Get All other cancer dates "site_o1","site_o2","site_o3","site_o4","site_o5","site_o6"
 ############################################################################################
 othercancer_df_list <- list()
 for (p in 1:length(updated_analysis_ID)){
@@ -359,7 +360,7 @@ for (p in 1:length(updated_analysis_ID)){
   curr_2ndP_site <- curr_all_dates_df[which(rownames(curr_all_dates_df) == "Primary2"),"Site"]
   
   
-  #'@Fristevent must be 1st primary bc dates
+  #'@1stevent must be 1st primary bc dates
   first_event_date <- curr_1stP_date
   first_event_site <- curr_1stP_site
   
@@ -454,120 +455,4 @@ cond1 <- All_event_df$Site_1st_Event == All_event_df$Site_2nd_Event
 cond2 <- All_event_df$Site_2nd_Event == All_event_df$Site_3rd_Event
 equal123_idxes <- which(cond1 & cond2 == T)
 check123 <- All_event_df[equal123_idxes,]
-
-############################################################################################
-##Add Outcome flag
-############################################################################################
-All_event_df <- read.csv(paste0(out_dir,"All_event_df.csv"),stringsAsFactors = F)
-analysis_IDs <- unique(All_event_df$ID)
-
-#Add BC related Death flag
-#Add Cause of death site
-All_event_df$BC_related_Death <- 0
-All_event_df$BC_related_Death_Site <- NA
-All_event_df$First_Primary_BC_related_Death<-0
-
-#'@Question2: #What is death code 0000 or 7777 mean
-for (i in 1:length(analysis_IDs)){
-  curr_id <- analysis_IDs[i]
-  
-  curr_first_primary_site <- All_event_df[which(All_event_df[,"ID"] == curr_id),"Site_1st_Event"]
-  curr_first_primary_site <- gsub("Primary_","",curr_first_primary_site)
-  
-  curr_idx <- which(uh3_kcr_df[,"study_id"] == curr_id)
-  curr_death_site <- unique(uh3_kcr_df[curr_idx,"CauseOfDeath"])
-  if (length(curr_death_site) > 1){
-    All_event_df[i,"BC_related_Death"] <- "More than 1 death codes"
-    All_event_df[i,"BC_related_Death_Site"] <- paste0(curr_death_site,collapse = "$$$")
-    All_event_df[i,"First_Primary_BC_related_Death"] <- "More than 1 death codes"
-  }else{
-  if (curr_death_site %in% bc_codes){ #BC related death
-    All_event_df[i,"BC_related_Death"] <- 1
-    All_event_df[i,"BC_related_Death_Site"] <- curr_death_site
-    
-    #Check if it is first priamry related death
-    if(curr_death_site == curr_first_primary_site){
-      All_event_df[i,"First_Primary_BC_related_Death"] <- 1
-    }else{
-      All_event_df[i,"First_Primary_BC_related_Death"] <- 0
-    }
-    
-  }else{
-    All_event_df[i,"BC_related_Death"] <- 0
-    All_event_df[i,"BC_related_Death_Site"] <- NA
-    All_event_df[i,"First_Primary_BC_related_Death"] <- 0
-  }
-  }
-  
-}
-
-table(All_event_df$BC_related_Death) #    0 :34561, 1: 6813 , morethan 1 codes1
-table(All_event_df$First_Primary_BC_related_Death) #0:39631 1:1743 
-
-#Add a flag to see if the 3rd event is other cancer or breast cancer event (recur or primary)
-All_event_df$Event3_Flag <- NA
-no3rd_idxes <- which(is.na(All_event_df[,"Site_3rd_Event"])==T)
-All_event_df$Event3_Flag[no3rd_idxes] <- "No 3rd"
-priBC_3rd_idxes <- which(grepl("Primary",All_event_df[,"Site_3rd_Event"])==T)
-All_event_df[priBC_3rd_idxes,"Event3_Flag"] <- "Primary BC"
-recurBC_3rd_idxes <- which(All_event_df[,"Site_3rd_Event"]== "1Recur")
-All_event_df[recurBC_3rd_idxes,"Event3_Flag"] <- "1Recur"
-All_event_df[-c(no3rd_idxes,priBC_3rd_idxes,recurBC_3rd_idxes),"Event3_Flag"] <- "Other Cancer"
-
-####################################################################################################
-#report number of patients who has 2nd event
-####################################################################################################
-All_event_df$SBCE <- 0
-All_event_df[which(is.na(All_event_df[,"Date_2nd_Event"])==F),"SBCE"] <- 1
-table(All_event_df$SBCE) #    0:36955  1: 4420
-
-#first primary died with SBCE
-All_event_df$Died_And_Recur <- NA
-both_died_andRecur_idxes <- which(All_event_df[,"First_Primary_BC_related_Death"] == 1 & All_event_df[,"SBCE"] == 1)
-All_event_df[both_died_andRecur_idxes,"Died_And_Recur"] <- 1
-All_event_df[-both_died_andRecur_idxes,"Died_And_Recur"] <- 0
-table(All_event_df$Died_And_Recur)     #0     1  41076   299  
-
-#first primary died without SBCE 
-died_noRecur_idxes <- which(All_event_df[,"First_Primary_BC_related_Death"] == 1 & All_event_df[,"SBCE"] == 0)
-length(died_noRecur_idxes)
-
-
-
-#has 2nd event, no 3rd
-only2nd_no3rd_idxes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F & is.na(All_event_df[,"Date_3rd_Event"])==T)
-length(only2nd_no3rd_idxes) #3932
-only2nd_no3rd_df <- All_event_df[only2nd_no3rd_idxes,]
-length(which(only2nd_no3rd_df[,"Site_2nd_Event"]== "1Recur"))  #1st->Recur  #2964
-length(which(grepl("Primary",only2nd_no3rd_df[,"Site_2nd_Event"]) == T))  #1st->2nd Primary #1104
-
-
-#149  both 2nd and 3rd
-both23_idxes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F & is.na(All_event_df[,"Date_3rd_Event"])==F)
-length(both23_idxes) #352
-both23_df <- All_event_df[both23_idxes,]
-
-
-####2nd event = recur ( 154)
-event2_recur_idxes <- which(both23_df[,"Site_2nd_Event"]== "1Recur")
-both23_event2_recur_df <- both23_df[event2_recur_idxes,]
-#Recur->2nd Primary #44
-length(which(grepl("Primary",both23_event2_recur_df[,"Site_3rd_Event"])==T)) 
-#1st->Recur->other #110
-length(which(grepl("Primary",both23_event2_recur_df[,"Site_3rd_Event"])==F)) 
-
-####2nd event = 2nd Primary (202)
-event2_pri_idxes <- which(grepl("Primary",both23_df[,"Site_2nd_Event"])==T)
-both23_event2_pri_df <- both23_df[event2_pri_idxes,]
-#1st-> 2nd Primary -> Primary Breast cancer #21
-length(which(grepl("Primary",both23_event2_pri_df[,"Site_3rd_Event"])==T)) 
-#1st->2nd Primary -> Recur #78
-length(which(both23_event2_pri_df[,"Site_3rd_Event"] == "1Recur"))
-
-#1st-> 2nd Primary -> others #99
-length(which(both23_event2_pri_df[,"Site_3rd_Event"] != "1Recur" & 
-            grepl("Primary",both23_event2_pri_df[,"Site_3rd_Event"])==F))
-
-write.csv(All_event_df,paste0(out_dir,"updated_All_event_df.csv"),row.names = F)
-
 
