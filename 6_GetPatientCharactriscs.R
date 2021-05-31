@@ -183,6 +183,7 @@ write.csv(char_df,paste0(outdir,"pts_charecteristics.csv"),row.names = F)
 #########################################################################################################
 #report statistics
 #########################################################################################################
+char_df <- read.csv(paste0(outdir,"pts_charecteristics.csv"),stringsAsFactors = F)
 table(char_df$SBCE)
 round(100*(table(char_df$SBCE) / nrow(char_df)),2)
 df<- t(data.frame(table(char_df$Diagnosis_Year_1stEvent) ))
@@ -199,11 +200,28 @@ round(100*(length(which(grepl("Primary",char_df$`2nd_Event_Type`) ==T))/ nrow(ch
 table(char_df$First_Primary_BC_related_Death)
 round(100*(table(char_df$First_Primary_BC_related_Death) / nrow(char_df)),2)
 
+
+
+
 #########################################################################################################
 #Seperate with recurrence table and  no-SBCE table
 #########################################################################################################
 noSBCE_df <- char_df[which(char_df$SBCE==0),]
 yesSBCE_df <-char_df[which(char_df$SBCE==1),]
+
+hist(noSBCE_df$num_claims_months)
+mean(noSBCE_df$num_claims_months)
+hist(yesSBCE_df$num_claims_months)
+char_df$SBCE <- as.factor(char_df$SBCE)
+char_df$Recurrence <- char_df$SBCE
+ggplot(char_df, aes(x=num_claims_months, color=Recurrence)) +
+  geom_histogram(fill = "white") +theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))+
+  theme(text = element_text(size=20)) +
+  xlab("Number of Valid Months")+
+  ylab ("Count")
+ 
+
 
 ct_perc_var <- c("Medicaid_OR_Medicare","Site","Stage","Grade","er_stat","pr_stat","surg_prim_site","radiation",
                  "DAJCC_T","DAJCC_M","DAJCC_N","cs_tum_ext","chemo","hormone","cs_tum_nodes")
