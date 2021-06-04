@@ -15,6 +15,7 @@ out_dir <- paste0(proj_dir,"ReCAPSE_Intermediate_Data/0318_21/Medicare_Intermedi
 
 all_files <- list.files(data_dir)
 for (f in 1:length(all_files)){
+    f <- 1
     print(f)
   
     curr_file <- all_files[f]
