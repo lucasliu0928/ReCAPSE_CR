@@ -392,6 +392,10 @@ numCores <- detectCores() # get the number of cores available
 print(numCores)
 registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
+IDs_processed <-  as.numeric(gsub("_perDay_Data.xlsx|ID","",list.files(outdir)))
+
+analysis_ID <- analysis_ID[-which(analysis_ID %in% IDs_processed)]
+print(length(analysis_ID))
 foreach (i = 1: length(analysis_ID)) %dopar% {
   curr_id <- analysis_ID[i]
   
