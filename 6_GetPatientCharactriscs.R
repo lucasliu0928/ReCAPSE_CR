@@ -71,13 +71,6 @@ kcr_data$DAJCC_N <- get_DAJCC_var_funtion(kcr_data,"TNMPathN","TNMClinN")
 Valid_Month_df <- read.csv(paste0(data_dir,"All_Final_Valid_month.csv"),stringsAsFactors = F)
 
 
-################################################################################ 
-####7. Load combined per day data
-################################################################################ 
-Comb_perday_df <- read.csv(paste0(data_dir, "filtered_inValidMonth_comb_perday_df.csv"),stringsAsFactors = F)
-Comb_perday_df <- Comb_perday_df[,-1]
-check <- Comb_perday_df[1:100,]
-
 
 #########################################################################################################
 #### 6.  get charastersitc for final anlaysis IDs
