@@ -331,7 +331,7 @@ get_perDay_both <- function(patient_ID,medicaid_heath_dir,medicaid_pharm_dir,med
 }
 
 data_dir <- "/recapse/intermediate_data/"
-outdir <- "/recapse/intermediate_data/perDay_PerPatientData/"
+outdir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
 
 # local
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
