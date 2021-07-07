@@ -10,7 +10,7 @@ library(openxlsx)
 numCores <- detectCores() # get the number of cores available
 print(numCores)
 data_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
-outdir <- "/recapse/intermediate_data/perPatientData/Medicaid_PharmClaims/"
+outdir <- "/recapse/intermediate_data/2_perPatientData/Medicaid_PharmClaims/"
 #Load data
 medicaid_pharm_df <- as.data.frame(fread(paste0(data_dir,"KCR_MEDICAID_PHARMCLAIMS_FB0015.csv")))
 pharm_ID <- unique(medicaid_pharm_df[,"study_id"])
