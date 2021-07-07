@@ -166,7 +166,7 @@ sbce_idexes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F | All_event_df[,"
 All_event_df[sbce_idexes,"SBCE"] <- 1
 table(All_event_df$SBCE) #    0:34548  1:4839  
 
-write.csv(All_event_df,paste0(outdir,"4_updated_All_event_df.csv"),row.names = F)
+write.xlsx(All_event_df,paste0(outdir,"4_updated_All_event_df.xlsx"))
 
 
 ####################################################################################################
@@ -188,7 +188,7 @@ only2nd_no3rd_idxes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F & is.na(A
 length(only2nd_no3rd_idxes) #3634
 only2nd_no3rd_df <- All_event_df[only2nd_no3rd_idxes,]
 table(only2nd_no3rd_df[,"Type_2nd_Event"])
-#3.1 1st->Recur -> no 3rd    #2850
+#3.1 1st->Recur -> no 3rd    #2850 (2826 + 11+12+1)
 #3.2 1st->2nd Primary -> no 3rd    784
 
 
