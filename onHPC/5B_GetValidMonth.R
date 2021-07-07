@@ -13,7 +13,7 @@ outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 #########################################################################################################
 #1.Load pateint event type and date data
 #########################################################################################################
-All_event_df <- read.csv(paste0(outdir,"4_updated_All_event_df.csv"),stringsAsFactors = F)
+All_event_df <- read.xlsx(paste0(outdir,"4_updated_All_event_df.xlsx"),sheet = 1)
 #1.Get number of IDs in event type files
 event_type_IDs <- unique(All_event_df$study_id) #39387
 
