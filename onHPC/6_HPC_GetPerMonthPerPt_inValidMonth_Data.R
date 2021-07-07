@@ -32,12 +32,12 @@ split_andcombine_codes <- function(code_df,code_col){
 
 valid_month_dir <- "/recapse/intermediate_data/"
 data_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
-outdir <- "/recapse/intermediate_data/6_perMonth_inValidMonth_PerPatientData/"
+outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
 
-#local
-valid_month_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/6_perDay_ValidMonth_PerPatientData/"
+# #local
+# valid_month_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
 
 
 numCores <- detectCores() # get the number of cores available
@@ -61,7 +61,6 @@ perDay_files <- list.files(data_dir)
 
 #only for pts has valid month
 foreach (i = 1: length(perDay_files)) %dopar% {
-  i <- 1
   curr_file <- perDay_files[i]
   curr_id <- as.numeric(gsub("_perDay_Data.xlsx|ID","",curr_file))
   
@@ -70,7 +69,7 @@ foreach (i = 1: length(perDay_files)) %dopar% {
   
   #valid month
   curr_valid_month_df <- valid_month_df[which(valid_month_df$study_id == curr_id),]
-  if (nrow(curr_valid_month_df) > 0){ #only output file when valid month is >0
+  if (nrow(curr_valid_month_df) > 0){ #only output file when pts has valid month
     #Get data in range
     start <- ymd(curr_valid_month_df[,"Valid_Start"])
     end <- ymd(curr_valid_month_df[,"Valid_End"])
@@ -104,7 +103,7 @@ foreach (i = 1: length(perDay_files)) %dopar% {
       
     }
     
-    write.xlsx(filtered_df,paste0(outdir,"ID",curr_id,"_","perDay_ValidMonth_Data.xlsx"))
+    write.xlsx(perMonth_data,paste0(outdir,"ID",curr_id,"_","perMonthData_inValidMonth.xlsx"))
     
   }
   
