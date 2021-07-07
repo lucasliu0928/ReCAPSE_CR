@@ -2,7 +2,7 @@ library(openxlsx)
 library(data.table)
 
 data_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
-outdir <- "/recapse/intermediate_data/perPatientData/Medicare/"
+outdir <- "/recapse/intermediate_data/2_perPatientData/Medicare/"
 
 #######################################################################################
 #Process Medicare, get per patient data as seperated files
