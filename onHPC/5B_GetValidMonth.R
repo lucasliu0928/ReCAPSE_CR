@@ -100,9 +100,6 @@ for (i in 1:length(analysis_Ids)){
     
 }
 
-check_IDs <- All_event_df[which(All_event_df$SBCE == 1 & All_event_df$Type_3rd_Event == "Other"),"study_id"]
-
-check_df <- valid_month_df[which(valid_month_df$study_id %in% check_IDs),]
 
 write.xlsx(valid_month_df,paste0(outdir,"5_valid_month_df.xlsx"))
 
