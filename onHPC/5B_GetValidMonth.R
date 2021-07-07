@@ -101,5 +101,17 @@ for (i in 1:length(analysis_Ids)){
 }
 
 
+#########################################################################################################
+#Exclude patient has valid end before valid start (because it is possible enrollment end before valid start date)
+#########################################################################################################
+valid_month_df$Valid_Duration_inDays <- difftime(ymd(valid_month_df$Valid_End) , ymd(valid_month_df$Valid_Start), units = "days")
+#Exclude duration < 0 days
+exclude_indxes <- which(valid_month_df$Valid_Duration_inDays < 0 )
+valid_month_df <- valid_month_df[-exclude_indxes,]
+
+#Exclude duration < 90 days (3 month) #(cuz Later will further exclude no claims within 3month before and after SBCE or 6 month for no SBCE patient)
+exclude_indxes <- which(valid_month_df$Valid_Duration_inDays < 90 )
+valid_month_df <- valid_month_df[-exclude_indxes,]
+
 write.xlsx(valid_month_df,paste0(outdir,"5_valid_month_df.xlsx"))
 
