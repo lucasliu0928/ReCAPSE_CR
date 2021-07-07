@@ -55,11 +55,11 @@ for (i in 1:length(analysis_Ids)){
 
     #########curr event df
     curr_event_df <- All_event_df[which(All_event_df[,"study_id"] == curr_id),]
-    curr_1stPBC_date <- curr_event_df[,"Date_1st_Event"]
-    curr_3rd_event_date <- curr_event_df[,"Date_3rd_Event"]
+    curr_1stPBC_date <- mdy(curr_event_df[,"Date_1st_Event"])
+    curr_3rd_event_date <- mdy(curr_event_df[,"Date_3rd_Event"])
     
     #Start point
-    curr_start <- mdy(curr_1stPBC_date) + days(6*30)  #in the case of + 6months returns NA
+    curr_start <- curr_1stPBC_date + days(6*30)  #in the case of + 6months returns NA
     
     #End point
     #1. Check if patient has SBCE
@@ -73,15 +73,13 @@ for (i in 1:length(analysis_Ids)){
       }else{
         #3. Check type of 3rd event
         curr_3rd_event_type <- curr_event_df[,"Type_3rd_Event"]
-        curr_3rd_event_date <- curr_event_df[,"Date_3rd_Event"]
-        
         #3rd event is a breast cancer event (Recurrence or diagnose of breast cancer):  1 month before the first subsequent breast cancer event.
         if (grepl("Primary|1Recur",curr_3rd_event_type)==T){ #due to merging effect, as long as it contains primary/1Recur, it counts, it is possible that type = "Priamry$$$Other"
-          curr_end <- mdy(curr_3rd_event_date) - days(1*30) 
+          curr_end <- curr_3rd_event_date - days(1*30) 
           
         }else if (curr_3rd_event_type == "Other"){# due to merging effect, consider exact match in this case
           #3rd event is a non-breast primary cancer: 3 months before the registry-based diagnosis date or, 
-          curr_end <- mdy(curr_3rd_event_date) - days(3*30) 
+          curr_end <- curr_3rd_event_date - days(3*30) 
           
         }
   
