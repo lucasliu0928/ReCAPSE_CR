@@ -25,9 +25,9 @@ data_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 outdir <- "/recapse/intermediate_data/"
 
 
-#local
-data_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# #local
+# data_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 ###########################################################################
 ###########   1. Load UH3 KCR data                           ##############
