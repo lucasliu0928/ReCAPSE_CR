@@ -34,3 +34,13 @@ outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 ################################################################################ 
 updated_Patient_Char_df <- Patient_Char_df[which(Patient_Char_df$study_id %in% Final_IDs),]
 missing_table <- get_missing_rate_table(updated_Patient_Char_df,colnames(updated_Patient_Char_df))
+
+
+
+# ################################################################################ 
+# #5. Combine code sand char
+# ################################################################################ 
+# comb_df <- cbind(All_perMonthData_df,month_level_char_df[,-1])
+# 
+# write.xlsx(comb_df,paste0(outdir,"10_PerMonthData_WithMonthChar_df.xlsx"))
+# 
