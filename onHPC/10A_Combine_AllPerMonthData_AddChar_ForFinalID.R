@@ -16,11 +16,11 @@ perMonth_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatie
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/10_perMonthData_withChar/"
 
-# #local
-# perday_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
-# perMonth_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
-# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-# outdir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar/"
+#local
+perday_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
+perMonth_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+outdir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar/"
 
 
 ################################################################################ 
