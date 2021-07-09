@@ -4,7 +4,7 @@ library(lubridate)
 library(parallel)
 library(foreach)
 library(doParallel)
-
+library(stringr)
 ######################################################################
 #3_HPC_Get....R Functions:
 clean_code_func <-function(list_of_codes){
@@ -62,7 +62,7 @@ clean_code_columns <-function(claims_df, col_to_clean){
   return(claims_df)
 }
 
-
+#remove NA from a list of code
 remove_NA_func<- function(curr_day_codes){
   na_idxes <- which(curr_day_codes == "" | is.na(curr_day_codes) == TRUE)
   if (length(na_idxes) > 0){
@@ -70,6 +70,16 @@ remove_NA_func<- function(curr_day_codes){
   }
   return(curr_day_codes)
 }
+
+#remove NA from dataframe col
+remove_NA_from_df <- function(input_df,col_tocheck){
+  na_indexes <- which(is.na(input_df[,col_tocheck])==T)
+  if (length(na_indexes) > 0){
+    input_df <- input_df[-na_indexes,]
+  }
+  return(input_df)
+}
+
 
 #These fucntions get per day cleaned codes for all avaiable dates for one pateint
 get_perDay_medicaid <- function(patient_ID,medicaid_heath_dir,medicaid_pharm_dir){
@@ -336,9 +346,8 @@ get_perDay_both <- function(patient_ID,medicaid_heath_dir,medicaid_pharm_dir,med
 }
 
 ######################################################################
-
-
-split_code_strings <- function(code_df, code_col){
+#return unique codes
+split_code_strings_to_unique_codes <- function(code_df, code_col){
   #this function split code strings in a column, and return unique codes
   code_strings <- code_df[,code_col]
   
@@ -356,11 +365,12 @@ split_code_strings <- function(code_df, code_col){
   return(unique_splited_codes)
 }
 
+#return unique codes
 split_andcombine_codes <- function(code_df,code_col){
   #This function split concatenated code strings in a data column into individual code, 
   #then concatednete all codes in a column into one string
    
-  unique_splited_codes <- split_code_strings(code_df,code_col)
+  unique_splited_codes <- split_code_strings_to_unique_codes(code_df,code_col)
 
   if (is.null(unique_splited_codes) == F){
       combined_codes <- paste0(unique_splited_codes,collapse = "$$$$")
@@ -370,6 +380,41 @@ split_andcombine_codes <- function(code_df,code_col){
   return(combined_codes)
 }
 
+
+#this one does not return unique codes
+split_code_strings_to_non_unique_codes <- function(code_df, code_col){
+  #this function split code strings in a column, and return unique codes
+  code_strings <- code_df[,code_col]
+  
+  #remove NAs
+  na_idxes <- which(is.na(code_strings)==T)
+  if (length(na_idxes) > 0 ){
+    code_strings <- code_strings[-na_idxes]
+  }
+  
+  if (length(code_strings) >0){ #if remaining code length > 0
+    unique_splited_codes <- unlist(strsplit(code_strings,split= "$$$$",fixed = T))
+  }else{
+    unique_splited_codes <- NULL
+  }
+  return(unique_splited_codes)
+}
+
+
+#this one combine all non-unique codes
+split_andcombine_codes2 <- function(code_df,code_col){
+  #This function split concatenated code strings in a data column into individual code, 
+  #then concatednete all codes in a column into one string
+  
+  unique_splited_codes <- split_code_strings_to_non_unique_codes(code_df,code_col)
+  
+  if (is.null(unique_splited_codes) == F){
+    combined_codes <- paste0(unique_splited_codes,collapse = "$$$$")
+  }else{
+    combined_codes <- NA
+  }
+  return(combined_codes)
+}
 
 #Compute missings
 compute_missing_rate <- function(data_input,col_name){
@@ -391,9 +436,123 @@ get_missing_rate_table <- function(data_df,features){
 }
 
 
+####Grouping functions
+load_and_clean_CSS_data<- function(file_dir){
+  #Load four tables
+  HCUP_Diag1_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-9.diag_ref.edit.csv"),stringsAsFactors = F)
+  HCUP_Diag2_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-10.diag_ref.edit.csv"),stringsAsFactors = F)
+  HCUP_Proc1_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-9.proc_ref.edit.csv"),stringsAsFactors = F)
+  HCUP_Proc2_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-10.proc_ref.edit.csv"),stringsAsFactors = F)
+  
+  #Change col name to comb
+  colnames(HCUP_Diag1_df)[which(colnames(HCUP_Diag1_df) == "ICD.9.CM.CODE")] <- "Code"
+  colnames(HCUP_Diag2_df)[which(colnames(HCUP_Diag2_df) == "ICD.10.CM.CODE")] <- "Code"
+  colnames(HCUP_Proc1_df)[which(colnames(HCUP_Proc1_df) == "ICD.9.CM.CODE")] <- "Code"
+  colnames(HCUP_Proc2_df)[which(colnames(HCUP_Proc2_df) == "ICD.10.PCS.CODE")] <- "Code"
+  
+  HCUP_Diag1_df$CODE_TYPE <- "ICD9_Diag"
+  HCUP_Diag2_df$CODE_TYPE <- "ICD10_Diag"
+  HCUP_Proc1_df$CODE_TYPE <- "ICD9_Proc"
+  HCUP_Proc2_df$CODE_TYPE <- "ICD10_Proc"
+  
+  HCUP_comb <- rbind(HCUP_Diag1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
+                     HCUP_Diag2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
+                     HCUP_Proc1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
+                     HCUP_Proc2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")])
+  
+  #3.clean code and category
+  HCUP_comb[,"Code"]  <- clean_code_func(HCUP_comb[,"Code"])
+  HCUP_comb[,"CCS.CATEGORY"]  <- clean_code_func(HCUP_comb[,"CCS.CATEGORY"]) #Clean category in HCUP
+  
+  
+  #4. Remove all blanks and NAs   
+  HCUP_comb <- remove_NA_from_df(HCUP_comb,"Code")
+  
+  #5. remove the unspecified codes, cuz they will result codes grped into multiple groups, (e.g, E8342 is a qulified codes in ICD10, but unspecified in ICD9)
+  unspecified_idxes <- which(grepl("\\be codes|\\bExternal cause codes",HCUP_comb[,"CCS.CATEGORY.DESCRIPTION"],ignore.case = T)==T)
+  HCUP_comb<- HCUP_comb[-unspecified_idxes,]
+  return(HCUP_comb)
+}
 
-# ################################################################################ 
-# #4. Compute missing
-# ################################################################################ 
-# updated_Patient_Char_df <- Patient_Char_df[which(Patient_Char_df$study_id %in% Final_IDs),]
-# missing_table <- get_missing_rate_table(updated_Patient_Char_df,colnames(updated_Patient_Char_df))
+group_codes_into_CCS_func <- function(claim_code_df,CCS_df){
+  claim_code_df$CCS_CATEGORY <- NA
+  claim_code_df$CCS_CATEGORY_DESCRIPTION <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,1]
+    curr_ccs_idxes <- which(CCS_df[,"Code"] == curr_code)
+    if (length(curr_ccs_idxes) > 0){
+      claim_code_df[i,"CCS_CATEGORY"] <- CCS_df[curr_ccs_idxes,"CCS.CATEGORY"]
+      claim_code_df[i,"CCS_CATEGORY_DESCRIPTION"] <- CCS_df[curr_ccs_idxes,"CCS.CATEGORY.DESCRIPTION"]
+    }
+  }
+  return(claim_code_df)
+}
+
+group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
+  claim_code_df$specific_group <- NA
+  claim_code_df$general_group <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,"Drug_name"]
+    curr_idxes <- which(DM3_df[,"desc"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"specific_group"] <-  unique(DM3_df[curr_idxes,"specific_group"])
+      claim_code_df[i,"general_group"]  <-  unique(DM3_df[curr_idxes,"general_group"])
+    }
+  }
+  return(claim_code_df)
+}
+
+get_ccs_discription <- function(freq_tb,CCS_Diag_df,CCS_Proc_df){
+  #for diag
+  ccs_d_idxes <- which(grepl("CCS_D",freq_tb$Code_Group) == T)
+  
+  for (i in 1:length(ccs_d_idxes)){
+    curr_ind <- ccs_d_idxes[i]
+    curr_grp <- gsub("CCS_D_","",freq_tb[curr_ind,"Code_Group"])
+    freq_tb[curr_ind,"DESCRIPTION"] <- unique(CCS_Diag_df[which(CCS_Diag_df[,"CCS.CATEGORY"] == curr_grp),"CCS.CATEGORY.DESCRIPTION"])[1]
+  }
+  
+  #for proc
+  ccs_p_idxes <- which(grepl("CCS_P",freq_tb$Code_Group) == T)
+  
+  for (i in 1:length(ccs_p_idxes)){
+    curr_ind <- ccs_p_idxes[i]
+    curr_grp <- gsub("CCS_P_","",freq_tb[curr_ind,"Code_Group"])
+    freq_tb[curr_ind,"DESCRIPTION"] <- unique(CCS_Proc_df[which(CCS_Proc_df[,"CCS.CATEGORY"] == curr_grp),"CCS.CATEGORY.DESCRIPTION"])[1]
+  }
+  return(freq_tb)
+}
+
+#######Construct code feature df
+get_code_feature_df_func <- function(input_data,grouped_code_df,code_col_ingrpdf,code_col_ininputdf,group_col){
+  # input_data <- All_data[71:72,]
+  # grouped_code_df <- grouped_unique_diag_df
+  # code_col_ingrpdf <- "Unique_Diag_Codes"
+  # code_col_ininputdf <- "Diag_Codes"
+  # group_col <- "CCS_CATEGORY"
+
+  unique_groups <- unique(grouped_code_df[,group_col])
+  
+  feature_df <- as.data.frame(matrix(0, nrow = nrow(input_data), ncol = length(unique_groups)+1))
+  colnames(feature_df) <- c("study_id",unique_groups)
+  for (i in 1:nrow(input_data)){
+    if (i %% 500 == 0){print(i)}
+    curr_df <- input_data[i,code_col_ininputdf]
+    feature_df[i,"study_id"] <- input_data[i,"study_id"]
+    if (is.na(curr_df) == F){
+      curr_codes <- split_code_strings_to_non_unique_codes(input_data[i,],code_col_ininputdf)
+      if (code_col_ininputdf == "Drug_Codes"){ #if drug codes, remove leading 0s due to omitting zeros in wrting unique_drug_df to csv
+        curr_codes <- str_remove(curr_codes, "^0+")
+      }
+      curr_code_idxes <- match(curr_codes, grouped_code_df[,code_col_ingrpdf])
+      curr_groups <- grouped_code_df[curr_code_idxes,group_col]
+      curr_groups_freq_tb <- data.frame(table(curr_groups))
+      curr_feature_cols <- as.character(curr_groups_freq_tb[,"curr_groups"])
+      feature_df[i,curr_feature_cols] <- curr_groups_freq_tb[,"Freq"]
+    }
+    
+  }
+  return(feature_df)
+}
