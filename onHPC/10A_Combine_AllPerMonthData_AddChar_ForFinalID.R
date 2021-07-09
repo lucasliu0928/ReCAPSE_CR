@@ -5,6 +5,11 @@ library(parallel)
 library(foreach)
 library(doParallel)
 
+numCores <- detectCores() # get the number of cores available
+print(numCores)
+registerDoParallel(numCores)  # use multicore, set to the number of our cores
+
+
 #onHPC
 perday_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
 perMonth_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
@@ -16,7 +21,7 @@ outdir <- "/recapse/intermediate_data/10_perMonthData_withChar/"
 # perMonth_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
 # outdir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar/"
-# 
+
 
 ################################################################################ 
 #1. Load patient level charateristics
@@ -58,10 +63,26 @@ All_perMonthData_df <- do.call(rbind,All_perMonthData_list)
 print(paste0("Total number of monthes:", nrow(All_perMonthData_df)))
 
 
+########################################################################################################################
+#Use the following code to run in case out of memory when procssing all at one time
+########################################################################################################################
+files_outputed<- list.files(outdir)
+ID_outputed <- as.numeric(gsub("_PerMonthData_WithMonthChar_df.xlsx|ID","",files_outputed))
+
+indxes_processed <- which(Final_IDs %in% ID_outputed)
+
+if (length(indxes_processed) > 0){ #if any Id has been process
+  Final_IDs <- Final_IDs[-indxes_processed]
+}
+
+print(paste0("To Process IDs: ",length(Final_IDs)))
+
+
 ################################################################################ 
 #4. Add charatersitics for the machine learning model (pareall)
 ################################################################################
-site_cols<- paste0("C",seq(501,509,1))
+site_cols<- paste0("C50",seq(0,9,1))
+
 foreach (i = 1: length(Final_IDs)) %dopar% {
   curr_id <- Final_IDs[i]
   
@@ -71,7 +92,7 @@ foreach (i = 1: length(Final_IDs)) %dopar% {
   curr_pt_level_char_df <- Patient_Char_df[which(Patient_Char_df$study_id == curr_id),]
   
   #construct per patient month level data
-  curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(curr_perMonth_data) ,ncol = 32))
+  curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(curr_perMonth_data) ,ncol = 33))
   colnames(curr_month_level_char_df) <- c("study_id","num_claims","Age","months_since_dx",
                                      "Race", site_cols,
                                      "regional","Grade","Laterality",
