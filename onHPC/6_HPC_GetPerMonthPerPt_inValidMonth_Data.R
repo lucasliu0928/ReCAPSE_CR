@@ -12,7 +12,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 ################################################################################
 valid_month_dir <- "/recapse/intermediate_data/"
 data_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
-outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
 
 # #local
 # valid_month_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
@@ -73,9 +73,9 @@ foreach (i = 1: length(perDay_files)) %dopar% {
         curr_df <- filtered_df[which(ymd(filtered_df[,"claims_date"]) >= curr_mon_start & 
                                      ymd(filtered_df[,"claims_date"]) < curr_mon_end ),]
         if (nrow(curr_df) > 0){
-          curr_month_diag_codes <- split_andcombine_codes(curr_df,"Diag_Codes")
-          curr_month_proc_codes <- split_andcombine_codes(curr_df,"Proc_Codes")
-          curr_month_drug_codes <- split_andcombine_codes(curr_df,"Drug_Codes")
+          curr_month_diag_codes <- split_andcombine_codes2(curr_df,"Diag_Codes") #split_andcombine_codes2 returns non_unique codes
+          curr_month_proc_codes <- split_andcombine_codes2(curr_df,"Proc_Codes")
+          curr_month_drug_codes <- split_andcombine_codes2(curr_df,"Drug_Codes")
         }else{
           curr_month_diag_codes <- NA
           curr_month_proc_codes <- NA
