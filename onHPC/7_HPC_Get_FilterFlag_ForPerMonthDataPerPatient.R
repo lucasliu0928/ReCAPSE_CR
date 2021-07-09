@@ -10,7 +10,7 @@ library(lubridate)
 ###########################################################################################################################
 
 #onHPC
-data_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+data_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
 outdir <- "/recapse/intermediate_data/"
 
 # #local
