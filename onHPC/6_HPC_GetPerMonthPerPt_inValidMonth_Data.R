@@ -1,35 +1,15 @@
-library(openxlsx)
-library(data.table)
-library(lubridate)
-library(parallel)
-library(foreach)
-library(doParallel)
+source("Recapse_Ultility.R")
 
-split_andcombine_codes <- function(code_df,code_col){
-  # code_df <- curr_df
-  # code_col <- "Diag_Codes"
-  
-  curr_codes <- code_df[,code_col]
-  #remove NAs
-  na_idxes <- which(is.na(curr_codes)==T)
-  if (length(na_idxes) > 0 ){
-    curr_codes <- curr_codes[-na_idxes]
-  }
-  
-  
-  if (length(curr_codes) >0){ #if remaining code length > 0
-    #split to remove duplciated from each day
-    curr_unique_splited_codes <- unique(unlist(strsplit(curr_codes,split= "$$$$",fixed = T)))
-    curr_combined_codes <- paste0(curr_unique_splited_codes,collapse = "$$$$")
-  }else{
-    curr_combined_codes <- NA
-  }
-  
-  return(curr_combined_codes)
-  
-}
+################################################################################
+#Set up parallel computing envir
+################################################################################
+numCores <- detectCores() # get the number of cores available
+print(numCores)
+registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
-
+################################################################################
+#Data dir
+################################################################################
 valid_month_dir <- "/recapse/intermediate_data/"
 data_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
 outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
@@ -38,11 +18,6 @@ outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData
 # valid_month_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
 # outdir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
-
-
-numCores <- detectCores() # get the number of cores available
-print(numCores)
-registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 
 ############################################################
