@@ -4,7 +4,7 @@ library(openxlsx)
 data_dir <- "/recapse/intermediate_data/10_perMonthData_withChar/"
 outdir <- "/recapse/intermediate_data/"
 
-# local
+# #local
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar/"
 # outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
@@ -18,9 +18,9 @@ Final_IDs <- unique(FinalID_df$study_id)
 #1. Combine all per month with char data into one dataframe
 ################################################################################ 
 All_Data_list <- list(NA)
-for (i in 1:length(Final_IDs)){ #length(Final_IDs)
+for (i in 1:length(Final_IDs)){ 
+  if (i %% 1000 == 0){print(i)}
   curr_id <- Final_IDs[i]
-  print(curr_id)
   curr_perMonth_file <- paste0(data_dir,"ID",curr_id,"_PerMonthData_WithMonthChar_df.xlsx")
   
   if (file.exists(curr_perMonth_file) == T){
@@ -29,7 +29,6 @@ for (i in 1:length(Final_IDs)){ #length(Final_IDs)
     curr_df <- NULL
   }
   
-  print(curr_df)
   All_Data_list[[i]] <-curr_df
 }
 
