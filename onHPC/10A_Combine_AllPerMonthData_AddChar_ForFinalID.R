@@ -12,15 +12,15 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 #onHPC
 perday_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
-perMonth_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+perMonth_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/" #6.V2 has non_unique codes in one month
 data_dir <- "/recapse/intermediate_data/"
-outdir <- "/recapse/intermediate_data/10_perMonthData_withChar/"
+outdir <- "/recapse/intermediate_data/10_perMonthData_withChar_V2_nonuniquecodes/" #V2 
 
-#local
-perday_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
-perMonth_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar/"
+# #local
+# perday_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
+# perMonth_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar_V2_nonuniquecodes/"
 
 
 ################################################################################ 
@@ -125,17 +125,14 @@ foreach (i = 1: length(Final_IDs)) %dopar% {
   curr_2ndevent_date <- mdy(curr_event[,"Date_2nd_Event"])
   
   #date of birth
-  curr_diag_year <- as.numeric(unlist(strsplit(as.character(curr_1stevent_date),split = "-"))[[1]])
-  curr_age_at_diags <- curr_pt_level_char_df[,"reg_age_at_dx"]
-  curr_dob <- curr_diag_year - curr_age_at_diags
+  curr_dob <-   mdy(curr_pt_level_char_df$date_Birth)
+
   
-  
-  #for each  month
+  #for ecurr_dobach  month
   for (j in 1:nrow(curr_month_level_char_df)){
     curr_month <- ymd(curr_perMonth_data[j,"Month_Start"])
-    curr_month_yr <- as.numeric(unlist(strsplit(as.character(curr_month),split = "-"))[[1]])
-  
-    curr_month_level_char_df[j,"Age"] <- curr_month_yr - curr_dob
+
+    curr_month_level_char_df[j,"Age"] <- as.numeric(difftime(curr_month,curr_dob,units = "days")/365)
     curr_month_level_char_df[j,"months_since_dx"] <- as.numeric(difftime(curr_month,curr_1stevent_date,units = "days"))/30 #converted to month
     if (is.na(curr_2ndevent_date) == F){
       curr_month_level_char_df[j,"months_to_second_event"] <- as.numeric(difftime(curr_month,curr_2ndevent_date,units = "days"))/30 #converted to month
@@ -146,9 +143,9 @@ foreach (i = 1: length(Final_IDs)) %dopar% {
     
     #get outcome label
     if (curr_month_level_char_df[j,"months_to_second_event"] < 0 | is.na(curr_month_level_char_df[j,"months_to_second_event"])==T){
-      curr_month_level_char_df[j,"y_PRE_OR_POST_2ndEvent"] <- 0
+      curr_month_level_char_df[j,"y_PRE_OR_POST_2ndEvent"] <- 0 #pre
     }else{
-      curr_month_level_char_df[j,"y_PRE_OR_POST_2ndEvent"] <- 1
+      curr_month_level_char_df[j,"y_PRE_OR_POST_2ndEvent"] <- 1 #post
     }
     
     #number of claims in each month
