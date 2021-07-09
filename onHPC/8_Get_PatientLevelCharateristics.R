@@ -27,13 +27,15 @@ get_DAJCC_var_funtion <- function(kcr_data, pathology_results_col,clinical_resul
 #onHPC
 raw_data_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 data_dir <- "/recapse/intermediate_data/"
-per_month_data_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+per_month_data_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
+perday_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
 outdir <- "/recapse/intermediate_data/"
 
 # #local
 # raw_data_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-# per_month_data_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+# per_month_data_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
+# perday_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
 # outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 
@@ -70,11 +72,6 @@ ID_Sources_Df <- read.xlsx(paste0(data_dir,"1_All_ID_Source.xlsx"),sheet = 1)
 analysis_ID <- unique(Reduce(intersect, list(updated_All_event_df$study_id,kcr_data$study_id, Valid_Month_df$study_id)))
 
 ################################################################################ 
-#6. per month data files
-################################################################################ 
-perMonth_files <- list.files(per_month_data_dir)
-
-################################################################################ 
 #7. BC codes
 ################################################################################ 
 bc_codes <- paste0("C50",seq(0,9,1))
@@ -84,19 +81,18 @@ bc_codes <- paste0("C50",seq(0,9,1))
 ################################################################################ 
 All_cancer_site_date_df <- read.xlsx(paste0(data_dir,"4_All_cancer_site_date_df.xlsx"),sheet = 1)
 
-
 #########################################################################################################
 #### 6.  get charastersitc for final anlaysis IDs
 #########################################################################################################
-char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 34))
+char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 35))
 colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE","First_Primary_BC_related_Death","Type_2nd_Event",
                        "Diagnosis_Year_1stEvent","Diagnosis_Year_2ndEvent","Year_Death",
                        "Race","Site","Stage","Laterality",
                        "Grade","er_stat","pr_stat","surg_prim_site","her2_stat",
                        "radiation","DAJCC_T","DAJCC_M","DAJCC_N","reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
-                       "cs_tum_size","num_claims_months","most_recent_enrollment_year",
+                       "cs_tum_size","num_claims","most_recent_enrollment_year",
                        "cs_tum_ext","chemo","hormone","cs_tum_nodes",
-                       "num_nonbc","regional","SEERSummStg2000")
+                       "num_nonbc","regional","SEERSummStg2000","date_Birth")
 
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 == 0){
@@ -122,12 +118,22 @@ for (i in 1:length(analysis_ID)){
   
   if ( file.exists(curr_perMonth_file) == T){
         curr_perMonth_df <- read.xlsx(curr_perMonth_file,sheet = 1)
-        char_df[i,"num_claims_months"]  <- nrow(curr_perMonth_df)
+        min_month <- min(ymd(curr_perMonth_df$Month_Start))
+        max_month <- max(ymd(curr_perMonth_df$Month_Start))
         
-        curr_most_recent_enrollment_month   <-  max(curr_perMonth_df[,"Month_Start"])
-        char_df[i,"most_recent_enrollment_year"]  <-  as.numeric(unlist(strsplit(curr_most_recent_enrollment_month,split= "-"))[1])
+        #per day file
+        curr_perday_file <- paste0(perday_dir,"ID",curr_id,"_perDay_Data.xlsx") #    #1.get per day file
+        curr_perday_df <- read.xlsx(curr_perday_file,sheet = 1)
+        #claims in valid months
+        curr_claims_indxes <- which(ymd(curr_perday_df$claims_date) >= min_month & ymd(curr_perday_df$claims_date) <= max_month)
+
+        char_df[i,"num_claims"]  <- length(curr_claims_indxes)
+        
+        char_df[i,"most_recent_enrollment_year"]  <-  as.numeric(unlist(strsplit(as.character(max_month),split= "-"))[1])
   }
 
+  
+  
   #Event data
   curr_event <- updated_All_event_df[which(updated_All_event_df[,"study_id"] == curr_id),]
   char_df[i,"SBCE"] <-  curr_event$SBCE
@@ -159,6 +165,7 @@ for (i in 1:length(analysis_ID)){
                                kcr_data[,"Date_dx"] ==  curr_1stevent_date &
                                kcr_data[,"CentralSequenceNumber"] %in% c(0,1)),] #Acutal first priamry
   
+  char_df[i,"date_Birth"] <- curr_kcr[,"date_Birth"]
   char_df[i,"Race"] <- curr_kcr[,"Race1"]
   char_df[i,"Site"] <- curr_kcr[,"PrimarySite"]
   char_df[i,"Stage"] <- curr_kcr[,"BestStageGrp"]
