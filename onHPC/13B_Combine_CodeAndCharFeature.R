@@ -6,10 +6,10 @@ grp_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/"
 
-# #local
-grp_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# # #local
+# grp_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 
 ##############################################################################
@@ -39,8 +39,8 @@ nosbce_pt_Ids <- pts_level_char_df$study_id[which(pts_level_char_df$SBCE == 0)]
 ################################################################################ 
 diag_feature_df <- read.csv(paste0(data_dir,"12_diag_feature_df.csv"), stringsAsFactors = F)
 proc_feature_df <- read.csv(paste0(data_dir,"12_proc_feature_df.csv"), stringsAsFactors = F)
-#drug_feature_df <- read.csv(paste0(data_dir,"12_drug_feature_df.csv"), stringsAsFactors = F)
-all_code_feature_df <- cbind(diag_feature_df,proc_feature_df[,-1])# drug_feature_df[-1])
+drug_feature_df <- read.csv(paste0(data_dir,"12_drug_feature_df.csv"), stringsAsFactors = F)
+all_code_feature_df <- cbind(diag_feature_df,proc_feature_df[,-1], drug_feature_df[-1])
 
 
 ################################################################################ 
@@ -48,7 +48,7 @@ all_code_feature_df <- cbind(diag_feature_df,proc_feature_df[,-1])# drug_feature
 ################################################################################
 #Combine
 Comb_df <- cbind(All_data_withBinary_Char,all_code_feature_df[,-1])
-write.csv(Comb_df,paste0(outdir,"13_Model_data_before_SelectionOfFeatures_onFreq.csv"),row.names = F)
+#write.csv(Comb_df,paste0(outdir,"13_Model_data_before_SelectionOfFeatures_onFreq.csv"),row.names = F)
 
 
 ################################################################################
