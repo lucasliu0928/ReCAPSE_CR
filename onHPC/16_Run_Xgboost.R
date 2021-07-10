@@ -1,62 +1,5 @@
 source("Recapse_Ultility.R")
-library(rBayesianOptimization) 
-library(xgboost) 
-library(Matrix)
-library(fastDummies)
-compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
-  #compute ROC-AUC
-  auc_res <- compute_auc_func(predicted_prob,actual_label)
-  auc_score <- auc_res[[1]]
-  pred_threhold <- auc_res[[2]] #threhold at cutoff point for ROC curve
-  
-  #convert to predicted labels
-  predicted_labels <- convert_prediction_function(predicted_prob,pred_threhold)
-  
-  #Match label factor levels
-  matched_res <- match_label_levels_func(predicted_labels,actual_label)
-  final_pred <- matched_res[[1]]
-  final_actual <- matched_res[[2]]
-  
-  #Class 0 
-  cm<-confusionMatrix(final_pred, final_actual, positive = "0", dnn = c("Prediction", "Actual"),mode = "prec_recall")
-  class0_prec<-cm$byClass[5]
-  class0_recall<-cm$byClass[6]
-  class0_f1<-cm$byClass[7]
-  
-  #class 1
-  cm1<-confusionMatrix(final_pred, final_actual, positive = "1", dnn = c("Prediction", "Actual"),mode = "prec_recall")
-  class1_prec<-cm1$byClass[5]
-  class1_recall<-cm1$byClass[6]
-  class1_f1<-cm1$byClass[7]
-  
-  acc<-cm$overall[1]
-  auc<-as.numeric(auc_score)
-  
-  performance_table <- round(cbind.data.frame(auc,acc,class0_prec,class0_recall,class0_f1,class1_prec,class1_recall,class1_f1),2)
-  
-  return(performance_table)
-}
-
-xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_by_tree){
-  print(paste("eta:", eta))
-  print(paste("max_depth:", max_depth))
-  print(paste("min_child_weight:", min_child_weight)) 
-  print(paste("subsample:", subsample))
-  print(paste("colsample_by_tree:", colsample_by_tree))
-  cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
-                           min_child_weight=min_child_weight,
-                           subsample=subsample,
-                           olsample_by_tree=colsample_by_tree,
-                           lambda=1, alpha=0,
-                           #nthread=ncores, n_jobs=ncores,
-                           objective="binary:logistic", eval_metric="auc"),
-               data=dtrain, nround=5,nfold = 10,
-               prediction=TRUE, showsd=TRUE, early_stopping_rounds=100,
-               stratified=FALSE, maximize=TRUE)
-  print(paste("cv:", cv))
-  list(Score=cv$evaluation_log[, max(test_auc_mean)], Pred=cv$pred)
-}
-
+library(shapr)
 
 #onHPC
 data_dir <- "/recapse/intermediate_data/"
@@ -88,36 +31,76 @@ original_noSBCE_toSBCEratio <- round(length(nosbce_pt_Ids)/length(sbce_pt_Ids))
 ### make sure no overlapping in original Ids in train,validation and test
 ######################################################################################################## 
 nonrecurrent_pts_data <- model_data[which(model_data$study_id %in% nosbce_pt_Ids),]
-nrow(nonrecurrent_pts_data) #619991
+n_no <- nrow(nonrecurrent_pts_data) #619991
 recurrent_pts_data <- model_data[which(model_data$study_id %in% sbce_pt_Ids),]
-nrow(recurrent_pts_data) # 72670
+n_yes<- nrow(recurrent_pts_data) # 72670
 
-####SAmple IDs
-#1.Testing : Randomly choose 200 SBCE original pts data, and 200*8 noSBCE original pt Data
+##statisc
+mean(nonrecurrent_pts_data$Age,na.rm = T) #69.34246
+mean(recurrent_pts_data$Age,na.rm = T) #66
+
+mean(nonrecurrent_pts_data$months_since_dx,na.rm = T) #84.5
+mean(recurrent_pts_data$months_since_dx,na.rm = T) #77.9
+
+mean(nonrecurrent_pts_data$reg_nodes_exam,na.rm = T) #10.17263
+mean(recurrent_pts_data$reg_nodes_exam,na.rm = T) #11.09704
+
+mean(nonrecurrent_pts_data$reg_nodes_pos,na.rm = T) #10.17263
+mean(recurrent_pts_data$reg_nodes_pos,na.rm = T) #11.09704
+
+length(which(nonrecurrent_pts_data$CCS_D_42==1))/n_no*100
+length(which(recurrent_pts_data$CCS_D_42==1))/n_yes*100
+
+length(which(nonrecurrent_pts_data$CCS_D_24==1))/n_no*100
+length(which(recurrent_pts_data$CCS_D_24==1))/n_yes*100
+
+length(which(nonrecurrent_pts_data$C504==1))/n_no*100
+length(which(recurrent_pts_data$C504==1))/n_yes*100
+
+
+length(which(nonrecurrent_pts_data$surg_prim_site_23==1))/n_no*100
+length(which(recurrent_pts_data$surg_prim_site_23==1))/n_yes*100
+
+length(which(nonrecurrent_pts_data$Laterality_1==1))/n_no*100
+length(which(recurrent_pts_data$Laterality_1==1))/n_yes*100
+
+####Sample IDs
+Total_n_test <- round(6259*0.1)
+Total_n_validation <- round(6259*0.1)
+Total_n_Train <- round(6259*0.5)
+
+#1.Testing : Randomly choose 100 SBCE original pts data, and 100*8 noSBCE original pt Data
 set.seed(123)
-test_ID_SBCE <- sample(sbce_pt_Ids,200)
-test_ID_noSBCE <- sample(nosbce_pt_Ids,200*8)
+test_ID_SBCE <- sample(sbce_pt_Ids,100)
+test_ID_noSBCE <- sample(nosbce_pt_Ids,100*8)
 test_IDs <- c(test_ID_SBCE,test_ID_noSBCE)
 
 #remove test ID from 
 remaining_ID <- final_ID[which(!final_ID %in% test_IDs)]
 
-#1. Training 80% of the remaining_ID
+#1. Training 80% (50%)of the remaining_ID
 training_ID <- sample(remaining_ID,length(remaining_ID)*0.8)
 
+remaining_ID <- remaining_ID[which(!remaining_ID %in% training_ID)]
+
 #2. validation 20% of the remaining_ID
-validation_ID <- remaining_ID[which(!remaining_ID %in% training_ID)]
+validation_ID <- sample(remaining_ID,length(remaining_ID))
 
 
 ####Get data
 train_data <- model_data[which(model_data$study_id %in% training_ID),]
-table(train_data$y_PRE_OR_POST_2ndEvent) #375925  18359 
+table(train_data$y_PRE_OR_POST_2ndEvent) #114186   4707 
+#downsample
+pos_idxes<- which(train_data$y_PRE_OR_POST_2ndEvent==1)
+neg_idxes<- which(train_data$y_PRE_OR_POST_2ndEvent==0)
+sampled_neg_indxes <- sample(neg_idxes,length(pos_idxes))
+train_data <- train_data[c(sampled_neg_indxes,pos_idxes),]
 
 validation_data <- model_data[which(model_data$study_id %in% validation_ID),]
-table(validation_data$y_PRE_OR_POST_2ndEvent) #92792  4319
+table(validation_data$y_PRE_OR_POST_2ndEvent) #89164  4572 
 
 test_data <- model_data[which(model_data$study_id %in% test_IDs),]
-table(test_data$y_PRE_OR_POST_2ndEvent) #192381  8885 
+table(test_data$y_PRE_OR_POST_2ndEvent) #96080  4381 
 
 
 
@@ -143,8 +126,7 @@ dtest <- xgb.DMatrix(data = as.matrix(test_data_part), label = test_label)
 
 
 
-
-optimal_results <- BayesianOptimization(xgb_cv_bayes, 
+optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                         bounds=list(eta=c(0.001, 0.3),
                                                     max_depth=c(3L, 10L),
                                                     min_child_weight=c(0L, 20L),
@@ -153,7 +135,7 @@ optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                         n_iter=10)
 
 
-current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']), 
+current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                      subsample = as.numeric(optimal_results$Best_Par['subsample']),
@@ -161,12 +143,48 @@ current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      scale_pos_weight = 9)
 watchlist <- list(train = dtrain, eval = dvalidation)
 
-mod_optimal <- xgb.train(objective="binary:logistic", 
+mod_optimal <- xgb.train(objective="binary:logistic",
                          params=current_best, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
                          watchlist=watchlist, verbose=TRUE, print_every_n=10, eval_metric="error", eval_metric="error@0.2", eval_metric="auc")
+
+
+mod_easy <- xgb.train(objective="binary:logistic",
+                      data=dtrain, nrounds=10)
+
 pred <- predict(mod_optimal, dtest)
 actual <-test_label
 
+
+perf <- compute_binaryclass_perf_func(pred,actual)
+print(perf)
+write.csv(perf,paste0(outdir,"16_perf.csv"),row.names = F)
+
+#check 
+bst <- xgboost(data = dtrain,nrounds = 10, params = list(scale_pos_weight = 9),objective = "binary:logistic")
+pred <- predict(bst, dtest)
 perf <- compute_binaryclass_perf_func(pred,actual)
 print(perf)
 
+importance_matrix = xgb.importance(model = mod_optimal)
+
+importance_matrix <- xgb.importance(model = mod_optimal)
+importance_matrix$Group <- as.factor(1)
+gp = xgb.ggplot.importance(importance_matrix,top_n = 10,n_clusters = 1)
+final_p <- gp +geom_bar(stat="identity",position = position_dodge(width=10))+aes(fill = "brown1") +
+  theme_bw()+
+  theme(legend.position = "none",
+        #panel.grid.major = element_blank(), #remove grid
+        plot.title = element_text(size= 22),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title = element_text(size=20)) +
+  ggtitle("")
+final_p
+
+explainer <- shapr(as.matrix(train_data_part), mod_easy,n_combinations = 10000)
+explanation <- explain(
+  as.matrix(test_data_part),
+  approach = "empirical",
+  explainer = explainer,
+  prediction_zero = p
+)
