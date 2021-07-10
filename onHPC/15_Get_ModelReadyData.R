@@ -5,9 +5,9 @@ library(fastDummies)
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/"
 
-# #local
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# # #local
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 
 ##############################################################################
@@ -20,8 +20,8 @@ All_data_withBinary_Char <- read.csv(paste0(outdir,"13_All_data_withBinary_Char.
 ################################################################################ 
 diag_feature_df <- read.csv(paste0(data_dir,"12_diag_feature_df.csv"), stringsAsFactors = F)
 proc_feature_df <- read.csv(paste0(data_dir,"12_proc_feature_df.csv"), stringsAsFactors = F)
-#drug_feature_df <- read.csv(paste0(data_dir,"12_drug_feature_df.csv"), stringsAsFactors = F)
-all_code_feature_df <- cbind(diag_feature_df,proc_feature_df[,-1])# drug_feature_df[-1])
+drug_feature_df <- read.csv(paste0(data_dir,"12_drug_feature_df.csv"), stringsAsFactors = F)
+all_code_feature_df <- cbind(diag_feature_df,proc_feature_df[,-1], drug_feature_df[-1])
 all_code_feature_names <- colnames(all_code_feature_df)[-1]
 
 ##############################################################################
