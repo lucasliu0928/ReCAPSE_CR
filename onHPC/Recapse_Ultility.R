@@ -5,6 +5,103 @@ library(parallel)
 library(foreach)
 library(doParallel)
 library(stringr)
+library(rBayesianOptimization) 
+library(xgboost) 
+library(Matrix)
+library(fastDummies)
+library(pROC)
+library(caret)
+compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
+  #compute ROC-AUC
+  auc_res <- compute_auc_func(predicted_prob,actual_label)
+  auc_score <- auc_res[[1]]
+  pred_threhold <- auc_res[[2]] #threhold at cutoff point for ROC curve
+  
+  #convert to predicted labels
+  predicted_labels <- convert_prediction_function(predicted_prob,pred_threhold)
+  
+  #Match label factor levels
+  matched_res <- match_label_levels_func(predicted_labels,actual_label)
+  final_pred <- matched_res[[1]]
+  final_actual <- matched_res[[2]]
+  
+  #Class 0 
+  cm<-confusionMatrix(final_pred, final_actual, positive = "0", dnn = c("Prediction", "Actual"),mode = "prec_recall")
+  class0_prec<-cm$byClass[5]
+  class0_recall<-cm$byClass[6]
+  class0_f1<-cm$byClass[7]
+  
+  #class 1
+  cm1<-confusionMatrix(final_pred, final_actual, positive = "1", dnn = c("Prediction", "Actual"),mode = "prec_recall")
+  class1_prec<-cm1$byClass[5]
+  class1_recall<-cm1$byClass[6]
+  class1_f1<-cm1$byClass[7]
+  
+  acc<-cm$overall[1]
+  auc<-as.numeric(auc_score)
+  
+  performance_table <- round(cbind.data.frame(auc,acc,class0_prec,class0_recall,class0_f1,class1_prec,class1_recall,class1_f1),2)
+  
+  return(performance_table)
+}
+
+compute_auc_func <- function(predicted_prob,actual_label){
+  roc_obj <- roc(actual_label, predicted_prob,quiet = T,direction = "<") #direction = "<"
+  auc_score <-auc(roc_obj)
+  
+  #compute performance at cutoff point of ROC curve
+  cutoff_results<-coords(roc_obj, "best", ret=c("threshold", "specificity", "sensitivity", "accuracy","precision", "recall"), transpose = FALSE)
+  
+  ###best threshold for ROC curve might happend at multiple point, so choose the one with max acc
+  max_index<-which(cutoff_results$accuracy == max(cutoff_results$accuracy))
+  cut_off_thres <- cutoff_results$threshold[max_index[1]]  #choose the first one for max acc
+  pred_threhold<-cut_off_thres
+  return(list(auc_score,pred_threhold))
+}
+
+
+xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_by_tree){
+  print(paste("eta:", eta))
+  print(paste("max_depth:", max_depth))
+  print(paste("min_child_weight:", min_child_weight)) 
+  print(paste("subsample:", subsample))
+  print(paste("colsample_by_tree:", colsample_by_tree))
+  cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
+                           min_child_weight=min_child_weight,
+                           subsample=subsample,
+                           olsample_by_tree=colsample_by_tree,
+                           lambda=1, alpha=0,
+                           #nthread=ncores, n_jobs=ncores,
+                           objective="binary:logistic", eval_metric="auc"),
+               data=dtrain, nround=5,nfold = 10,
+               prediction=TRUE, showsd=TRUE, early_stopping_rounds=100,
+               stratified=FALSE, maximize=TRUE)
+  print(paste("cv:", cv))
+  list(Score=cv$evaluation_log[, max(test_auc_mean)], Pred=cv$pred)
+}
+
+match_label_levels_func <- function(predicted_classes,actual_classes){
+  #Make `actual` and `predicted`  be factors with the same levels. 
+  original_levels <- unique(actual_classes)
+  actual_classes <- factor(actual_classes,levels = original_levels)
+  predicted_classes <- factor(predicted_classes,levels = original_levels)
+  return(list(predicted_classes,actual_classes))
+}
+
+convert_prediction_function <- function(predicted_prob,pred_threhold){
+  prediceted_labels <- NA
+  for(i in 1: length(predicted_prob)){
+    current_prediction<-predicted_prob[i]
+    if(current_prediction>pred_threhold){
+      prediceted_labels[i]<-1
+    }else {
+      prediceted_labels[i]<-0
+    }
+  }
+  return(prediceted_labels)
+}
+
+
 ######################################################################
 #3_HPC_Get....R Functions:
 clean_code_func <-function(list_of_codes){
