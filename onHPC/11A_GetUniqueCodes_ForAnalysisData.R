@@ -4,12 +4,11 @@ source("Recapse_Ultility.R")
 data_dir <- "/recapse/intermediate_data/"
 drug_name_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 outdir <- "/recapse/intermediate_data/"
-grp_dir <- 
 
-#local
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-drug_name_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# #local
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# drug_name_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 
 ################################################################################ 
