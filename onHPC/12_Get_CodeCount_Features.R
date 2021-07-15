@@ -21,7 +21,7 @@ outdir <- "/recapse/intermediate_data/"
 ################################################################################ 
 All_data <- read.csv(paste0(data_dir,"10_All_PerMonthData_WithMonthChar_df.csv"), stringsAsFactors = F)
 missing_table <- get_missing_rate_table(All_data,colnames(All_data))
-table(All_data$y_PRE_OR_POST_2ndEvent) #661098,  1 :31563 
+table(All_data$y_PRE_OR_POST_2ndEvent)  #0:2267391 1 : 95903
 
 ################################################################################ 
 #2. Load Grouped codes
@@ -40,11 +40,3 @@ proc_feature_df <- get_code_feature_df_func(All_data,grouped_unique_proc_df,"Uni
 write.csv(proc_feature_df,paste0(outdir,"12_proc_feature_df.csv"),row.names = F)
 drug_feature_df <- get_code_feature_df_func(All_data,grouped_unique_drug_df,"Unique_Drug_Codes","Drug_Codes","specific_group")
 write.csv(drug_feature_df,paste0(outdir,"12_drug_feature_df.csv"),row.names = F)
-
-##Get race1,race2....,grade2,summ_stage2,laterality9,er_stat0
-# er_stat1
-# pr_stat0
-# pr_stat1
-# her2_stat0
-# her2_stat1
-# surg_prim_site20
