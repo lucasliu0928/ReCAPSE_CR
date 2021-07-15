@@ -83,6 +83,8 @@ All_cancer_site_date_df <- read.xlsx(paste0(data_dir,"4_All_cancer_site_date_df.
 
 #########################################################################################################
 #### 6.  get charastersitc for final anlaysis IDs
+#'@NOTE:  for now, we use Best stage to determine reginoal or not, 
+#'#Update this later using updated seerstage
 #########################################################################################################
 char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 35))
 colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE","First_Primary_BC_related_Death","Type_2nd_Event",
@@ -218,9 +220,26 @@ for (i in 1:length(analysis_ID)){
   char_df[i,"SEERSummStg2000"] <- curr_kcr[,"SEERSummStg2000"]
   
   
-  curr_seer_stage <- curr_kcr[,"SEERSummStg2000"]
-  if (is.na(curr_seer_stage) == F){
-    if (curr_seer_stage %in% c(2,3,4,5)){ 
+  
+  #Local or regional
+  #'@NOTE: due to we have a lot of missing in SEERSummStg2000, we will update this later
+  # curr_seer_stage <- curr_kcr[,"SEERSummStg2000"]
+  # if (is.na(curr_seer_stage) == F){
+  #   if (curr_seer_stage %in% c(2,3,4,5)){ 
+  #       char_df[i,"regional"] <- 1
+  #   }else{
+  #      char_df[i,"regional"] <- 0
+  #   }
+  # }else{ #no stage info
+  #   char_df[i,"regional"] <- 0
+  # }
+  #
+  #'@NOTE:  for now, we do   Best stage usually is not defined as local or regional. 
+  #If have to, we consider stage I and II as local and stage III as regional.
+  #For BestStageGrp: Stage 0 (0-2) Stage I [10-30) Stage II [30-50) Stage III [50-70) Stage IV [70-80)
+  curr_bestStageGrp <-  curr_kcr[,"BestStageGrp"] 
+  if (is.na(curr_bestStageGrp) == F){
+    if (curr_bestStageGrp >= 50 & curr_bestStageGrp < 70){
         char_df[i,"regional"] <- 1
     }else{
        char_df[i,"regional"] <- 0
@@ -228,7 +247,7 @@ for (i in 1:length(analysis_ID)){
   }else{ #no stage info
     char_df[i,"regional"] <- 0
   }
-
+  
   #For month data
   #curr_age <- as.numeric(difftime(ymd(curr_month),mdy(curr_dob), units = "days"))/365 
   #curr_months_since_dx <- as.numeric(difftime(ymd(curr_month),mdy(curr_1stevent_date), units = "days"))
