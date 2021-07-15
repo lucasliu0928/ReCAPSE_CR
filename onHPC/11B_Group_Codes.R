@@ -5,10 +5,10 @@ grp_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/"
 
-#local
-grp_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# #local
+# grp_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 ################################################################################ 
 #1. Load unique codes 
@@ -30,8 +30,8 @@ CCS_Proc_df <- CCS_df[which(CCS_df[,"CODE_TYPE"] %in% c("ICD9_Proc","ICD10_Proc"
 #3. Group  diagnose codes
 ########################################################################  
 grouped_unique_diag_df <- group_codes_into_CCS_func(unique_diag_df,CCS_Diag_df)
-length(which(is.na(grouped_unique_diag_df$CCS_CATEGORY)==T)) #926 no grps
-length(unique(grouped_unique_diag_df$CCS_CATEGORY)) #262 grps
+length(which(is.na(grouped_unique_diag_df$CCS_CATEGORY)==T)) #1594 no grps
+length(unique(grouped_unique_diag_df$CCS_CATEGORY)) #265 grps
 
 write.csv(grouped_unique_diag_df,paste0(outdir,"11_grouped_unique_diag_df.csv"),row.names = F)
 
@@ -39,8 +39,8 @@ write.csv(grouped_unique_diag_df,paste0(outdir,"11_grouped_unique_diag_df.csv"),
 #4. Group  procedure codes
 ########################################################################  
 grouped_unique_proc_df <- group_codes_into_CCS_func(unique_proc_df,CCS_Proc_df)
-length(which(is.na(grouped_unique_proc_df$CCS_CATEGORY)==T)) #8391 no grps
-length(unique(grouped_unique_proc_df$CCS_CATEGORY)) #211 grps
+length(which(is.na(grouped_unique_proc_df$CCS_CATEGORY)==T)) #10811 no grps
+length(unique(grouped_unique_proc_df$CCS_CATEGORY)) #216 grps
 
 write.csv(grouped_unique_proc_df,paste0(outdir,"11_grouped_unique_proc_df.csv"),row.names = F)
 
@@ -63,9 +63,9 @@ unique_drug_df[,"Drug_name"] <- trimws(unique_drug_df[,"Drug_name"], which = c("
 #group drug codes
 grouped_unique_drug_df <- group_drugcodes_into_DM3_func(unique_drug_df,DM3_df)
 
-length(which(is.na(grouped_unique_drug_df$specific_group)==T)) #16415 no grps
-length(which(is.na(grouped_unique_drug_df$general_group)==T)) #16415 no grps
-length(unique(grouped_unique_drug_df$specific_group)) #56 grps
+length(which(is.na(grouped_unique_drug_df$specific_group)==T)) # 25798 no grps
+length(which(is.na(grouped_unique_drug_df$general_group)==T)) # 25798 no grps
+length(unique(grouped_unique_drug_df$specific_group)) #58 grps
 length(unique(grouped_unique_drug_df$general_group)) #14 grps
 
 write.csv(grouped_unique_drug_df,paste0(outdir,"11_grouped_unique_drug_df.csv"),row.names = F)
