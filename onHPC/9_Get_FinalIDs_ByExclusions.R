@@ -61,17 +61,17 @@ for (i in 1:length(analysis_ID)){
 
 ################################################################################ 
 #Exclusion 1: Has_ValidClaims_inRange == 0 
-#Exclusion 2: non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5)
-#Exclusion 3: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (BestStageGrp)
+#Exclusion 2: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (BestStageGrp) 
+#'@Updated071421: Do not do this one Exclusion 3: non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5)
 ################################################################################ 
 exclusion1_indxes <- which(exclusion_df$Has_ValidClaims_inRange ==0 | is.na(exclusion_df$Has_ValidClaims_inRange)==T) #584
-exclusion2_indxes <- which((!exclusion_df$SEERSummStg2000 %in% c(1,2,3,4,5)) | is.na(exclusion_df$SEERSummStg2000)==T) # 21472
-exclusion3_indxes <- which(exclusion_df$BestStageGrp %in% c(0,1,2,seq(70,79,1),88,99) | is.na(exclusion_df$BestStageGrp)==T) #2788
+exclusion2_indxes <- which(exclusion_df$BestStageGrp %in% c(0,1,2,seq(70,79,1),88,99) | is.na(exclusion_df$BestStageGrp)==T) #2789
+#exclusion3_indxes <- which((!exclusion_df$SEERSummStg2000 %in% c(1,2,3,4,5)) | is.na(exclusion_df$SEERSummStg2000)==T) # 21472
 
-final_analysis_ID_df <- exclusion_df[-unique(c(exclusion1_indxes,exclusion2_indxes,exclusion3_indxes)),]
+final_analysis_ID_df <- exclusion_df[-unique(c(exclusion1_indxes,exclusion2_indxes)),]
 
 colnames(final_analysis_ID_df)[2:4] <- paste0("ExcCrit_",colnames(final_analysis_ID_df)[2:4])
-write.xlsx(final_analysis_ID_df,paste0(outdir,"9_Final_Analysis_ID.xlsx")) #6259
+write.xlsx(final_analysis_ID_df,paste0(outdir,"9_Final_Analysis_ID.xlsx")) # 25076
 
 
 
