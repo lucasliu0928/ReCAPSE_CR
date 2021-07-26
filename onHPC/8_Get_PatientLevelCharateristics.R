@@ -1,5 +1,7 @@
 library(openxlsx)
 library(lubridate)
+library(sas7bdat)
+source("Recapse_Ultility.R")
 get_DAJCC_var_funtion <- function(kcr_data, pathology_results_col,clinical_results_col){
   #Rules : consider the values from 'TNMPathT' first (which is pathology results), 
   #       if TNMPathT is in value of '88' or 'pX' (unknown) then you check the value from 'TNMClinT' (clinical diagnosis results
@@ -48,12 +50,54 @@ updated_All_event_df <- read.xlsx(paste0(data_dir,"4_updated_All_event_df.xlsx")
 ### 2.  Load patinet char data
 #########################################################################################################
 kcr_data <- read.csv(paste0(raw_data_dir, "uh3_kcrdata.csv"),stringsAsFactors = F)
+
+#Feature Missing_N_Perc
+#1        TNMPathM   49244 (100%)
+#2        TNMClinM   49246 (100%)
+#3 SEERSummStg2000 37225 (75.59%)
+
+kcr_data[which(kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
+kcr_data[which(kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
+get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","SEERSummStg2000"))
+
+#Add updated columns to kcr_data
+new_kcr_data <- read.sas7bdat(paste0(raw_data_dir, "ky0015_update_DerivedSS2000_andTNM.sas7bdat"),debug = FALSE)
+new_kcr_data <- new_kcr_data[match(new_kcr_data[,c("study_id")],kcr_data[,c("study_id")]),]
+new_kcr_data[which(new_kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
+new_kcr_data[which(new_kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
+
+#Update 
+kcr_data$TNMPathM <- new_kcr_data$TNMPathM
+kcr_data$TNMClinM <- new_kcr_data$TNMClinM
+kcr_data$DerivedSS2000 <- new_kcr_data$DerivedSS2000
+
+
+#'SEERSummStg2000’ only captures SEER summary stage from the years 2001-2003. 
+# ‘DerivedSS2000’ was also added for the summary stage between the years 2004-2015. 
+#No such information was captured for the year 2000.
+kcr_data$Comb_SEERSummStg <- NA
+#for not missing original SEER stage, use "SEERSummStg2000
+NOTmissing_idxes <- which(is.na(kcr_data[,"SEERSummStg2000"])== F)
+kcr_data[NOTmissing_idxes,"Comb_SEERSummStg"] <- kcr_data[NOTmissing_idxes,"SEERSummStg2000"]
+#formissing original SEER stage, use "DerivedSS2000
+missing_idxes    <- which(is.na(kcr_data[,"SEERSummStg2000"])== T)
+kcr_data[missing_idxes,"Comb_SEERSummStg"] <- kcr_data[missing_idxes,"DerivedSS2000"]
+kcr_data <- kcr_data[, -which(colnames(kcr_data) %in% c("SEERSummStg2000","DerivedSS2000"))]
+
+#           Feature Missing_N_Perc
+#1         TNMPathM  23443 (47.6%)
+#2         TNMClinM  12945 (26.29%)
+#3 Comb_SEERSummStg   3329 (6.76%)
+get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","Comb_SEERSummStg"))
+
+#########################################################################################################
 #Compute DAJCC_T, DAJCC_M, DAJCC_N
+#########################################################################################################
 kcr_data$DAJCC_T <- get_DAJCC_var_funtion(kcr_data,"TNMPathT","TNMClinT")
 kcr_data$DAJCC_M <- get_DAJCC_var_funtion(kcr_data,"TNMPathM","TNMClinM")
 kcr_data$DAJCC_N <- get_DAJCC_var_funtion(kcr_data,"TNMPathN","TNMClinN")
 
-
+get_missing_rate_table(kcr_data,c("DAJCC_T","DAJCC_M","DAJCC_N"))
 
 ################################################################################ 
 ###3.  Load Valid month
@@ -94,7 +138,7 @@ colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE","First_Primary_B
                        "radiation","DAJCC_T","DAJCC_M","DAJCC_N","reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                        "cs_tum_size","num_claims","most_recent_enrollment_year",
                        "cs_tum_ext","chemo","hormone","cs_tum_nodes",
-                       "num_nonbc","regional","SEERSummStg2000","date_Birth")
+                       "num_nonbc","regional","Comb_SEERSummStg","date_Birth")
 
 for (i in 1:length(analysis_ID)){
   if (i %% 1000 == 0){
@@ -217,41 +261,22 @@ for (i in 1:length(analysis_ID)){
     char_df[i,"num_nonbc"] <- 0
   }
   
-  char_df[i,"SEERSummStg2000"] <- curr_kcr[,"SEERSummStg2000"]
+  char_df[i,"Comb_SEERSummStg"] <- curr_kcr[,"Comb_SEERSummStg"]
   
   
   
   #Local or regional
-  #'@NOTE: due to we have a lot of missing in SEERSummStg2000, we will update this later
-  # curr_seer_stage <- curr_kcr[,"SEERSummStg2000"]
-  # if (is.na(curr_seer_stage) == F){
-  #   if (curr_seer_stage %in% c(2,3,4,5)){ 
-  #       char_df[i,"regional"] <- 1
-  #   }else{
-  #      char_df[i,"regional"] <- 0
-  #   }
-  # }else{ #no stage info
-  #   char_df[i,"regional"] <- 0
-  # }
-  #
-  #'@NOTE:  for now, we do   Best stage usually is not defined as local or regional. 
-  #If have to, we consider stage I and II as local and stage III as regional.
-  #For BestStageGrp: Stage 0 (0-2) Stage I [10-30) Stage II [30-50) Stage III [50-70) Stage IV [70-80)
-  curr_bestStageGrp <-  curr_kcr[,"BestStageGrp"] 
-  if (is.na(curr_bestStageGrp) == F){
-    if (curr_bestStageGrp >= 50 & curr_bestStageGrp < 70){
+  curr_seer_stage <- curr_kcr[,"Comb_SEERSummStg"]
+  if (is.na(curr_seer_stage) == F){
+    if (curr_seer_stage %in% c(2,3,4,5)){
         char_df[i,"regional"] <- 1
     }else{
        char_df[i,"regional"] <- 0
     }
   }else{ #no stage info
-    char_df[i,"regional"] <- 0
+    char_df[i,"regional"] <- NA
   }
-  
-  #For month data
-  #curr_age <- as.numeric(difftime(ymd(curr_month),mdy(curr_dob), units = "days"))/365 
-  #curr_months_since_dx <- as.numeric(difftime(ymd(curr_month),mdy(curr_1stevent_date), units = "days"))
-  
+
 }
 
 write.xlsx(char_df,paste0(outdir,"8_PatientLevel_charecteristics.xlsx"))
