@@ -5,7 +5,7 @@ outdir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
 
 # local
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-# outdir <- "/Users/lucasliu/Desktop/intermediate_data/perDay_PerPatientData/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
 
 #######################################################################################
 #Load IDs
