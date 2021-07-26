@@ -4,9 +4,9 @@ library(lubridate)
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/"
 
-#local
-data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+# #local
+# data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
 ################################################################################ 
@@ -22,7 +22,6 @@ PerMonthData_FilterFlag_df_df <- read.xlsx(paste0(data_dir,"7_PerMonthData_Filte
 
 ################################################################################ 
 #2. Load patient level charateristics
-
 ################################################################################ 
 Patient_Char_df <- read.xlsx(paste0(data_dir,"8_PatientLevel_charecteristics.xlsx"),sheet = 1)
 
@@ -53,7 +52,7 @@ for (i in 1:length(analysis_ID)){
   curr_filterflag_df <- PerMonthData_FilterFlag_df_df[which(PerMonthData_FilterFlag_df_df[,"study_id"] == curr_id),]
   
   exclusion_df[i,"study_id"] <- curr_id
-  exclusion_df[i,"SEERSummStg2000"] <- curr_Patient_Char_df[,"SEERSummStg2000"]
+  exclusion_df[i,"SEERSummStg2000"] <- curr_Patient_Char_df[,"Comb_SEERSummStg"]
   exclusion_df[i,"BestStageGrp"] <- curr_Patient_Char_df[,"Stage"]
   exclusion_df[i,"Has_ValidClaims_inRange"] <- curr_filterflag_df[,"Has_ValidClaims_inRange"]
 
@@ -61,17 +60,17 @@ for (i in 1:length(analysis_ID)){
 
 ################################################################################ 
 #Exclusion 1: Has_ValidClaims_inRange == 0 
-#Exclusion 2: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (BestStageGrp) 
-#'@Updated071421: Do not do this one Exclusion 3: non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5)
+#Exclusion 2 : non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5) #In-situ 0; Localized 1; Regional 2-5; Distant 7
+#Exclusion 3: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (BestStageGrp) 
 ################################################################################ 
 exclusion1_indxes <- which(exclusion_df$Has_ValidClaims_inRange ==0 | is.na(exclusion_df$Has_ValidClaims_inRange)==T) #584
-exclusion2_indxes <- which(exclusion_df$BestStageGrp %in% c(0,1,2,seq(70,79,1),88,99) | is.na(exclusion_df$BestStageGrp)==T) #2789
-#exclusion3_indxes <- which((!exclusion_df$SEERSummStg2000 %in% c(1,2,3,4,5)) | is.na(exclusion_df$SEERSummStg2000)==T) # 21472
+exclusion2_indxes <- which((!exclusion_df$SEERSummStg2000 %in% c(1,2,3,4,5)) | is.na(exclusion_df$SEERSummStg2000)==T) #3491
+exclusion3_indxes <- which(exclusion_df$BestStageGrp %in% c(0,1,2,seq(70,99,1)) | is.na(exclusion_df$BestStageGrp)==T) #2789
 
-final_analysis_ID_df <- exclusion_df[-unique(c(exclusion1_indxes,exclusion2_indxes)),]
+final_analysis_ID_df <- exclusion_df[-unique(c(exclusion1_indxes,exclusion2_indxes,exclusion3_indxes)),]
+colnames(final_analysis_ID_df)[2:4] <- paste0("ExcCrit_",colnames(final_analysis_ID_df)[2:4]) 
+write.xlsx(final_analysis_ID_df,paste0(outdir,"9_Final_Analysis_ID.xlsx")) #23378
 
-colnames(final_analysis_ID_df)[2:4] <- paste0("ExcCrit_",colnames(final_analysis_ID_df)[2:4])
-write.xlsx(final_analysis_ID_df,paste0(outdir,"9_Final_Analysis_ID.xlsx")) # 25076
-
-
+table(final_analysis_ID_df$ExcCrit_BestStageGrp)
+table(final_analysis_ID_df$ExcCrit_BestStageGrp)
 
