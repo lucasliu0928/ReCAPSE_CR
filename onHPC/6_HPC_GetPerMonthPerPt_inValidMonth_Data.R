@@ -12,12 +12,12 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 ################################################################################
 valid_month_dir <- "/recapse/intermediate_data/"
 data_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
-outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
+outdir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth/"
 
 # #local
 # valid_month_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
 # data_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
-# outdir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData/"
+# outdir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth/"
 
 
 ############################################################
