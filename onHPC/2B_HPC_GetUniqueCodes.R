@@ -9,7 +9,7 @@ source("Recapse_Ultility.R")
 data_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 outdir <- "/recapse/intermediate_data/2_Codes_And_Groups/"
 # 
-# 
+
 # #local
 # data_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
 # outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/2_Codes_And_Groups/"
