@@ -442,6 +442,30 @@ get_perDay_both <- function(patient_ID,medicaid_heath_dir,medicaid_pharm_dir,med
   return(per_day_table)
 }
 
+
+#This function get unique code in original claims data
+get_unique_codes <- function(claims_df,code_columns,code_source,code_type){
+  #claims_df <- cleaned_pharmClaims
+  #code_columns <- "CDE_THERA_CLS_AHFS"
+  #code_source <- "AHFS Therapeutic Class"
+  #code_type <- "Drug"
+  
+  #get unique codes
+  unique_codes_df <- as.data.frame(unique(unlist(claims_df[,code_columns])))
+  colnames(unique_codes_df) <- paste0("Unique_", code_type,"_Code")
+  
+  #add code source info
+  unique_codes_df$Code_Coumn  <- code_columns
+  unique_codes_df$Code_Source <- code_source
+  
+  #remove NA
+  na_idxes <- which(is.na(unique_codes_df[,1]) == T)
+  unique_codes_df <- unique_codes_df[-na_idxes,]
+  
+  return(unique_codes_df)
+}
+
+
 ######################################################################
 #return unique codes
 split_code_strings_to_unique_codes <- function(code_df, code_col){
@@ -653,3 +677,5 @@ get_code_feature_df_func <- function(input_data,grouped_code_df,code_col_ingrpdf
   }
   return(feature_df)
 }
+
+
