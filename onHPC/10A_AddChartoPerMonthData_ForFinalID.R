@@ -12,15 +12,15 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 #onHPC
 perday_dir <- "/recapse/intermediate_data/3A_perDay_PerPatientData/"
-perMonth_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/" #6.V2 has non_unique codes in one month
+perMonth_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth/"
 data_dir <- "/recapse/intermediate_data/"
-outdir <- "/recapse/intermediate_data/10_perMonthData_withChar_V2_nonuniquecodes/" #V2 
+outdir <- "/recapse/intermediate_data/10_perMonthData_withChar/" 
 
 # #local
 # perday_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/3A_perDay_PerPatientData/"
-# perMonth_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
+# perMonth_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_perMonthData_inValidMonth/"
 # data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/10_perMonthData_withChar_V2_nonuniquecodes/"
+# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/10_perMonthData_withChar/"
 
 
 ################################################################################ 
@@ -33,6 +33,20 @@ Patient_Char_df <- read.xlsx(paste0(data_dir,"8_PatientLevel_charecteristics.xls
 ################################################################################ 
 FinalID_df <- read.xlsx(paste0(data_dir,"9_Final_Analysis_ID.xlsx"),sheet = 1)
 Final_IDs <- unique(FinalID_df$study_id) #23378
+
+#########################################################################################################
+#recode stage in pateint char df
+#########################################################################################################
+Patient_Char_df <- Patient_Char_df[which(Patient_Char_df$study_id %in% Final_IDs),]
+#For BestStageGrp: Stage 0 (0-2) Stage I [10-30) Stage II [30-50) Stage III [50-70) Stage IV [70-80)
+stage1_indxes <- which(Patient_Char_df[,"Stage"]>=10 & Patient_Char_df[,"Stage"] < 30)
+stage2_indxes <- which(Patient_Char_df[,"Stage"]>=30 & Patient_Char_df[,"Stage"] < 50)
+stage3_indxes <- which(Patient_Char_df[,"Stage"]>=50 & Patient_Char_df[,"Stage"] < 70)
+
+Patient_Char_df[stage1_indxes,"Stage"] <- 1
+Patient_Char_df[stage2_indxes,"Stage"] <- 2
+Patient_Char_df[stage3_indxes,"Stage"] <- 3
+table(Patient_Char_df$Stage)
 
 #########################################################################################################
 #3. Load outcome/event type data
@@ -81,7 +95,7 @@ print(paste0("To Process IDs: ",length(Final_IDs)))
 ################################################################################ 
 #4. Add charatersitics for the machine learning model (pareall)
 ################################################################################
-site_cols<- paste0("C50",seq(0,9,1))
+#site_cols<- paste0("C50",seq(0,9,1))
 
 foreach (i = 1: length(Final_IDs)) %dopar% {
   curr_id <- Final_IDs[i]
@@ -92,32 +106,32 @@ foreach (i = 1: length(Final_IDs)) %dopar% {
   curr_pt_level_char_df <- Patient_Char_df[which(Patient_Char_df$study_id == curr_id),]
   
   #construct per patient month level data
-  curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(curr_perMonth_data) ,ncol = 33))
+  curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(curr_perMonth_data) ,ncol = 26))
   colnames(curr_month_level_char_df) <- c("study_id","num_claims","Age","months_since_dx",
-                                     "Race", site_cols,
-                                     "regional","Grade","Laterality",
+                                     "Race", "Site", "Stage","Grade","Laterality",
                                      "er_stat","pr_stat","her2_stat","surg_prim_site",
                                      "DAJCC_T","DAJCC_M","DAJCC_N",
                                      "reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
-                                     "cs_tum_size","cs_tum_ext","cs_tum_nodes",
+                                     "cs_tum_size","cs_tum_ext","cs_tum_nodes","regional",
+                                     "has_second_event",
                                      "months_to_second_event",
                                      "y_PRE_OR_POST_2ndEvent")
   
   curr_month_level_char_df[,"study_id"] <- curr_id
   
   #add features
-  feature_cols <- c("Race","regional","Grade","Laterality",
+  feature_cols <- c("Race","Site","Stage","Grade","Laterality",
                     "er_stat","pr_stat","her2_stat","surg_prim_site",
                     "DAJCC_T","DAJCC_M","DAJCC_N",
                     "reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
-                    "cs_tum_size","cs_tum_ext","cs_tum_nodes")
+                    "cs_tum_size","cs_tum_ext","cs_tum_nodes","regional")
   curr_month_level_char_df[,feature_cols] <- curr_pt_level_char_df[,feature_cols]
   
-  #curr site
-  curr_site <- curr_pt_level_char_df[,"Site"]
-  curr_month_level_char_df[,curr_site] <- 1 #curr site col = 1
-  curr_month_level_char_df[, site_cols[which(site_cols != curr_site)]] <- 0 #othre site 0
-  
+  # #curr site
+  # curr_site <- curr_pt_level_char_df[,"Site"]
+  # curr_month_level_char_df[,curr_site] <- 1 #curr site col = 1
+  # curr_month_level_char_df[, site_cols[which(site_cols != curr_site)]] <- 0 #othre site 0
+    
   #curr event df
   curr_event <- updated_All_event_df[which(updated_All_event_df[,"study_id"] == curr_id),]
   #first and 2nd event and death date
@@ -127,8 +141,13 @@ foreach (i = 1: length(Final_IDs)) %dopar% {
   #date of birth
   curr_dob <-   mdy(curr_pt_level_char_df$date_Birth)
 
+  if (is.na(curr_2ndevent_date) == F){
+    curr_month_level_char_df[,"has_second_event"] <- 1
+  }else{
+    curr_month_level_char_df[,"has_second_event"] <- 0
+  }
   
-  #for ecurr_dobach  month
+  #for each month
   for (j in 1:nrow(curr_month_level_char_df)){
     curr_month <- ymd(curr_perMonth_data[j,"Month_Start"])
 
