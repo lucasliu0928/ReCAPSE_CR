@@ -8,62 +8,12 @@ intermediate_dir <-  paste0(proj_dir,"/ReCAPSE_Intermediate_Data/0318_21/For_Bot
 grp_dir <- paste0(proj_dir,"ReCAPSE_Data/")
 outdir <- paste0(proj_dir,"/ReCAPSE_Intermediate_Data/0318_21/For_Both_Data/")
 
-########################################################################   
-#####                 load chuback file:                       #########  
-########################################################################   
-chuback_group_df <- read.csv(paste0(grp_dir,"BRAVA_lookup.20180502.edit.csv"),stringsAsFactors = F)
-length(unique(chuback_group_df$Type)) #216
-length(unique(chuback_group_df$Category)) #22
-
-########################################################################   
-#####                 load Ritzwoller file:                    #########  
-######################################################################## 
-Ritzwoller_group_df <- read.csv(paste0(grp_dir,"Ritzwoller_code_table.edited.csv"),stringsAsFactors = F)
-length(unique(Ritzwoller_group_df$Category)) #6
-
-########################################################################   
-######                 load HCUP CCS file:                      ########
-########################################################################   
-HCUP_Diag1_df <- read.csv(paste0(grp_dir,"HCUP_CCS_tables/CCS.ICD-9.diag_ref.edit.csv"),stringsAsFactors = F)
-HCUP_Diag2_df <- read.csv(paste0(grp_dir,"HCUP_CCS_tables/CCS.ICD-10.diag_ref.edit.csv"),stringsAsFactors = F)
-HCUP_Proc1_df <- read.csv(paste0(grp_dir,"HCUP_CCS_tables/CCS.ICD-9.proc_ref.edit.csv"),stringsAsFactors = F)
-HCUP_Proc2_df <- read.csv(paste0(grp_dir,"HCUP_CCS_tables/CCS.ICD-10.proc_ref.edit.csv"),stringsAsFactors = F)
-
-#Change col name to comb
-colnames(HCUP_Diag1_df)[which(colnames(HCUP_Diag1_df) == "ICD.9.CM.CODE")] <- "Code"
-colnames(HCUP_Diag2_df)[which(colnames(HCUP_Diag2_df) == "ICD.10.CM.CODE")] <- "Code"
-colnames(HCUP_Proc1_df)[which(colnames(HCUP_Proc1_df) == "ICD.9.CM.CODE")] <- "Code"
-colnames(HCUP_Proc2_df)[which(colnames(HCUP_Proc2_df) == "ICD.10.PCS.CODE")] <- "Code"
-
-HCUP_Diag1_df$CODE_TYPE <- "ICD9_Diag"
-HCUP_Diag2_df$CODE_TYPE <- "ICD10_Diag"
-HCUP_Proc1_df$CODE_TYPE <- "ICD9_Proc"
-HCUP_Proc2_df$CODE_TYPE <- "ICD10_Proc"
-
-HCUP_comb <- rbind(HCUP_Diag1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
-                   HCUP_Diag2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
-                   HCUP_Proc1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
-                   HCUP_Proc2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")])
-
-length(unique(HCUP_comb$CCS.CATEGORY)) #276
-
-########################################################################   
-#####                         Clean codes                          ##### 
-########################################################################   
-chuback_group_df[,"Code"]<- clean_code_func(chuback_group_df[,"Code"])
-Ritzwoller_group_df[,"Code"] <- clean_code_func(Ritzwoller_group_df[,"Code"])
-HCUP_comb[,"Code"]  <- clean_code_func(HCUP_comb[,"Code"])
-HCUP_comb[,"CCS.CATEGORY"]  <- clean_code_func(HCUP_comb[,"CCS.CATEGORY"]) #Clean category in HCUP
 
 ########################################################################   
 ##                  remove all blanks and NAs                         ##    
 ######################################################################## 
-chuback_group_df <- remove_NA_from_df(chuback_group_df,"Code")
 Ritzwoller_group_df <- remove_NA_from_df(Ritzwoller_group_df,"Code")
-HCUP_comb <- remove_NA_from_df(HCUP_comb,"Code")
-#remove the unspecified codes, cuz they will result codes grped into multiple groups, (e.g, E8342 is a qulified codes in ICD10, but unspecified in ICD9)
-unspecified_idxes <- which(grepl("\\be codes|\\bExternal cause codes",HCUP_comb[,"CCS.CATEGORY.DESCRIPTION"],ignore.case = T)==T)
-HCUP_comb<- HCUP_comb[-unspecified_idxes,]
+
 
 ########################################################################   
 ##  Orgnized type for dianoises or procedure                          ##    
