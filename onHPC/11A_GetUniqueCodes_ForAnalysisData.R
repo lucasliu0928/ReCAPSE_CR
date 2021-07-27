@@ -38,7 +38,7 @@ all_unique_drug_codes <- split_code_strings_to_unique_codes(All_data,"Drug_Codes
 all_unique_drug_codes_df <- as.data.frame(all_unique_drug_codes)
 colnames(all_unique_drug_codes_df) <- "Unique_Drug_Codes"
 
-#1. Filter out durg name df for code in calims
+#1. Filter out durg name df for code in claims
 drug_name_df <- drug_name_df[which(drug_name_df$V1 %in% all_unique_drug_codes),]
 #2. Add drug name to unique drug df
 all_unique_drug_codes_df$Drug_name <- NA
