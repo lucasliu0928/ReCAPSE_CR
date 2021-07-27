@@ -610,6 +610,56 @@ group_codes_into_CCS_func <- function(claim_code_df,CCS_df){
   return(claim_code_df)
 }
 
+#Chuback
+load_and_clean_Chuback_data<- function(file_dir){
+  #Load four tables
+  chuback_group_df <- read.csv(paste0(file_dir,"Code_Groups/BRAVA_lookup.20180502.edit.csv"),stringsAsFactors = F)
+  length(unique(chuback_group_df$Type)) #216
+  length(unique(chuback_group_df$Category)) #22
+  
+  #3.clean code 
+  chuback_group_df[,"Code"]<- clean_code_func(chuback_group_df[,"Code"])
+  
+  #4. Remove all blanks and NAs   
+  chuback_group_df <- remove_NA_from_df(chuback_group_df,"Code")
+  
+  return(chuback_group_df)
+}
+group_codes_into_Chuback_func <- function(claim_code_df,Chuback_grp_df){
+  claim_code_df[,"Chuback_Type"] <- NA
+  claim_code_df[,"Chuback_Category"] <- NA
+  claim_code_df[,"Chuback_Description"] <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,1]
+    curr_idxes <- which(Chuback_grp_df[,"Code"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"Chuback_Type"]     <- paste0(unique(Chuback_grp_df[curr_idxes,"Type"]),collapse = "$$$$")
+      claim_code_df[i,"Chuback_Category"] <- paste0(unique(Chuback_grp_df[curr_idxes,"Category"]),collapse = "$$$$")
+      
+      claim_code_df[i,"Chuback_Description"] <-  paste0(unique(Chuback_grp_df[curr_idxes,"Code.Description"]),collapse = "$$$$")
+      
+    }
+  }
+  return(claim_code_df)
+}
+
+
+#DM3 grouping
+load_and_clean_DM3_data<- function(file_dir){
+  #Load data
+  drug_group_df <- read.csv(paste0(file_dir,"Code_Groups/Drug Code Groups-DM3.sorted.csv"),stringsAsFactors = F)
+  drug_group_df <- drug_group_df[,-1]
+  
+  # #Clean drug name by removing the source prefix
+  drug_group_df[,"desc"] <- gsub("NC: |NH: |NO: |NS: ","",drug_group_df[,"desc"])
+  drug_group_df[,"desc"] <- gsub("[[:punct:]]"," ",drug_group_df[,"desc"])
+  drug_group_df[,"desc"] <- trimws(drug_group_df[,"desc"], which = c("both"), whitespace = "[ \t\r\n]")
+  
+  
+  return(drug_group_df)
+}
+
 group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
   claim_code_df$specific_group <- NA
   claim_code_df$general_group <- NA
