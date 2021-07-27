@@ -8,13 +8,6 @@ intermediate_dir <-  paste0(proj_dir,"/ReCAPSE_Intermediate_Data/0318_21/For_Bot
 grp_dir <- paste0(proj_dir,"ReCAPSE_Data/")
 outdir <- paste0(proj_dir,"/ReCAPSE_Intermediate_Data/0318_21/For_Both_Data/")
 
-
-########################################################################   
-##                  remove all blanks and NAs                         ##    
-######################################################################## 
-Ritzwoller_group_df <- remove_NA_from_df(Ritzwoller_group_df,"Code")
-
-
 ########################################################################   
 ##  Orgnized type for dianoises or procedure                          ##    
 ######################################################################## 
