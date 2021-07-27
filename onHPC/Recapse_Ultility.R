@@ -644,7 +644,39 @@ group_codes_into_Chuback_func <- function(claim_code_df,Chuback_grp_df){
   return(claim_code_df)
 }
 
+#Ritzwoller
+load_and_clean_Ritzwoller_data<- function(file_dir){
+  #Load four tables
+  Ritzwoller_group_df <- read.csv(paste0(file_dir,"Code_Groups/Ritzwoller_code_table.edited.csv"),stringsAsFactors = F)
+  length(unique(Ritzwoller_group_df$Category)) #6
+  
+  #3.clean code 
+  Ritzwoller_group_df[,"Code"] <- clean_code_func(Ritzwoller_group_df[,"Code"])
+  
+  #4. Remove all blanks and NAs   
+  Ritzwoller_group_df <- remove_NA_from_df(Ritzwoller_group_df,"Code")
+  
+  return(Ritzwoller_group_df)
+}
 
+group_codes_into_Ritzwoller_func <- function(claim_code_df,Ritzwoller_grp_df){
+  claim_code_df[,"Ritzwoller_Type"] <- NA
+  claim_code_df[,"Ritzwoller_Category"] <- NA
+  claim_code_df[,"Ritzwoller_Description"] <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,1]
+    curr_idxes <- which(Ritzwoller_grp_df[,"Code"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"Ritzwoller_Type"]     <- paste0(unique(Ritzwoller_grp_df[curr_idxes,"Code.type"]),collapse = "$$$$")
+      claim_code_df[i,"Ritzwoller_Category"] <- paste0(unique(Ritzwoller_grp_df[curr_idxes,"Category"]),collapse = "$$$$")
+      
+      claim_code_df[i,"Ritzwoller_Description"] <-  paste0(unique(Ritzwoller_grp_df[curr_idxes,"Description"]),collapse = "$$$$")
+      
+    }
+  }
+  return(claim_code_df)
+}
 #DM3 grouping
 load_and_clean_DM3_data<- function(file_dir){
   #Load data
