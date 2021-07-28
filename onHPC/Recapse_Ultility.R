@@ -730,33 +730,36 @@ get_ccs_discription <- function(freq_tb,CCS_Diag_df,CCS_Proc_df){
 
 #######Construct code feature df
 get_code_feature_df_func <- function(input_data,grouped_code_df,code_col_ingrpdf,code_col_ininputdf,group_col){
-  # input_data <- All_data[71:72,]
-  # grouped_code_df <- grouped_unique_diag_df
-  # code_col_ingrpdf <- "Unique_Diag_Codes"
-  # code_col_ininputdf <- "Diag_Codes"
-  # group_col <- "CCS_CATEGORY"
-
-  unique_groups <- unique(grouped_code_df[,group_col])
-  
-  feature_df <- as.data.frame(matrix(0, nrow = nrow(input_data), ncol = length(unique_groups)+1))
-  colnames(feature_df) <- c("study_id",unique_groups)
-  for (i in 1:nrow(input_data)){
-    if (i %% 500 == 0){print(i)}
-    curr_df <- input_data[i,code_col_ininputdf]
-    feature_df[i,"study_id"] <- input_data[i,"study_id"]
-    if (is.na(curr_df) == F){
-      curr_codes <- split_code_strings_to_non_unique_codes(input_data[i,],code_col_ininputdf)
-      if (code_col_ininputdf == "Drug_Codes"){ #if drug codes, remove leading 0s due to omitting zeros in wrting unique_drug_df to csv
-        curr_codes <- str_remove(curr_codes, "^0+")
+   # input_data <- All_data
+   # grouped_code_df <- grouped_unique_proc_df
+   # code_col_ingrpdf <- "Unique_Proc_Codes"
+   # code_col_ininputdf <- "Proc_Codes"
+   # group_col <- "Ritzwoller_Category"
+   # 
+   unique_groups <- sort(unique(unlist(strsplit(grouped_code_df[,group_col],split = "$$$$",fixed = T)))) #str in case the code belongs to two seperated groups
+   
+   feature_df <- as.data.frame(matrix(0, nrow = nrow(input_data), ncol = length(unique_groups)+2))
+   colnames(feature_df) <- c("study_id","Month_Start",unique_groups)
+    for (i in 1:nrow(input_data)){
+      if (i %% 500 == 0){print(i)}
+      curr_df <- input_data[i,code_col_ininputdf]
+      feature_df[i,"study_id"] <- input_data[i,"study_id"]
+      feature_df[i,"Month_Start"] <- input_data[i,"Month_Start"]
+      
+      if (is.na(curr_df) == F){
+        curr_codes <- split_code_strings_to_non_unique_codes(input_data[i,],code_col_ininputdf)
+        if (code_col_ininputdf == "Drug_Codes"){ #if drug codes, remove leading 0s due to omitting zeros in wrting unique_drug_df to csv
+          curr_codes <- str_remove(curr_codes, "^0+")
+        }
+        curr_code_idxes <- match(curr_codes, grouped_code_df[,code_col_ingrpdf])
+        curr_groups <- grouped_code_df[curr_code_idxes,group_col]
+        curr_groups <- unlist(strsplit(curr_groups,split = "$$$$",fixed = T)) #strpslit in the case of one code in two groups (e.g,A9605 in proc codes in ritzwoller group)
+        curr_groups_freq_tb <- data.frame(table(curr_groups))
+        curr_feature_cols <- as.character(curr_groups_freq_tb[,"curr_groups"])
+        feature_df[i,curr_feature_cols] <- curr_groups_freq_tb[,"Freq"]
       }
-      curr_code_idxes <- match(curr_codes, grouped_code_df[,code_col_ingrpdf])
-      curr_groups <- grouped_code_df[curr_code_idxes,group_col]
-      curr_groups_freq_tb <- data.frame(table(curr_groups))
-      curr_feature_cols <- as.character(curr_groups_freq_tb[,"curr_groups"])
-      feature_df[i,curr_feature_cols] <- curr_groups_freq_tb[,"Freq"]
+      
     }
-    
-  }
   return(feature_df)
 }
 
