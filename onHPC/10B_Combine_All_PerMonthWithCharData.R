@@ -1,11 +1,11 @@
 library(openxlsx)
 
 #onHPC
-data_dir <- "/recapse/intermediate_data/10_perMonthData_withChar_V2_nonuniquecodes/"
+data_dir <- "/recapse/intermediate_data/10_perMonthData_withChar/"
 outdir <- "/recapse/intermediate_data/"
 
 # #local
-# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar_V2_nonuniquecodes/"
+# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/10_perMonthData_withChar/"
 # outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
 
 ################################################################################ 
