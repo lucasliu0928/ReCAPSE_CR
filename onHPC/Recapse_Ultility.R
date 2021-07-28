@@ -763,4 +763,169 @@ get_code_feature_df_func <- function(input_data,grouped_code_df,code_col_ingrpdf
   return(feature_df)
 }
 
+#######Construct code transformation feature df
+read_codecount_df <- function(code_count_file,selected_codegrps){
+  #read feature count data and selected features
+  # code_count_file <- ccs_diag_file
+  # selected_codegrps <- selected_Features
+  # 
+  counting_df    <- read.xlsx(code_count_file,sheet = 1)
+  counting_df    <- counting_df[,which(colnames(counting_df) %in% c("study_id","Month_Start",selected_codegrps))]
+  return(counting_df)
+}
+apply_code_transforamtion_func <- function(counting_df){
 
+  time_since_df  <- add_time_since_func(counting_df)
+  time_until_df  <- add_time_until_func(counting_df)
+  cumul_ratio_df <- add_cumul_ratio_func(counting_df)
+  
+  transf_df <- cbind(time_since_df,time_until_df,cumul_ratio_df)
+  
+  return(transf_df)
+}
+
+add_time_since_func <-function(pt_perMonth_df){
+  #the time since the most recent occurrence of this code group
+  
+  #pt_perMonth_df <- curr_CCS_counting_df_diag
+  
+  #reoder and add month sqeuence
+  pt_perMonth_df <- pt_perMonth_df[order(ymd(pt_perMonth_df[,"Month_Start"])),]  #sort pt data by month
+  pt_perMonth_df$Month_Index <- seq(1,nrow(pt_perMonth_df),1) #Use interger as month sequence for easier computation
+  pt_perMonth_df <- pt_perMonth_df[,c(1,2,ncol(pt_perMonth_df),3:(ncol(pt_perMonth_df)-1))] #    #reorder columns
+  
+  time_since_df <-as.data.frame(matrix(NA, nrow = nrow(pt_perMonth_df),ncol =ncol(pt_perMonth_df)))
+  colnames(time_since_df) <- colnames(pt_perMonth_df)
+  colnames(time_since_df)[4:ncol(time_since_df)] <- paste0("time_since_",colnames(time_since_df)[4:ncol(time_since_df)])
+  
+  #code group col started at index 4
+  for(j in 4:ncol(time_since_df)){ #for each code group 
+    most_recent_month <- Inf #initial a most recent month as Future for each code group
+    
+    for (i in 1:nrow(pt_perMonth_df)){ #for each month
+      curr_month_df <- pt_perMonth_df[i,]
+      time_since_df[i,"study_id"] <- curr_month_df[,"study_id"]
+      time_since_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+      time_since_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+      
+      curr_count <- curr_month_df[,j]
+      curr_month <- curr_month_df[,"Month_Index"]
+      if (curr_count >= 1){ #if count of group in current month is >=1
+        time_since_df[i,j] <- 0
+        most_recent_month <- curr_month #update most recent month
+      }else { #if count og group in current moneth is 0
+        time_since_df[i,j] <- curr_month - most_recent_month
+      }
+    }
+  }
+  
+  time_since_df[which(time_since_df== "-Inf",arr.ind = T)] <- -1 #recode -INF to -1 for months that has never seen a code
+  return(time_since_df)
+}
+
+
+add_time_until_func <-function(pt_perMonth_df){
+  #the time since the soonest future occurrence of this code group
+  #pt_perMonth_df <- curr_CCS_counting_df_diag
+  
+  #reoder and add month sqeuence
+  pt_perMonth_df <- pt_perMonth_df[order(ymd(pt_perMonth_df[,"Month_Start"])),]  #sort pt data by month
+  pt_perMonth_df$Month_Index <- seq(1,nrow(pt_perMonth_df),1) #Use interger as month sequence for easier computation
+  pt_perMonth_df <- pt_perMonth_df[,c(1,2,ncol(pt_perMonth_df),3:(ncol(pt_perMonth_df)-1))] #    #reorder columns
+  
+  time_until_df <-as.data.frame(matrix(NA, nrow = nrow(pt_perMonth_df),ncol =ncol(pt_perMonth_df)))
+  colnames(time_until_df) <- colnames(pt_perMonth_df)
+  colnames(time_until_df)[4:ncol(time_until_df)] <- paste0("time_until_",colnames(time_until_df)[4:ncol(time_until_df)])
+  
+  #code group col started at index 4
+  for(j in 4:ncol(time_until_df)){ #for each code group 
+    soonest_future_month <- -Inf #initial a soonest future month as past(-INF) for each code group
+    
+    for (i in nrow(pt_perMonth_df):1){ #for each month from latest to oldest
+      curr_month_df <- pt_perMonth_df[i,]
+      time_until_df[i,"study_id"] <- curr_month_df[,"study_id"]
+      time_until_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+      time_until_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+      
+      curr_count <- curr_month_df[,j]
+      curr_month <- curr_month_df[,"Month_Index"]
+      if (curr_count >= 1){ #if count of group in current month is >=1
+        time_until_df[i,j] <- 0
+        soonest_future_month <- curr_month #update soonest future month 
+      }else { #if count og group in current moneth is 0
+        time_until_df[i,j] <- soonest_future_month - curr_month
+      }
+    }
+  }
+  
+  time_until_df[which(time_until_df== "-Inf",arr.ind = T)] <- -1 #recode -INF to -1 for months that has never seen a code
+  return(time_until_df)
+}
+
+
+add_cumul_ratio_func <-function(pt_perMonth_df){
+  #the total number of occurrences in each patient up to the time in question of that grouping divided by total elapsed time
+  #pt_perMonth_df <- curr_CCS_counting_df_diag
+  
+  #reoder and add month sqeuence
+  pt_perMonth_df <- pt_perMonth_df[order(ymd(pt_perMonth_df[,"Month_Start"])),]  #sort pt data by month
+  pt_perMonth_df$Month_Index <- seq(1,nrow(pt_perMonth_df),1) #Use interger as month sequence for easier computation
+  pt_perMonth_df <- pt_perMonth_df[,c(1,2,ncol(pt_perMonth_df),3:(ncol(pt_perMonth_df)-1))] #    #reorder columns
+  
+  cumul_ratio_df <-as.data.frame(matrix(NA, nrow = nrow(pt_perMonth_df),ncol =ncol(pt_perMonth_df)))
+  colnames(cumul_ratio_df) <- colnames(pt_perMonth_df)
+  colnames(cumul_ratio_df)[4:ncol(cumul_ratio_df)] <- paste0("cumul_ratio_",colnames(cumul_ratio_df)[4:ncol(cumul_ratio_df)])
+  
+  #code group col started at index 4
+  for(j in 4:ncol(cumul_ratio_df)){ #for each code group 
+    curr_cum_count <- 0 #inital cumalitive count as 0 
+    for (i in 1:nrow(pt_perMonth_df)){ #for each month
+      #get month data and assign to the new dataframe
+      curr_month_df <- pt_perMonth_df[i,]
+      cumul_ratio_df[i,"study_id"] <- curr_month_df[,"study_id"]
+      cumul_ratio_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+      cumul_ratio_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+      
+      #get count and month index
+      curr_count <- curr_month_df[,j]
+      curr_month <- curr_month_df[,"Month_Index"]
+      
+      #cumalative count 
+      curr_cum_count <- curr_cum_count + curr_count
+      cumul_ratio_df[i,j] <- round(curr_cum_count/curr_month,4)
+    }
+  }
+  
+  return(cumul_ratio_df)
+}
+
+
+####Count code freq
+get_code_group_freq <- function(pt_files_dir,code_group_name){
+  pt_files <- list.files(pt_files_dir,full.names = T)
+  allpts_df <- do.call(rbind,lapply(pt_files, read.xlsx))
+  code_groups <- unique(colnames(allpts_df)[which(grepl(code_group_name,colnames(allpts_df))==T)])
+  grp_freq_tb <- as.data.frame(matrix(NA, nrow = length(code_groups), ncol = 3))
+  colnames(grp_freq_tb) <- c("Code_Group","N_SamplesHASCode","Perc_SamplesHASCode")
+  for (i in 1:length(code_groups)){
+    curr_grp <- code_groups[i]
+    
+    n_HasCode_incurrGrp <- length(which(allpts_df[,curr_grp]>=1))
+    perc_HasCode_incurrGrp <- n_HasCode_incurrGrp/nrow(allpts_df)
+    
+    grp_freq_tb[i, "Code_Group"] <- curr_grp
+    grp_freq_tb[i, "N_SamplesHASCode"] <- n_HasCode_incurrGrp
+    grp_freq_tb[i, "Perc_SamplesHASCode"] <- perc_HasCode_incurrGrp
+  }
+  
+  return(grp_freq_tb)
+}
+
+
+get_grp_discription_func <- function(code_grp,grp_prefix,discrip_df,grp_col,grp_discrip_col){
+  indxes <- which(discrip_df[,grp_col] == gsub(grp_prefix,"",code_grp))
+  discrip <- gsub("[[:punct:]]"," ",discrip_df[indxes,grp_discrip_col])
+  discrip <- unique(trimws(discrip, which = c("both"), whitespace = "[ \t\r\n]"))
+  discrip <- paste0(discrip, collapse = "&&") #in the case one grp has multiple discriptions
+  return(discrip)
+}
