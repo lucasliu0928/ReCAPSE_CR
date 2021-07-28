@@ -5,10 +5,10 @@ library(fastDummies)
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/"
 
-# # #local
+# #local
 # data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 # outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-# 
+
 
 
 ################################################################################ 
@@ -16,15 +16,16 @@ outdir <- "/recapse/intermediate_data/"
 ################################################################################ 
 All_data <- read.csv(paste0(data_dir,"10_All_PerMonthData_WithMonthChar_df.csv"), stringsAsFactors = F)
 table(All_data$y_PRE_OR_POST_2ndEvent) #0:2036132   1: 83301 
+table(All_data$Site)  
+table(All_data$Stage)
+table(All_data$Laterality)
 
-#remove features redudant
-All_data <- All_data[, -which(colnames(All_data) %in% c("months_to_second_event","Drug_Codes","Proc_Codes","Diag_Codes","Month_Start"))]
 missing_table <- get_missing_rate_table(All_data,colnames(All_data))
 
 ################################################################################ 
 #Recode feature to binary columns 
 ################################################################################
-col_toconvert <- c("Race","Grade","Laterality","er_stat","pr_stat","her2_stat",
+col_toconvert <- c("Race","Site","Stage","Grade","Laterality","er_stat","pr_stat","her2_stat",
                    "surg_prim_site" ,"DAJCC_T" ,"DAJCC_M","DAJCC_N")
 All_data_withBinary_Char <- dummy_cols(All_data, remove_first_dummy = FALSE,select_columns = col_toconvert)
 
