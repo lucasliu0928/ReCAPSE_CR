@@ -60,8 +60,9 @@ n_yes<- nrow(recurrent_pts_data) # 72670
 
 #1.Testing : Randomly choose 100 SBCE original pts data, and 100*8 noSBCE original pt Data
 set.seed(123)
-test_ID_SBCE <- sample(sbce_pt_Ids,100)
-test_ID_noSBCE <- sample(nosbce_pt_Ids,100*original_noSBCE_toSBCEratio)
+n <- 100
+test_ID_SBCE <- sample(sbce_pt_Ids,n)
+test_ID_noSBCE <- sample(nosbce_pt_Ids,n*original_noSBCE_toSBCEratio)
 test_IDs <- c(test_ID_SBCE,test_ID_noSBCE)
 #remove test ID from 
 remaining_ID <- Final_ID[which(!Final_ID %in% test_IDs)]
@@ -93,7 +94,7 @@ test_data <- model_data[which(model_data$study_id %in% test_IDs),]
 print("Test: : ")
 table(test_data$y_PRE_OR_POST_2ndEvent) 
 test_label <- as.numeric(test_data[,"y_PRE_OR_POST_2ndEvent"])
-test_data_part<-test_data[,!(names(test_data) %in% c("study_id","y_PRE_OR_POST_2ndEvent"))]
+test_data_part<-test_data[,!(names(test_data) %in% c("study_id","Month_Start","y_PRE_OR_POST_2ndEvent"))]
 dtest <- xgb.DMatrix(data = as.matrix(test_data_part), label = test_label)
 
 
@@ -112,7 +113,7 @@ current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                      subsample = as.numeric(optimal_results$Best_Par['subsample']),
                      colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']),
-                     scale_pos_weight = 9)
+                     scale_pos_weight = 20)
 watchlist <- list(train = dtrain, eval = dvalidation)
 
 mod_optimal <- xgb.train(objective="binary:logistic",
@@ -123,7 +124,7 @@ pred   <- predict(mod_optimal, dtest)
 actual <- test_label
 prediction_tb <- as.data.frame(cbind(pred,actual))
 write.csv(prediction_tb,paste0(outdir,"16_prediction_tb.csv"),row.names = F)
-#Performance table
+#Performance table (The threhold is chosen at cutoff point for ROC curve)
 perf <- compute_binaryclass_perf_func(pred,actual)
 print(perf)
 write.csv(perf,paste0(outdir,"16_perf.csv"),row.names = F)
