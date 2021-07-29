@@ -91,7 +91,7 @@ dvalidation <- xgb.DMatrix(data = as.matrix(validation_data_part), label = valid
 
 test_data <- model_data[which(model_data$study_id %in% test_IDs),]
 print("Test: : ")
-table(test_data$y_PRE_OR_POST_2ndEvent) 1 
+table(test_data$y_PRE_OR_POST_2ndEvent) 
 test_label <- as.numeric(test_data[,"y_PRE_OR_POST_2ndEvent"])
 test_data_part<-test_data[,!(names(test_data) %in% c("study_id","y_PRE_OR_POST_2ndEvent"))]
 dtest <- xgb.DMatrix(data = as.matrix(test_data_part), label = test_label)
