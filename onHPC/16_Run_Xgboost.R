@@ -64,7 +64,7 @@ test_ID_SBCE <- sample(sbce_pt_Ids,100)
 test_ID_noSBCE <- sample(nosbce_pt_Ids,100*original_noSBCE_toSBCEratio)
 test_IDs <- c(test_ID_SBCE,test_ID_noSBCE)
 #remove test ID from 
-remaining_ID <- final_ID[which(!final_ID %in% test_IDs)]
+remaining_ID <- Final_ID[which(!Final_ID %in% test_IDs)]
 
 #1. Training 80% of the remaining_ID
 training_ID <- sample(remaining_ID,length(remaining_ID)*0.8)
