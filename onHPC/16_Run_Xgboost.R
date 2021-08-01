@@ -5,6 +5,48 @@ source("Recapse_Ultility.R")
 #2.CodeTrans feature
 #3.BinaryChar feature
 
+Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,random_perc = 0.8){
+  # upsample_flag <- 0
+  # train_data <- train_data
+  # label_col_name <- "y_PRE_OR_POST_2ndEvent"
+  # seed_num <- 1
+  
+  #Get label col index
+  label_col_index <- which(colnames(train_data) == label_col_name)
+  
+  #Sampling
+  if(upsample_flag==1){ #upsampling
+    set.seed(seed_num)
+    up_train <- upSample(x = train_data[, -label_col_index],
+                         y = as.factor(train_data[,label_col_name]), yname = label_col_name)  
+    sampled_train_data <- up_train
+    
+  }else if(upsample_flag==0){ #downsample
+    set.seed(seed_num)
+    down_train <- downSample(x = train_data[, -label_col_index],
+                             y = as.factor(train_data[,label_col_name]), yname = label_col_name)      
+    sampled_train_data <- down_train
+    
+  }else if(upsample_flag==2){ #random sample 90% of orignal data
+    set.seed(seed_num)
+    sampled_indxes <- sample(nrow(train_data), nrow(train_data)*random_perc, replace = TRUE, prob = NULL)
+    sampled_train_data <- train_data[sampled_indxes,]
+  }else if (upsample_flag == 3){ #random sample then down sample
+    set.seed(seed_num)
+    sampled_indxes <- sample(nrow(train_data), nrow(train_data)*random_perc, replace = TRUE, prob = NULL)
+    randomsampled_train_data <- train_data[sampled_indxes,]
+    down_train <- downSample(x = randomsampled_train_data[, -label_col_index],
+                             y = as.factor(randomsampled_train_data[,label_col_name]), yname = label_col_name)      
+    sampled_train_data <- down_train
+  }else{
+    original_train <- train_data
+    sampled_train_data <- original_train
+  }
+  
+  return(sampled_train_data)
+}
+
+
 ################################################################################
 #Set up parallel computing envir
 ################################################################################
@@ -64,34 +106,44 @@ n <- 100
 test_ID_SBCE <- sample(sbce_pt_Ids,n)
 test_ID_noSBCE <- sample(nosbce_pt_Ids,n*original_noSBCE_toSBCEratio)
 test_IDs <- c(test_ID_SBCE,test_ID_noSBCE)
+print(paste0("# Test Original IDs: ", length(test_IDs)))
 #remove test ID from 
 remaining_ID <- Final_ID[which(!Final_ID %in% test_IDs)]
 
 #1. Training 80% of the remaining_ID
 training_ID <- sample(remaining_ID,length(remaining_ID)*0.8)
+print(paste0("# Train Original IDs: ", length(training_ID)))
+
 #2. validation 20% of the remaining_ID
 validation_ID <- remaining_ID[which(!remaining_ID %in% training_ID)]
+print(paste0("# Validation Original IDs: ", length(validation_ID)))
 
 
 ####Get data
 train_data <- model_data[which(model_data$study_id %in% training_ID),]
-print("Training: : ")
+print("Training:")
 table(train_data$y_PRE_OR_POST_2ndEvent) 
-train_label <- as.numeric(train_data[,"y_PRE_OR_POST_2ndEvent"])
+#Down sampling
+upsample_flag <- 0
+seed_num <- 123
+train_data <- Data_Sampling_Func(upsample_flag,train_data,"y_PRE_OR_POST_2ndEvent",seed_num)
+print("Down Sampled:")
+table(train_data$y_PRE_OR_POST_2ndEvent) 
+
+#Create xgb input
+train_label <- as.numeric(train_data[,"y_PRE_OR_POST_2ndEvent"])-1
 train_data_part<-train_data[,!(names(train_data) %in% c("study_id","Month_Start","y_PRE_OR_POST_2ndEvent"))]
 dtrain <- xgb.DMatrix(data = as.matrix(train_data_part), label = train_label)
 
-
 validation_data <- model_data[which(model_data$study_id %in% validation_ID),]
-print("Validation: : ")
+print("Validation:")
 table(validation_data$y_PRE_OR_POST_2ndEvent) 
 validation_label <- as.numeric(validation_data[,"y_PRE_OR_POST_2ndEvent"])
 validation_data_part<-validation_data[,!(names(validation_data) %in% c("study_id","Month_Start","y_PRE_OR_POST_2ndEvent"))]
 dvalidation <- xgb.DMatrix(data = as.matrix(validation_data_part), label = validation_label)
 
-
 test_data <- model_data[which(model_data$study_id %in% test_IDs),]
-print("Test: : ")
+print("Test:")
 table(test_data$y_PRE_OR_POST_2ndEvent) 
 test_label <- as.numeric(test_data[,"y_PRE_OR_POST_2ndEvent"])
 test_data_part<-test_data[,!(names(test_data) %in% c("study_id","Month_Start","y_PRE_OR_POST_2ndEvent"))]
@@ -108,12 +160,14 @@ optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                                     subsample=c(0.3, 0.9), colsample_by_tree=c(0.2, 0.8)),
                                         init_points=10,
                                         n_iter=10)
+pos_weight <- 10 #for weight more on pos samples
 current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                      subsample = as.numeric(optimal_results$Best_Par['subsample']),
                      colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']),
-                     scale_pos_weight = 20)
+                     scale_pos_weight = pos_weight)
+#We do not have to use this watch list and we do not have do create valdiation set, cuz xgb_cv_bayes set cross-validation set internally
 watchlist <- list(train = dtrain, eval = dvalidation)
 
 mod_optimal <- xgb.train(objective="binary:logistic",
@@ -122,12 +176,18 @@ mod_optimal <- xgb.train(objective="binary:logistic",
 #Prediction table
 pred   <- predict(mod_optimal, dtest)
 actual <- test_label
-prediction_tb <- as.data.frame(cbind(pred,actual))
-write.csv(prediction_tb,paste0(outdir,"16_prediction_tb.csv"),row.names = F)
-#Performance table (The threhold is chosen at cutoff point for ROC curve)
+prediction_tb <- cbind.data.frame(study_id = test_data$study_id,Month_Start = test_data$Month_Start,pred,actual)
+write.csv(prediction_tb,paste0(outdir,"16_prediction_tb_withDS_POSweight",pos_weight,".csv"),row.names = F)
+#Performance table 
 perf <- compute_binaryclass_perf_func(pred,actual)
 print(perf)
-write.csv(perf,paste0(outdir,"16_perf.csv"),row.names = F)
+write.csv(perf,paste0(outdir,"16_perf_withDS_POSweight",pos_weight,".csv"),row.names = F)
+
+#Importantant matrix
+importance_matrix <- xgb.importance(model = mod_optimal)
+write.csv(importance_matrix,paste0(outdir,"16_importance_matrix_withDS_POSweight",pos_weight,".csv"),row.names = F)
+
+
 
 # #check 
 # bst <- xgboost(data = dtrain,nrounds = 10, params = list(scale_pos_weight = 9),objective = "binary:logistic")
@@ -135,22 +195,7 @@ write.csv(perf,paste0(outdir,"16_perf.csv"),row.names = F)
 # perf <- compute_binaryclass_perf_func(pred,actual)
 # print(perf)
 # 
-# importance_matrix = xgb.importance(model = mod_optimal)
-# 
-# importance_matrix <- xgb.importance(model = mod_optimal)
-# importance_matrix$Group <- as.factor(1)
-# gp = xgb.ggplot.importance(importance_matrix,top_n = 10,n_clusters = 1)
-# final_p <- gp +geom_bar(stat="identity",position = position_dodge(width=10))+aes(fill = "brown1") +
-#   theme_bw()+
-#   theme(legend.position = "none",
-#         #panel.grid.major = element_blank(), #remove grid
-#         plot.title = element_text(size= 22),
-#         axis.text.x = element_text(size = 20),
-#         axis.text.y = element_text(size = 20),
-#         axis.title = element_text(size=20)) +
-#   ggtitle("")
-# final_p
-# 
+
 
 
 # #statitiscs
