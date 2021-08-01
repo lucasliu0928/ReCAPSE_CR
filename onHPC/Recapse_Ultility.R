@@ -15,7 +15,8 @@ compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
   #compute ROC-AUC
   auc_res <- compute_auc_func(predicted_prob,actual_label)
   auc_score <- auc_res[[1]]
-  pred_threhold <- auc_res[[2]] #threhold at cutoff point for ROC curve
+  pred_threhold <- 0.5 
+  #pred_threhold <- auc_res[[2]] #threhold at cutoff point for ROC curve
   
   #convert to predicted labels
   predicted_labels <- convert_prediction_function(predicted_prob,pred_threhold)
@@ -92,7 +93,7 @@ convert_prediction_function <- function(predicted_prob,pred_threhold){
   prediceted_labels <- NA
   for(i in 1: length(predicted_prob)){
     current_prediction<-predicted_prob[i]
-    if(current_prediction>pred_threhold){
+    if(current_prediction>=pred_threhold){
       prediceted_labels[i]<-1
     }else {
       prediceted_labels[i]<-0
