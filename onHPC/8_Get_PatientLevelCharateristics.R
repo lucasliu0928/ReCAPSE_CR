@@ -6,9 +6,9 @@ get_DAJCC_var_funtion <- function(kcr_data, pathology_results_col,clinical_resul
   #Rules : consider the values from 'TNMPathT' first (which is pathology results), 
   #       if TNMPathT is in value of '88' or 'pX' (unknown) then you check the value from 'TNMClinT' (clinical diagnosis results
   
-  #pathology_results_col <- "TNMPathT"
-  #clinical_results_col <- "TNMClinT"
-  
+  # pathology_results_col <- "TNMPathT"
+  # clinical_results_col <- "TNMClinT"
+  # 
   computed_value <- NA
   for (i in 1:nrow(kcr_data)){
     curr_res <- kcr_data[i,pathology_results_col]
@@ -33,12 +33,12 @@ per_month_data_dir <- "/recapse/intermediate_data/6_perMonthData_inValidMonth_pe
 perday_dir <- "/recapse/intermediate_data/3_perDay_PerPatientData/"
 outdir <- "/recapse/intermediate_data/"
 
-# #local
-# raw_data_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
-# data_dir <- "/Users/lucasliu/Desktop/intermediate_data/"
-# per_month_data_dir <- "/Users/lucasliu/Desktop/intermediate_data/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
-# perday_dir <- "/Users/lucasliu/Desktop/intermediate_data/3_perDay_PerPatientData/"
-# outdir <- "/Users/lucasliu/Desktop/intermediate_data/"
+#local
+raw_data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
+data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+per_month_data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_perMonthData_inValidMonth_perPatientData_V2_nonuniquecodes/"
+perday_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/3_perDay_PerPatientData/"
+outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
 #########################################################################################################
@@ -67,8 +67,8 @@ new_kcr_data[which(new_kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
 new_kcr_data[which(new_kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
 
 #Update 
-kcr_data$TNMPathM <- new_kcr_data$TNMPathM
-kcr_data$TNMClinM <- new_kcr_data$TNMClinM
+kcr_data$TNMPathM <- as.character(new_kcr_data$TNMPathM)
+kcr_data$TNMClinM <- as.character(new_kcr_data$TNMClinM)
 kcr_data$DerivedSS2000 <- new_kcr_data$DerivedSS2000
 
 
@@ -96,6 +96,13 @@ get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","Comb_SEERSummStg"))
 kcr_data$DAJCC_T <- get_DAJCC_var_funtion(kcr_data,"TNMPathT","TNMClinT")
 kcr_data$DAJCC_M <- get_DAJCC_var_funtion(kcr_data,"TNMPathM","TNMClinM")
 kcr_data$DAJCC_N <- get_DAJCC_var_funtion(kcr_data,"TNMPathN","TNMClinN")
+
+DAJCC_T_tb <- as.data.frame(table(kcr_data$DAJCC_T))
+DAJCC_M_tb <- as.data.frame(table(kcr_data$DAJCC_M))
+DAJCC_N_tb <- as.data.frame(table(kcr_data$DAJCC_N))
+write.csv(DAJCC_T_tb,"/Users/lucasliu/Desktop/DAJCC_T_tb.csv")
+write.csv(DAJCC_M_tb,"/Users/lucasliu/Desktop/DAJCC_M_tb.csv")
+write.csv(DAJCC_N_tb,"/Users/lucasliu/Desktop/DAJCC_N_tb.csv")
 
 get_missing_rate_table(kcr_data,c("DAJCC_T","DAJCC_M","DAJCC_N"))
 
