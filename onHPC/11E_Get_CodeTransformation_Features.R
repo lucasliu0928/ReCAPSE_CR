@@ -1,4 +1,6 @@
 source("Recapse_Ultility.R")
+#Transoformation takes a lot of time
+#So in this script, we only do transformation for selected code group that has occurance freqeuncy > 0.05
 ################################################################################
 #Set up parallel computing envir
 ################################################################################
