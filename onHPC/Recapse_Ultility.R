@@ -561,16 +561,23 @@ get_missing_rate_table <- function(data_df,features){
 ####Grouping functions
 load_and_clean_CSS_data<- function(file_dir){
   #Load four tables
-  HCUP_Diag1_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-9.diag_ref.edit.csv"),stringsAsFactors = F)
-  HCUP_Diag2_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-10.diag_ref.edit.csv"),stringsAsFactors = F)
-  HCUP_Proc1_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-9.proc_ref.edit.csv"),stringsAsFactors = F)
-  HCUP_Proc2_df <- read.csv(paste0(file_dir,"Code_Groups/HCUP_CCS_tables/CCS.ICD-10.proc_ref.edit.csv"),stringsAsFactors = F)
+  HCUP_Diag1_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/icd9_dxref 2015.csv"),stringsAsFactors = F,skip = 1)
+  HCUP_Diag2_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/ccs_dx_icd10cm_2019_1.csv"),stringsAsFactors = F)
+  HCUP_Proc1_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/icd9_prref 2015.csv"),stringsAsFactors = F,skip = 1)
+  HCUP_Proc2_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/ccs_pr_icd10pcs_2020_1.csv"),stringsAsFactors = F)
   
   #Change col name to comb
+  colnames(HCUP_Diag1_df) <- gsub("\\.$|X.","",colnames(HCUP_Diag1_df)) #remove the last . and X.
+  colnames(HCUP_Diag2_df) <- gsub("\\.$|X.","",colnames(HCUP_Diag2_df))
+  colnames(HCUP_Proc1_df) <- gsub("\\.$|X.","",colnames(HCUP_Proc1_df))
+  colnames(HCUP_Proc2_df) <- gsub("\\.$|X.","",colnames(HCUP_Proc2_df))
+  
   colnames(HCUP_Diag1_df)[which(colnames(HCUP_Diag1_df) == "ICD.9.CM.CODE")] <- "Code"
   colnames(HCUP_Diag2_df)[which(colnames(HCUP_Diag2_df) == "ICD.10.CM.CODE")] <- "Code"
   colnames(HCUP_Proc1_df)[which(colnames(HCUP_Proc1_df) == "ICD.9.CM.CODE")] <- "Code"
   colnames(HCUP_Proc2_df)[which(colnames(HCUP_Proc2_df) == "ICD.10.PCS.CODE")] <- "Code"
+  
+
   
   HCUP_Diag1_df$CODE_TYPE <- "ICD9_Diag"
   HCUP_Diag2_df$CODE_TYPE <- "ICD10_Diag"
