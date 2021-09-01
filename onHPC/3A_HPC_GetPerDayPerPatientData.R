@@ -27,32 +27,6 @@ medicaid_heath_dir <- paste0(data_dir, "perPatientData/Medicaid_HealthClaims/")
 medicaid_pharm_dir <- paste0(data_dir, "perPatientData/Medicaid_PharmClaims/")
 medicare_dir <- paste0(data_dir, "perPatientData/Medicare/")
 
-
-# start_t <- Sys.time() #inital time
-# for (i in 1590:length(analysis_ID)){
-#     if (i %% 500 == 0){
-#       end_t <- Sys.time()
-#       time_d <- end_t - start_t
-#       print(paste0(i,", time used:",round(time_d,2)))
-#       start_t <- Sys.time()
-#     }
-#     curr_id <- analysis_ID[i]
-# 
-#     if (curr_id %in% medicare_only_ID){ #medicare
-#       curr_perDay_data <- get_perDay_medicare(curr_id,medicare_dir)
-# 
-#     }else if (curr_id %in% medicaid_only_ID){ #medcaid
-#       curr_perDay_data <- get_perDay_medicaid(curr_id,medicaid_heath_dir,medicaid_pharm_dir)
-#       
-#     }else if (curr_id %in% both_ID){# from two source and combine
-#       curr_perDay_data <- get_perDay_both(curr_id,medicaid_heath_dir,medicaid_pharm_dir,medicare_dir) #298
-#     }
-#     
-#     write.xlsx(curr_perDay_data,paste0(outdir,"ID",curr_id,"_","perDay_Data.xlsx"))
-# }
-
-
-
 #######################################################################################
 #1.Get per day data
 #######################################################################################
