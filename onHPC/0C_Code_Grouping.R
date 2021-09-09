@@ -3,23 +3,20 @@ source("Recapse_Ultility.R")
 #######################################################################
 ##############              Data dir                     ############## 
 #######################################################################
-code_data_dir <- "/recapse/intermediate_data/0_Codes/"
+code_data_dir <- "/recapse/intermediate_data/0_Codes/AfterClean_UniqueCodes/"
 grping_data_dir <- "/recapse/data/"
 outdir   <- "/recapse/intermediate_data/0_Codes/"
 
 #local
-code_data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/"
+code_data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/AfterClean_UniqueCodes/"
 grping_data_dir <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/"
 outdir   <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/"
+
 
 ################################################################################
 #1. Load grping data
 ################################################################################
-#1. Get drung names
-drug_name_df <- read.csv(paste0(grping_data_dir,"Testing data for UH3 - Dec 16 2020/DrugList.csv"),stringsAsFactors = F,header = F)
-drug_name_df$V1 <- as.character(drug_name_df$V1)
-
-#2. Load CCS Groups file:                                      
+#1. Load CCS Groups file:                                      
 CCS_df <- load_and_clean_CSS_data(grping_data_dir)
 CCS_Diag_df <- CCS_df[which(CCS_df[,"CODE_TYPE"] %in% c("ICD9_Diag","ICD10_Diag")),]
 CCS_Proc_df <- CCS_df[which(CCS_df[,"CODE_TYPE"] %in% c("ICD9_Proc","ICD10_Proc")),]
@@ -38,28 +35,11 @@ Ritzwoller_Proc_df <- Ritzwoller_df[which(Ritzwoller_df$D_or_P == "Procedure"),]
 DM3_df <- load_and_clean_DM3_data(grping_data_dir)
 
 ################################################################################
-#1. Load unique codes data
+#2. Load unique codes data
 ################################################################################
 unique_diag_df <- read.xlsx(paste0(code_data_dir,"0_Cleaned_Unique_Diag_Codes.xlsx"),sheet = 1)
 unique_proc_df <- read.xlsx(paste0(code_data_dir,"0_Cleaned_Unique_Proc_Codes.xlsx"),sheet = 1)
 unique_drug_df <- read.xlsx(paste0(code_data_dir,"0_Cleaned_Unique_Drug_Codes.xlsx"),sheet = 1)
-
-#Add drug name to unique drug df
-drug_name_df <- drug_name_df[which(drug_name_df$V1 %in% unique_drug_df$CODE),] #Filter out durg name df for code in claims
-unique_drug_df$Drug_name <- NA
-for (i in 1:nrow(unique_drug_df)){
-  if (i %% 1000 == 0 ){print(i)}
-  curr_drug <- unique_drug_df[i,"CODE"]
-  curr_idxes <- which(drug_name_df$V1 == curr_drug)
-  if (length(curr_idxes) > 0){
-    unique_drug_df[i,"Drug_name"] <- drug_name_df[curr_idxes,2]
-  }
-}
-
-#Clean drug names
-unique_drug_df[,"Drug_name"] <- gsub("[[:punct:]]"," ",unique_drug_df[,"Drug_name"])
-unique_drug_df[,"Drug_name"] <- trimws(unique_drug_df[,"Drug_name"], which = c("both"), whitespace = "[ \t\r\n]")
-
 
 
 ################################################################################
