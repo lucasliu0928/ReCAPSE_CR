@@ -93,6 +93,12 @@ drug_name_df$V1 <- as.character(drug_name_df$V1)
 #2.clean code in drug name df
 drug_name_df[,"V1"] <- clean_code_func2(drug_name_df[,"V1"],drug_name_df[,"V2"])
 
+#3. Clean drug names
+drug_name_df[,"V2"] <- gsub("[[:punct:]]","",drug_name_df[,"V2"])
+drug_name_df[,"V2"] <- trimws(drug_name_df[,"V2"], which = c("both"), whitespace = "[ \t\r\n]")
+
+
+
 #3.Filter out durg name df for code in claims
 drug_name_df <- drug_name_df[which(drug_name_df[,"V1"] %in% Comb_drug_cleaned[,"CODE"]),] 
 
