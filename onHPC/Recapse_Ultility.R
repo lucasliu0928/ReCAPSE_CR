@@ -103,80 +103,6 @@ convert_prediction_function <- function(predicted_prob,pred_threhold){
 }
 
 
-######################################################################
-#3_HPC_Get....R Functions:
-clean_code_func <-function(list_of_codes){
-  #list_of_codes <- HCUP_comb[,"Code"]
-  
-  #1.omitting any codes with non-alphanumeric characters,
-  updated_list_of_codes<- gsub("[^[:alnum:]]", " ", list_of_codes)
-  
-  #2. space
-  updated_list_of_codes <- trimws(updated_list_of_codes, which = c("both"), whitespace = "[ \t\r\n]")
-  
-  #3.decimal
-  updated_list_of_codes <- gsub("\\.","",updated_list_of_codes)
-  updated_list_of_codes <- gsub("[[:space:]]", "", updated_list_of_codes) #after\\. might resulting in sapce
-  
-  #Check the number of charter for each code
-  n_char <- NA
-  for (c in 1:length(updated_list_of_codes)){
-    cur_code <- updated_list_of_codes[c]
-    n_char[c] <- nchar(cur_code)
-  }
-  
-  #for codes less than 3 characters long
-  #.if it is non-numeric, then exclude codes 
-  # if it is numeric , then prepending '0'
-  l3_idxes <- which(n_char< 3)
-  l3_codes <- updated_list_of_codes[l3_idxes]
-  if(length(l3_codes) > 0){
-    updated_code <- NA
-    for (c in 1:length(l3_codes)){
-      cur_code <- l3_codes[c]
-      if(is.na(as.numeric(cur_code)==T)){ #if NA, then it is non-numeric
-        updated_code[c] <- NA #remove
-      }else{ #it is numeric , then prepending '0'
-        updated_code[c] <- paste0("0",cur_code)
-      }
-    }
-    
-    updated_list_of_codes[l3_idxes] <- updated_code
-    
-    #This might result in NAs(from converting to numeric when it is char) from orignal 
-  }
-  
-  return(updated_list_of_codes)
-}
-
-#this function cleans codes in the original claims data by columns 
-clean_code_columns <-function(claims_df, col_to_clean){
-  #claims_df <- curr_health_df
-  #col_to_clean <- c(diag_cols,proc_cols)
-  for (j in 1:length(col_to_clean)){
-    curr_col <- col_to_clean[j]
-    claims_df[,curr_col] <- clean_code_func(claims_df[,curr_col])
-  }  
-  return(claims_df)
-}
-
-#remove NA from a list of code
-remove_NA_func<- function(curr_day_codes){
-  na_idxes <- which(curr_day_codes == "" | is.na(curr_day_codes) == TRUE)
-  if (length(na_idxes) > 0){
-    curr_day_codes <- curr_day_codes[-na_idxes]
-  }
-  return(curr_day_codes)
-}
-
-#remove NA from dataframe col
-remove_NA_from_df <- function(input_df,col_tocheck){
-  na_indexes <- which(is.na(input_df[,col_tocheck])==T)
-  if (length(na_indexes) > 0){
-    input_df <- input_df[-na_indexes,]
-  }
-  return(input_df)
-}
 
 
 #These fucntions get per day cleaned codes for all avaiable dates for one pateint
@@ -941,6 +867,37 @@ get_grp_discription_func <- function(code_grp,grp_prefix,discrip_df,grp_col,grp_
 ##########################################################################################
 # Functions for cleaning code and grouping code
 ##########################################################################################
+######################################################################
+#this function cleans codes in the original claims data by columns 
+clean_code_columns <-function(claims_df, col_to_clean){
+  #claims_df <- curr_health_df
+  #col_to_clean <- c(diag_cols,proc_cols)
+  for (j in 1:length(col_to_clean)){
+    curr_col <- col_to_clean[j]
+    claims_df[,curr_col] <- clean_code_func(claims_df[,curr_col])
+  }  
+  return(claims_df)
+}
+
+#remove NA from a list of code
+remove_NA_func<- function(curr_day_codes){
+  na_idxes <- which(curr_day_codes == "" | is.na(curr_day_codes) == TRUE)
+  if (length(na_idxes) > 0){
+    curr_day_codes <- curr_day_codes[-na_idxes]
+  }
+  return(curr_day_codes)
+}
+
+#remove NA from dataframe col
+remove_NA_from_df <- function(input_df,col_tocheck){
+  na_indexes <- which(is.na(input_df[,col_tocheck])==T)
+  if (length(na_indexes) > 0){
+    input_df <- input_df[-na_indexes,]
+  }
+  return(input_df)
+}
+
+
 get_uniquecodes_onetype <-function(in_data,code_type, code_col,claim_source){
   #in_data <- data_df1
   #code_col <- HCPCS_proc_cols
@@ -966,4 +923,105 @@ get_uniquecodes_onetype <-function(in_data,code_type, code_col,claim_source){
   unique_code_df$CLAIM <- claim_source
   
   return(unique_code_df)
+}
+
+#This function prepend 0s or remove code (if non-numeric, remove)
+reformat_codes_func <-function(code,min_length){
+  if(is.na(as.numeric(code)==T)){ #if non-numeric (if NA when converting)
+    updated_code <- NA #remove
+  }else{ #it is numeric , then prepending "0"s to match the code minimum length
+    nchar_code   <- nchar(code)
+    num_0_needed <- min_length - nchar_code
+    prepend_string <- paste0(rep("0",num_0_needed),collapse = "")
+    updated_code <- paste0(prepend_string,code)
+  }
+  
+  return(updated_code)
+}
+
+
+clean_code_func <-function(list_of_codes){
+  #1.repalce any codes with non-alphanumeric characters with ""
+  updated_list_of_codes<- gsub("[^[:alnum:]]", "", list_of_codes)
+  
+  #2.replace decimal with ""
+  updated_list_of_codes <- gsub("\\.","",updated_list_of_codes)
+  
+  #3. replace space with ""
+  updated_list_of_codes <- gsub("[[:space:]]", "", updated_list_of_codes) #after\\. might resulting in sapce
+  
+  #4.Check the number of charter for each code
+  n_char <- NA
+  for (c in 1:length(updated_list_of_codes)){
+    cur_code <- updated_list_of_codes[c]
+    n_char[c] <- nchar(cur_code)
+  }
+  
+  #5.for codes less than 3 characters long
+  #.if it is non-numeric, then exclude codes 
+  # if it is numeric , then prepending '0'
+  l3_idxes <- which(n_char< 3)
+  l3_codes <- updated_list_of_codes[l3_idxes]
+  if(length(l3_codes) > 0){
+    updated_code <- NA
+    for (c in 1:length(l3_codes)){
+      cur_code <- l3_codes[c]
+      if(is.na(as.numeric(cur_code)==T)){ #if NA, then it is non-numeric
+        updated_code[c] <- NA #remove
+      }else{ #it is numeric , then prepending '0'
+        curr_nchar <- length(cur_code)
+        if (length(curr_nchar) == 1){
+          updated_code[c] <- paste0("00",cur_code)
+        }else if (length(curr_nchar) == 2){
+          updated_code[c] <- paste0("0",cur_code)
+        }
+      }
+    }
+    #'@NOTE: This might result in NAs for codess less than 3 nchar (from converting to numeric when it is char) from orignal 
+    
+    updated_list_of_codes[l3_idxes] <- updated_code
+    
+  }
+  
+  return(updated_list_of_codes)
+}
+
+#This function also consider the type of code
+#For ICD code, 3 digit
+#For HCPCS code, 5 digit
+#'@NOTE: This might result in NAs for codess less than 3/5 nchar (from converting to numeric when it is char) from orignal 
+
+clean_code_func2 <-function(list_of_codes,list_of_types){
+  #1.repalce any codes with non-alphanumeric characters with ""
+  updated_list_of_codes<- gsub("[^[:alnum:]]", "", list_of_codes)
+  
+  #2.replace decimal with ""
+  updated_list_of_codes <- gsub("\\.","",updated_list_of_codes)
+  
+  #3. replace space with ""
+  updated_list_of_codes <- gsub("[[:space:]]", "", updated_list_of_codes) #after\\. might resulting in sapce
+  
+  #4. For each code, 
+  #   #if HCPCS, reformat codes less than 5 char long
+  #   #if ICD, reformat codes less than 3 char long
+  #4.Check the number of charter for each code
+  for (i in 1:length(updated_list_of_codes)){
+    curr_code <- updated_list_of_codes[i]
+    curr_nchar <- nchar(curr_code)
+    curr_type <-  list_of_types[i]
+    
+    if (grepl("HCPCS",curr_type) == T){ #if HCPCS, reformat codes less than 5 char long
+      if (curr_nchar < 5){
+        curr_code <- reformat_codes_func(curr_code,5)
+      }
+    }else if (grepl("ICD",curr_type) == T){ #if ICD, reformat codes less than 3 char long
+      if (curr_nchar < 3){
+        curr_code <- reformat_codes_func(curr_code,3)
+      }
+    }
+     updated_list_of_codes[i] <- curr_code
+  }
+  
+
+  return(updated_list_of_codes)
 }
