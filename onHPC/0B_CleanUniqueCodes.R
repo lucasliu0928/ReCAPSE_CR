@@ -1,30 +1,5 @@
 source("Recapse_Ultility.R")
 
-##### Functions for code processes
-get_cleancode_onetype <- function(in_data,code_type, code_col){
-  # in_data   <- data_df1 
-  # code_col <- ICD_diag_cols
-  
-  #Read code columns
-  code_data      <-  in_data[,code_col]
-  
-  #Get non-NA  and non-Blanks codes
-  non_na_or_blanks <- which(is.na(code_data) == F & code_data != "",arr.ind = T)
-  unique_code_list <- unique(code_data[non_na_or_blanks])
-  
-  #Clean codes
-  unique_code_list <- clean_code_func(unique_code_list)  #Clean codes , may return NAs
-  non_na_or_blanks <- which(is.na(unique_code_list) == F & unique_code_list != "") #remove NA again
-  unique_code_list <- unique_code_list[non_na_or_blanks]
-  
-  #Unique code list
-  codes_list_df     <-  data.frame(unique_code_list)
-  colnames(codes_list_df) <- "CODE"
-  codes_list_df$TYPE <- code_type
-  
-  return(codes_list_df)
-}
-
 #######################################################################
 ##############              Data dir                     ############## 
 #######################################################################
@@ -78,34 +53,61 @@ Comb_diag <- Comb_diag[!duplicated(Comb_diag[,"CODE"]),] #remove duplicates
 Comb_proc <- Comb_proc[!duplicated(Comb_proc[,"CODE"]),] #remove duplicates
 Comb_drug <- Comb_drug[!duplicated(Comb_drug[,"CODE"]),] #remove duplicates
 
-#AHFS Drug code
-Drug_AHFS_Code <- Drug_AHFS_Code1
-Drug_AHFS_Code <- Drug_AHFS_Code[!duplicated(Drug_AHFS_Code[,"CODE"]),] #remove duplicates
+#remove the predix of code 
+Comb_diag[,"CODE"] <- gsub("CODE_","",Comb_diag[,"CODE"])
+Comb_proc[,"CODE"] <- gsub("CODE_","",Comb_proc[,"CODE"])
+Comb_drug[,"CODE"] <- gsub("CODE_","",Comb_drug[,"CODE"])
 
-#HCPC Procedure code
-Proc_HCPC_Code <- rbind(Proc_HCPC_Code1,Proc_HCPC_Code2)
-Proc_HCPC_Code <- Proc_HCPC_Code[!duplicated(Proc_HCPC_Code[,"CODE"]),] #remove duplicates
+#######################################################################
+## Clean codes
+#'@NOTE: Warinigs are OK. (From checking if a code is num or char)
+#######################################################################
+Comb_diag_cleaned <- Comb_diag
+Comb_proc_cleaned <- Comb_proc
+Comb_drug_cleaned <- Comb_drug
 
-#ICD Procedure code
-Proc_ICD_Code <- Proc_ICD_Code2
-Proc_ICD_Code <- Proc_ICD_Code[!duplicated(Proc_ICD_Code[,"CODE"]),] #remove duplicates
-
-#Combine drug code
-final_diag_code_df <- Diag_ICD_code
-final_drug_code_df <- rbind(Drug_NDC_Code,Drug_AHFS_Code)
-final_proc_code_df <- rbind(Proc_HCPC_Code,Proc_ICD_Code)
-
-print(table(nchar(as.character(final_proc_code_df$CODE))))
-
-# write.xlsx(final_diag_code_df,paste0(outdir,"0_Cleaned_Unique_Diag_Codes.xlsx"))
-# write.xlsx(final_proc_code_df,paste0(outdir,"0_Cleaned_Unique_Proc_Codes.xlsx"))
-# write.xlsx(final_drug_code_df,paste0(outdir,"0_Cleaned_Unique_Drug_Codes.xlsx"))
-
-# #Clean unique codes
-# Diag_ICD_code1  <- get_cleancode_onetype(data_df1,"DIAG_ICD9or10",ICD_diag_cols)
-# Proc_HCPC_Code1 <- get_cleancode_onetype(data_df1,"PROC_HCPCS",HCPCS_proc_cols)
-# Drug_AHFS_Code1 <- get_cleancode_onetype(data_df2,"DRUG_THERA_CLS_AHFS",AHFS_drug_cols)
-# Drug_NDC_Code1  <- get_cleancode_onetype(data_df2,"DRUG_NDC",NDC_drug_cols)
+#Reformat
+Comb_diag_cleaned[,"CODE"] <- clean_code_func2(Comb_diag_cleaned[,"CODE"],Comb_diag_cleaned[,"TYPE"])
+Comb_proc_cleaned[,"CODE"] <- clean_code_func2(Comb_proc_cleaned[,"CODE"],Comb_proc_cleaned[,"TYPE"])
+Comb_drug_cleaned[,"CODE"] <- clean_code_func2(Comb_drug_cleaned[,"CODE"],Comb_drug_cleaned[,"TYPE"])
 
 
+#Remove duplicate and NAs after reformat
+Comb_diag_cleaned <- Comb_diag_cleaned[!duplicated(Comb_diag_cleaned[,"CODE"]),]
+Comb_proc_cleaned <- Comb_proc_cleaned[!duplicated(Comb_proc_cleaned[,"CODE"]),]
+Comb_drug_cleaned <- Comb_drug_cleaned[!duplicated(Comb_drug_cleaned[,"CODE"]),]
 
+Comb_diag_cleaned <- Comb_diag_cleaned[-which(is.na(Comb_diag_cleaned[,"CODE"])==T | Comb_diag_cleaned[,"CODE"]==""),]
+Comb_proc_cleaned <- Comb_proc_cleaned[-which(is.na(Comb_proc_cleaned[,"CODE"])==T | Comb_proc_cleaned[,"CODE"] ==""),]
+Comb_drug_cleaned <- Comb_drug_cleaned[-which(is.na(Comb_drug_cleaned[,"CODE"])==T | Comb_drug_cleaned[,"CODE"] ==""),]
+
+
+
+#######################################################################
+## Add Drug names
+#######################################################################
+#1. Get drung names
+drug_name_df <- read.csv(paste0(drug_name_dir,"Testing data for UH3 - Dec 16 2020/DrugList.csv"),stringsAsFactors = F,header = F)
+drug_name_df$V1 <- as.character(drug_name_df$V1)
+
+#2.clean code in drug name df
+drug_name_df[,"V1"] <- clean_code_func2(drug_name_df[,"V1"],drug_name_df[,"V2"])
+
+#3.Filter out durg name df for code in claims
+drug_name_df <- drug_name_df[which(drug_name_df[,"V1"] %in% Comb_drug_cleaned[,"CODE"]),] 
+
+#4. Add drug name to Comb_drug_cleaned
+Comb_drug_cleaned$DRUG_NAME <- NA
+
+for (i in 1:nrow(Comb_drug_cleaned)){
+  if (i %% 1000 == 0 ){print(i)}
+  curr_drug <- Comb_drug_cleaned[i,"CODE"]
+  curr_idxes <- which(drug_name_df[,"V1"] == curr_drug)
+  if (length(curr_idxes) > 0){
+    Comb_drug_cleaned[i,"DRUG_NAME"] <- drug_name_df[curr_idxes,"V2"]
+  }
+}
+
+write.xlsx(Comb_diag_cleaned,paste0(outdir,"0_Cleaned_Unique_Diag_Codes.xlsx"))
+write.xlsx(Comb_proc_cleaned,paste0(outdir,"0_Cleaned_Unique_Proc_Codes.xlsx"))
+write.xlsx(Comb_drug_cleaned,paste0(outdir,"0_Cleaned_Unique_Drug_Codes.xlsx"))
