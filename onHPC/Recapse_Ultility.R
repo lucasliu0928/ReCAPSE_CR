@@ -937,3 +937,33 @@ get_grp_discription_func <- function(code_grp,grp_prefix,discrip_df,grp_col,grp_
   discrip <- paste0(discrip, collapse = "&&") #in the case one grp has multiple discriptions
   return(discrip)
 }
+
+##########################################################################################
+# Functions for cleaning code and grouping code
+##########################################################################################
+get_uniquecodes_onetype <-function(in_data,code_type, code_col,claim_source){
+  #in_data <- data_df1
+  #code_col <- HCPCS_proc_cols
+  
+  #Read code columns
+  code_data      <-  data.frame(in_data[,code_col])
+  colnames(code_data) <- code_col #for data only has one column
+  
+  #Convert integer columns to character
+  for (i in 1:length(code_col)){
+    curr_col <- code_col[i]
+    code_data[,curr_col] <- as.character(code_data[,curr_col])
+  }
+  
+  #Get non-NA  and non-Blanks unique codes
+  non_na_or_blanks <- which(is.na(code_data) == F & code_data != "",arr.ind = T)
+  unique_code_list <- unique(code_data[non_na_or_blanks])
+
+  #Unique code df
+  unique_code_df      <-  data.frame(paste0("CODE_",unique_code_list))
+  colnames(unique_code_df) <- "CODE"
+  unique_code_df$TYPE  <- code_type
+  unique_code_df$CLAIM <- claim_source
+  
+  return(unique_code_df)
+}
