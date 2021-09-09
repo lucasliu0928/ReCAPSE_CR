@@ -484,184 +484,6 @@ get_missing_rate_table <- function(data_df,features){
 }
 
 
-####Grouping functions
-load_and_clean_CSS_data<- function(file_dir){
-  #Load four tables
-  HCUP_Diag1_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/icd9_dxref 2015.csv"),stringsAsFactors = F,skip = 1)
-  HCUP_Diag2_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/ccs_dx_icd10cm_2019_1.csv"),stringsAsFactors = F)
-  HCUP_Proc1_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/icd9_prref 2015.csv"),stringsAsFactors = F,skip = 1)
-  HCUP_Proc2_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/ccs_pr_icd10pcs_2020_1.csv"),stringsAsFactors = F)
-  
-  #Change col name to comb
-  colnames(HCUP_Diag1_df) <- gsub("\\.$|X.","",colnames(HCUP_Diag1_df)) #remove the last . and X.
-  colnames(HCUP_Diag2_df) <- gsub("\\.$|X.","",colnames(HCUP_Diag2_df))
-  colnames(HCUP_Proc1_df) <- gsub("\\.$|X.","",colnames(HCUP_Proc1_df))
-  colnames(HCUP_Proc2_df) <- gsub("\\.$|X.","",colnames(HCUP_Proc2_df))
-  
-  colnames(HCUP_Diag1_df)[which(colnames(HCUP_Diag1_df) == "ICD.9.CM.CODE")] <- "Code"
-  colnames(HCUP_Diag2_df)[which(colnames(HCUP_Diag2_df) == "ICD.10.CM.CODE")] <- "Code"
-  colnames(HCUP_Proc1_df)[which(colnames(HCUP_Proc1_df) == "ICD.9.CM.CODE")] <- "Code"
-  colnames(HCUP_Proc2_df)[which(colnames(HCUP_Proc2_df) == "ICD.10.PCS.CODE")] <- "Code"
-  
-
-  
-  HCUP_Diag1_df$CODE_TYPE <- "ICD9_Diag"
-  HCUP_Diag2_df$CODE_TYPE <- "ICD10_Diag"
-  HCUP_Proc1_df$CODE_TYPE <- "ICD9_Proc"
-  HCUP_Proc2_df$CODE_TYPE <- "ICD10_Proc"
-  
-  HCUP_comb <- rbind(HCUP_Diag1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
-                     HCUP_Diag2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
-                     HCUP_Proc1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
-                     HCUP_Proc2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")])
-  
-  #3.clean code and category
-  HCUP_comb[,"Code"]  <- clean_code_func(HCUP_comb[,"Code"])
-  HCUP_comb[,"CCS.CATEGORY"]  <- clean_code_func(HCUP_comb[,"CCS.CATEGORY"]) #Clean category in HCUP
-  
-  
-  #4. Remove all blanks and NAs   
-  HCUP_comb <- remove_NA_from_df(HCUP_comb,"Code")
-  
-  #5. remove the unspecified codes, cuz they will result codes grped into multiple groups, (e.g, E8342 is a qulified codes in ICD10, but unspecified in ICD9)
-  unspecified_idxes <- which(grepl("\\be codes|\\bExternal cause codes",HCUP_comb[,"CCS.CATEGORY.DESCRIPTION"],ignore.case = T)==T)
-  HCUP_comb<- HCUP_comb[-unspecified_idxes,]
-  return(HCUP_comb)
-}
-
-group_codes_into_CCS_func <- function(claim_code_df,CCS_df){
-  claim_code_df$CCS_CATEGORY <- NA
-  claim_code_df$CCS_CATEGORY_DESCRIPTION <- NA
-  for (i in 1:nrow(claim_code_df)){
-    if (i %% 1000 == 0){print(i)}
-    curr_code <- claim_code_df[i,1]
-    curr_ccs_idxes <- which(CCS_df[,"Code"] == curr_code)
-    if (length(curr_ccs_idxes) > 0){
-      claim_code_df[i,"CCS_CATEGORY"] <- CCS_df[curr_ccs_idxes,"CCS.CATEGORY"]
-      claim_code_df[i,"CCS_CATEGORY_DESCRIPTION"] <- CCS_df[curr_ccs_idxes,"CCS.CATEGORY.DESCRIPTION"]
-    }
-  }
-  return(claim_code_df)
-}
-
-#Chuback
-load_and_clean_Chuback_data<- function(file_dir){
-  #Load four tables
-  chuback_group_df <- read.csv(paste0(file_dir,"Code_Groups/BRAVA_lookup.20180502.edit.csv"),stringsAsFactors = F)
-  length(unique(chuback_group_df$Type)) #216
-  length(unique(chuback_group_df$Category)) #22
-  
-  #3.clean code 
-  chuback_group_df[,"Code"]<- clean_code_func(chuback_group_df[,"Code"])
-  
-  #4. Remove all blanks and NAs   
-  chuback_group_df <- remove_NA_from_df(chuback_group_df,"Code")
-  
-  return(chuback_group_df)
-}
-group_codes_into_Chuback_func <- function(claim_code_df,Chuback_grp_df){
-  claim_code_df[,"Chuback_Type"] <- NA
-  claim_code_df[,"Chuback_Category"] <- NA
-  claim_code_df[,"Chuback_Description"] <- NA
-  for (i in 1:nrow(claim_code_df)){
-    if (i %% 1000 == 0){print(i)}
-    curr_code <- claim_code_df[i,1]
-    curr_idxes <- which(Chuback_grp_df[,"Code"] == curr_code)
-    if (length(curr_idxes) > 0){
-      claim_code_df[i,"Chuback_Type"]     <- paste0(unique(Chuback_grp_df[curr_idxes,"Type"]),collapse = "$$$$")
-      claim_code_df[i,"Chuback_Category"] <- paste0(unique(Chuback_grp_df[curr_idxes,"Category"]),collapse = "$$$$")
-      
-      claim_code_df[i,"Chuback_Description"] <-  paste0(unique(Chuback_grp_df[curr_idxes,"Code.Description"]),collapse = "$$$$")
-      
-    }
-  }
-  return(claim_code_df)
-}
-
-#Ritzwoller
-load_and_clean_Ritzwoller_data<- function(file_dir){
-  #Load four tables
-  Ritzwoller_group_df <- read.csv(paste0(file_dir,"Code_Groups/Ritzwoller_code_table.edited.csv"),stringsAsFactors = F)
-  length(unique(Ritzwoller_group_df$Category)) #6
-  
-  #3.clean code 
-  Ritzwoller_group_df[,"Code"] <- clean_code_func(Ritzwoller_group_df[,"Code"])
-  
-  #4. Remove all blanks and NAs   
-  Ritzwoller_group_df <- remove_NA_from_df(Ritzwoller_group_df,"Code")
-  
-  return(Ritzwoller_group_df)
-}
-
-group_codes_into_Ritzwoller_func <- function(claim_code_df,Ritzwoller_grp_df){
-  claim_code_df[,"Ritzwoller_Type"] <- NA
-  claim_code_df[,"Ritzwoller_Category"] <- NA
-  claim_code_df[,"Ritzwoller_Description"] <- NA
-  for (i in 1:nrow(claim_code_df)){
-    if (i %% 1000 == 0){print(i)}
-    curr_code <- claim_code_df[i,1]
-    curr_idxes <- which(Ritzwoller_grp_df[,"Code"] == curr_code)
-    if (length(curr_idxes) > 0){
-      claim_code_df[i,"Ritzwoller_Type"]     <- paste0(unique(Ritzwoller_grp_df[curr_idxes,"Code.type"]),collapse = "$$$$")
-      claim_code_df[i,"Ritzwoller_Category"] <- paste0(unique(Ritzwoller_grp_df[curr_idxes,"Category"]),collapse = "$$$$")
-      
-      claim_code_df[i,"Ritzwoller_Description"] <-  paste0(unique(Ritzwoller_grp_df[curr_idxes,"Description"]),collapse = "$$$$")
-      
-    }
-  }
-  return(claim_code_df)
-}
-#DM3 grouping
-load_and_clean_DM3_data<- function(file_dir){
-  #Load data
-  drug_group_df <- read.csv(paste0(file_dir,"Code_Groups/Drug Code Groups-DM3.sorted.csv"),stringsAsFactors = F)
-  drug_group_df <- drug_group_df[,-1]
-  
-  # #Clean drug name by removing the source prefix
-  drug_group_df[,"desc"] <- gsub("NC: |NH: |NO: |NS: ","",drug_group_df[,"desc"])
-  drug_group_df[,"desc"] <- gsub("[[:punct:]]"," ",drug_group_df[,"desc"])
-  drug_group_df[,"desc"] <- trimws(drug_group_df[,"desc"], which = c("both"), whitespace = "[ \t\r\n]")
-  
-  
-  return(drug_group_df)
-}
-
-group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
-  claim_code_df$specific_group <- NA
-  claim_code_df$general_group <- NA
-  for (i in 1:nrow(claim_code_df)){
-    if (i %% 1000 == 0){print(i)}
-    curr_code <- claim_code_df[i,"Drug_name"]
-    curr_idxes <- which(DM3_df[,"desc"] == curr_code)
-    if (length(curr_idxes) > 0){
-      claim_code_df[i,"specific_group"] <-  unique(DM3_df[curr_idxes,"specific_group"])
-      claim_code_df[i,"general_group"]  <-  unique(DM3_df[curr_idxes,"general_group"])
-    }
-  }
-  return(claim_code_df)
-}
-
-get_ccs_discription <- function(freq_tb,CCS_Diag_df,CCS_Proc_df){
-  #for diag
-  ccs_d_idxes <- which(grepl("CCS_D",freq_tb$Code_Group) == T)
-  
-  for (i in 1:length(ccs_d_idxes)){
-    curr_ind <- ccs_d_idxes[i]
-    curr_grp <- gsub("CCS_D_","",freq_tb[curr_ind,"Code_Group"])
-    freq_tb[curr_ind,"DESCRIPTION"] <- unique(CCS_Diag_df[which(CCS_Diag_df[,"CCS.CATEGORY"] == curr_grp),"CCS.CATEGORY.DESCRIPTION"])[1]
-  }
-  
-  #for proc
-  ccs_p_idxes <- which(grepl("CCS_P",freq_tb$Code_Group) == T)
-  
-  for (i in 1:length(ccs_p_idxes)){
-    curr_ind <- ccs_p_idxes[i]
-    curr_grp <- gsub("CCS_P_","",freq_tb[curr_ind,"Code_Group"])
-    freq_tb[curr_ind,"DESCRIPTION"] <- unique(CCS_Proc_df[which(CCS_Proc_df[,"CCS.CATEGORY"] == curr_grp),"CCS.CATEGORY.DESCRIPTION"])[1]
-  }
-  return(freq_tb)
-}
-
 #######Construct code feature df
 get_code_feature_df_func <- function(input_data,grouped_code_df,code_col_ingrpdf,code_col_ininputdf,group_col){
    # input_data <- All_data
@@ -990,7 +812,6 @@ clean_code_func <-function(list_of_codes){
 #For ICD code, 3 digit
 #For HCPCS code, 5 digit
 #'@NOTE: This might result in NAs for codess less than 3/5 nchar (from converting to numeric when it is char) from orignal 
-
 clean_code_func2 <-function(list_of_codes,list_of_types){
   #1.repalce any codes with non-alphanumeric characters with ""
   updated_list_of_codes<- gsub("[^[:alnum:]]", "", list_of_codes)
@@ -1010,11 +831,11 @@ clean_code_func2 <-function(list_of_codes,list_of_types){
     curr_nchar <- nchar(curr_code)
     curr_type <-  list_of_types[i]
     
-    if (grepl("HCPCS",curr_type) == T){ #if HCPCS, reformat codes less than 5 char long
+    if (grepl("HCPC",curr_type,ignore.case = T) == T){ #if HCPCS, reformat codes less than 5 char long
       if (curr_nchar < 5){
         curr_code <- reformat_codes_func(curr_code,5)
       }
-    }else if (grepl("ICD",curr_type) == T){ #if ICD, reformat codes less than 3 char long
+    }else if (grepl("ICD",curr_type,ignore.case = T) == T){ #if ICD, reformat codes less than 3 char long
       if (curr_nchar < 3){
         curr_code <- reformat_codes_func(curr_code,3)
       }
@@ -1025,3 +846,183 @@ clean_code_func2 <-function(list_of_codes,list_of_types){
 
   return(updated_list_of_codes)
 }
+
+
+####Grouping functions
+load_and_clean_CSS_data<- function(file_dir){
+  #Load four tables
+  HCUP_Diag1_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/icd9_dxref 2015.csv"),stringsAsFactors = F,skip = 1)
+  HCUP_Diag2_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/ccs_dx_icd10cm_2019_1.csv"),stringsAsFactors = F)
+  HCUP_Proc1_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/icd9_prref 2015.csv"),stringsAsFactors = F,skip = 1)
+  HCUP_Proc2_df <- read.csv(paste0(file_dir,"Code_Groups/New_HCUP_CCS_Data/ccs_pr_icd10pcs_2020_1.csv"),stringsAsFactors = F)
+  
+  #Change col name to combine
+  colnames(HCUP_Diag1_df) <- gsub("\\.$|X.","",colnames(HCUP_Diag1_df)) #remove the last . and X.
+  colnames(HCUP_Diag2_df) <- gsub("\\.$|X.","",colnames(HCUP_Diag2_df))
+  colnames(HCUP_Proc1_df) <- gsub("\\.$|X.","",colnames(HCUP_Proc1_df))
+  colnames(HCUP_Proc2_df) <- gsub("\\.$|X.","",colnames(HCUP_Proc2_df))
+  
+  colnames(HCUP_Diag1_df)[which(colnames(HCUP_Diag1_df) == "ICD.9.CM.CODE")] <- "Code"
+  colnames(HCUP_Diag2_df)[which(colnames(HCUP_Diag2_df) == "ICD.10.CM.CODE")] <- "Code"
+  colnames(HCUP_Proc1_df)[which(colnames(HCUP_Proc1_df) == "ICD.9.CM.CODE")] <- "Code"
+  colnames(HCUP_Proc2_df)[which(colnames(HCUP_Proc2_df) == "ICD.10.PCS.CODE")] <- "Code"
+  
+  
+  
+  HCUP_Diag1_df$CODE_TYPE <- "ICD9_Diag"
+  HCUP_Diag2_df$CODE_TYPE <- "ICD10_Diag"
+  HCUP_Proc1_df$CODE_TYPE <- "ICD9_Proc"
+  HCUP_Proc2_df$CODE_TYPE <- "ICD10_Proc"
+  
+  HCUP_comb <- rbind(HCUP_Diag1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
+                     HCUP_Diag2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
+                     HCUP_Proc1_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")],
+                     HCUP_Proc2_df[,c("Code","CCS.CATEGORY","CCS.CATEGORY.DESCRIPTION","CODE_TYPE")])
+  
+  #3.clean code and category
+  HCUP_comb[,"Code"]  <- clean_code_func2(HCUP_comb[,"Code"],HCUP_comb[,"CODE_TYPE"])
+  HCUP_comb[,"CCS.CATEGORY"]  <- clean_code_func2(HCUP_comb[,"CCS.CATEGORY"],HCUP_comb[,"CODE_TYPE"]) #Clean category in HCUP
+  
+  
+  #4. Remove all blanks and NAs   
+  HCUP_comb <- remove_NA_from_df(HCUP_comb,"Code")
+  
+  #5. remove the unspecified codes, cuz they will result codes grped into multiple groups, (e.g, E8342 is a qulified codes in ICD10, but unspecified in ICD9)
+  unspecified_idxes <- which(grepl("\\be codes|\\bExternal cause codes",HCUP_comb[,"CCS.CATEGORY.DESCRIPTION"],ignore.case = T)==T)
+  HCUP_comb<- HCUP_comb[-unspecified_idxes,]
+  return(HCUP_comb)
+}
+
+group_codes_into_CCS_func <- function(claim_code_df,CCS_df){
+  claim_code_df$CCS_CATEGORY <- NA
+  claim_code_df$CCS_CATEGORY_DESCRIPTION <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,1]
+    curr_ccs_idxes <- which(CCS_df[,"Code"] == curr_code)
+    if (length(curr_ccs_idxes) > 0){
+      claim_code_df[i,"CCS_CATEGORY"] <- CCS_df[curr_ccs_idxes,"CCS.CATEGORY"]
+      claim_code_df[i,"CCS_CATEGORY_DESCRIPTION"] <- CCS_df[curr_ccs_idxes,"CCS.CATEGORY.DESCRIPTION"]
+    }
+  }
+  return(claim_code_df)
+}
+
+#Chuback
+load_and_clean_Chuback_data<- function(file_dir){
+  #Load four tables
+  chuback_group_df <- read.csv(paste0(file_dir,"Code_Groups/BRAVA_lookup.20180502.edit.csv"),stringsAsFactors = F)
+  length(unique(chuback_group_df$Type)) #216
+  length(unique(chuback_group_df$Category)) #22
+  
+  #3.clean code 
+  chuback_group_df[,"Code"]<- clean_code_func2(chuback_group_df[,"Code"],chuback_group_df[,"Code.type"])
+  
+  #4. Remove all blanks and NAs   
+  chuback_group_df <- remove_NA_from_df(chuback_group_df,"Code")
+  
+  return(chuback_group_df)
+}
+group_codes_into_Chuback_func <- function(claim_code_df,Chuback_grp_df){
+  claim_code_df[,"Chuback_Type"] <- NA
+  claim_code_df[,"Chuback_Category"] <- NA
+  claim_code_df[,"Chuback_Description"] <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,1]
+    curr_idxes <- which(Chuback_grp_df[,"Code"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"Chuback_Type"]     <- paste0(unique(Chuback_grp_df[curr_idxes,"Type"]),collapse = "$$$$")
+      claim_code_df[i,"Chuback_Category"] <- paste0(unique(Chuback_grp_df[curr_idxes,"Category"]),collapse = "$$$$")
+      
+      claim_code_df[i,"Chuback_Description"] <-  paste0(unique(Chuback_grp_df[curr_idxes,"Code.Description"]),collapse = "$$$$")
+      
+    }
+  }
+  return(claim_code_df)
+}
+
+#Ritzwoller
+load_and_clean_Ritzwoller_data<- function(file_dir){
+  #Load four tables
+  Ritzwoller_group_df <- read.csv(paste0(file_dir,"Code_Groups/Ritzwoller_code_table.edited.csv"),stringsAsFactors = F)
+  length(unique(Ritzwoller_group_df$Category)) #6
+  
+  #3.clean code 
+  Ritzwoller_group_df[,"Code"] <- clean_code_func2(Ritzwoller_group_df[,"Code"],Ritzwoller_group_df[,"Code.type"])
+  
+  #4. Remove all blanks and NAs   
+  Ritzwoller_group_df <- remove_NA_from_df(Ritzwoller_group_df,"Code")
+  
+  return(Ritzwoller_group_df)
+}
+
+group_codes_into_Ritzwoller_func <- function(claim_code_df,Ritzwoller_grp_df){
+  claim_code_df[,"Ritzwoller_Type"] <- NA
+  claim_code_df[,"Ritzwoller_Category"] <- NA
+  claim_code_df[,"Ritzwoller_Description"] <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,1]
+    curr_idxes <- which(Ritzwoller_grp_df[,"Code"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"Ritzwoller_Type"]     <- paste0(unique(Ritzwoller_grp_df[curr_idxes,"Code.type"]),collapse = "$$$$")
+      claim_code_df[i,"Ritzwoller_Category"] <- paste0(unique(Ritzwoller_grp_df[curr_idxes,"Category"]),collapse = "$$$$")
+      
+      claim_code_df[i,"Ritzwoller_Description"] <-  paste0(unique(Ritzwoller_grp_df[curr_idxes,"Description"]),collapse = "$$$$")
+      
+    }
+  }
+  return(claim_code_df)
+}
+#DM3 grouping
+load_and_clean_DM3_data<- function(file_dir){
+  #Load data
+  drug_group_df <- read.csv(paste0(file_dir,"Code_Groups/Drug Code Groups-DM3.sorted.csv"),stringsAsFactors = F)
+  drug_group_df <- drug_group_df[,-1]
+  
+  # #Clean drug name by removing the source prefix
+  drug_group_df[,"desc"] <- gsub("NC: |NH: |NO: |NS: ","",drug_group_df[,"desc"])
+  drug_group_df[,"desc"] <- gsub("[[:punct:]]"," ",drug_group_df[,"desc"])
+  drug_group_df[,"desc"] <- trimws(drug_group_df[,"desc"], which = c("both"), whitespace = "[ \t\r\n]")
+  
+  
+  return(drug_group_df)
+}
+
+group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
+  claim_code_df$specific_group <- NA
+  claim_code_df$general_group <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,"Drug_name"]
+    curr_idxes <- which(DM3_df[,"desc"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"specific_group"] <-  unique(DM3_df[curr_idxes,"specific_group"])
+      claim_code_df[i,"general_group"]  <-  unique(DM3_df[curr_idxes,"general_group"])
+    }
+  }
+  return(claim_code_df)
+}
+
+get_ccs_discription <- function(freq_tb,CCS_Diag_df,CCS_Proc_df){
+  #for diag
+  ccs_d_idxes <- which(grepl("CCS_D",freq_tb$Code_Group) == T)
+  
+  for (i in 1:length(ccs_d_idxes)){
+    curr_ind <- ccs_d_idxes[i]
+    curr_grp <- gsub("CCS_D_","",freq_tb[curr_ind,"Code_Group"])
+    freq_tb[curr_ind,"DESCRIPTION"] <- unique(CCS_Diag_df[which(CCS_Diag_df[,"CCS.CATEGORY"] == curr_grp),"CCS.CATEGORY.DESCRIPTION"])[1]
+  }
+  
+  #for proc
+  ccs_p_idxes <- which(grepl("CCS_P",freq_tb$Code_Group) == T)
+  
+  for (i in 1:length(ccs_p_idxes)){
+    curr_ind <- ccs_p_idxes[i]
+    curr_grp <- gsub("CCS_P_","",freq_tb[curr_ind,"Code_Group"])
+    freq_tb[curr_ind,"DESCRIPTION"] <- unique(CCS_Proc_df[which(CCS_Proc_df[,"CCS.CATEGORY"] == curr_grp),"CCS.CATEGORY.DESCRIPTION"])[1]
+  }
+  return(freq_tb)
+}
+
