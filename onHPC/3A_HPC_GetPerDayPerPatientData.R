@@ -1,5 +1,12 @@
 source("Recapse_Ultility.R")
+#######################################################################################
+### Multi-Core set-up
+#######################################################################################
+numCores <- detectCores() # get the number of cores available
+print(numCores)
+registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
+#######################################################################################
 data_dir <- "/recapse/intermediate_data/"
 outdir <- "/recapse/intermediate_data/3A_perDay_PerPatientData/"
 
@@ -30,10 +37,6 @@ medicare_dir <- paste0(data_dir, "perPatientData/Medicare/")
 #######################################################################################
 #1.Get per day data
 #######################################################################################
-numCores <- detectCores() # get the number of cores available
-print(numCores)
-registerDoParallel(numCores)  # use multicore, set to the number of our cores
-
 IDs_processed <-  as.numeric(gsub("_perDay_Data.xlsx|ID","",list.files(outdir)))
 
 analysis_ID <- analysis_ID[-which(analysis_ID %in% IDs_processed)]
