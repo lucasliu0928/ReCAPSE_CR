@@ -13,8 +13,8 @@ outdir   <- "/recapse/intermediate_data/0_Codes/BeforeClean_UniqueCodes/"
 ############################## Medicaid  ############################## 
 #######################################################################
 #Data
-data_df1 <- data.frame(fread(paste0(data_dir,"kcr_medicaid_healthclaims_fb0015.csv")))
-data_df2 <- data.frame(fread(paste0(data_dir,"KCR_MEDICAID_PHARMCLAIMS_FB0015.csv")))
+data_df1 <- read.csv(paste0(data_dir,"kcr_medicaid_healthclaims_fb0015.csv"),stringsAsFactors = F)
+data_df2 <- read.csv(paste0(data_dir,"KCR_MEDICAID_PHARMCLAIMS_FB0015.csv"),stringsAsFactors = F)
 
 #Codes columns
 ICD_diag_cols   <- c("CDE_DIAG_PRIM","CDE_DIAG_2","CDE_DIAG_3","CDE_DIAG_4") #ICD 9 or ICD10
@@ -40,7 +40,7 @@ write.xlsx(Drug_comb1,paste0(outdir,"0_unique_Drug_Codes_Medicaid.xlsx"))
 #######################################################################
 ############################## Medicare  ############################## 
 #######################################################################
-#Data
+#Data (Do not use fread, it converts large interge to scitific notation )
 data_df <- read.csv(paste0(data_dir,"kcr_medicare_claims_fb0015.csv"),stringsAsFactors = F)
 
 #Code cols
