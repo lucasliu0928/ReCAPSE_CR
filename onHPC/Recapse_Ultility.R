@@ -370,6 +370,62 @@ get_perDay_both <- function(patient_ID,medicaid_heath_dir,medicaid_pharm_dir,med
 }
 
 
+#This function read all claims, if not avaiabliable, return NULL
+read_allClaims <- function(patient_ID,medicaid_heath_dir,medicaid_pharm_dir,medicare_dir){
+  #Codes columns for medicaid
+  medicaid_diag_cols <- c("CDE_DIAG_PRIM","CDE_DIAG_2","CDE_DIAG_3","CDE_DIAG_4")
+  medicaid_proc_cols <- c("CDE_PROC_PRIM")
+  medicaid_drug_cols <- c("CDE_THERA_CLS_AHFS","CDE_NDC")
+  
+  #Codes columns for medicare
+  medicare_diag_cols <- paste0("DGNS_CD",seq(1,25))
+  medicare_proc_cols <- c(paste0("PRCDRCD",seq(1,25)),"HCPCS_CD")
+  medicare_drug_cols <- c("NDC_CD","PROD_SRVC_ID")
+  medicare_drug_related <- c("GNN","BN")
+  
+  
+  #1.read original health_claims to get proc and diag codes
+  IDs_has_health_files <- as.numeric(gsub("_all_medicaid_healthclaims.xlsx|ID","",list.files(medicaid_heath_dir)))
+  if (patient_ID %in% IDs_has_health_files){  #check if ID in the dir
+    medicaid_health_df <- read.xlsx(paste0(medicaid_heath_dir,"ID",patient_ID,"_all_medicaid_healthclaims.xlsx"),sheet = 1,detectDates = T)
+    medicaid_health_df[,"DTE_FIRST_SVC"] <- mdy(medicaid_health_df[,"DTE_FIRST_SVC"])
+    medicaid_health_df <- medicaid_health_df[,c("study_id","Id_medicaid",
+                                                "DTE_FIRST_SVC",
+                                                medicaid_diag_cols,
+                                                medicaid_proc_cols)]
+  }else{
+    medicaid_health_df <- NULL
+  }
+  
+  #2.get original pharmcy_claims to get drug codes
+  IDs_has_pharm_files <- as.numeric(gsub("_all_medicaid_pharmclaims.xlsx|ID","",list.files(medicaid_pharm_dir)))
+  if (patient_ID %in% IDs_has_pharm_files){ # #check if ID in the dir
+    medicaid_pharm_df <- read.xlsx(paste0(medicaid_pharm_dir,"ID",patient_ID,"_all_medicaid_pharmclaims.xlsx"),sheet = 1,detectDates = T)
+    medicaid_pharm_df[,"DTE_FIRST_SVC"] <- dmy(medicaid_pharm_df[,"DTE_FIRST_SVC"])
+    medicaid_pharm_df <- medicaid_pharm_df[,c("study_id","Id_medicaid","DTE_FIRST_SVC",
+                                              medicaid_drug_cols)]
+  }else{
+    medicaid_pharm_df <- NULL
+  }
+  
+  #3.Get original medicare_claims
+  IDs_has_medicare_files <- as.numeric(gsub("_all_medicare_claims.xlsx|ID","",list.files(medicare_dir)))
+  if (patient_ID %in% IDs_has_medicare_files){
+    medicare_df <- read.xlsx(paste0(medicare_dir,"ID",patient_ID,"_all_medicare_claims.xlsx"),sheet = 1,detectDates = T)
+    medicare_df[,"claims_date"] <- mdy(medicare_df[,"claims_date"])
+    medicare_df <- medicare_df[,c("study_id","claims_date",
+                                  medicare_diag_cols,
+                                  medicare_proc_cols,
+                                  medicare_drug_cols,
+                                  medicare_drug_related)]
+  }else{
+    medicare_df <- NULL
+  }
+  
+  return(list(medicaid_health_df,medicaid_pharm_df,medicare_df))
+}
+
+
 #This function get unique code in original claims data
 get_unique_codes <- function(claims_df,code_columns,code_source,code_type){
   # claims_df <- cleaned_medicareClaims_df
@@ -825,13 +881,14 @@ clean_code_func2 <-function(list_of_codes,list_of_types){
   #4. For each code, 
   #   #if HCPCS, reformat codes less than 5 char long
   #   #if ICD, reformat codes less than 3 char long
-  #4.Check the number of charter for each code
   for (i in 1:length(updated_list_of_codes)){
     curr_code <- updated_list_of_codes[i]
     curr_nchar <- nchar(curr_code)
     curr_type <-  list_of_types[i]
     
-    if (grepl("HCPC",curr_type,ignore.case = T) == T){ #if HCPCS, reformat codes less than 5 char long
+    if (is.na(curr_code) == T | curr_code == ""){
+      curr_code <- NA
+    }else if (grepl("HCPC",curr_type,ignore.case = T) == T){ #if HCPCS, reformat codes less than 5 char long
       if (curr_nchar < 5){
         curr_code <- reformat_codes_func(curr_code,5)
       }
@@ -1060,3 +1117,59 @@ group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
   return(claim_code_df)
 }
 
+
+#3A_HPC_Get_PerMonth with clean codes
+get_claims_inDateRange <- function(in_data,time_col,start_d, end_d){
+  dat_inds <- which(in_data[,time_col] >= start_d & 
+                      in_data[,time_col] < end_d)
+  in_data <- in_data[dat_inds,]
+  return(in_data)
+}
+
+clean_codes_inPerPtsData <- function(in_data, all_code_cols, ICD_cols,HCPCS_cols){
+  # in_data <- medicaid_health_df
+  # ICD_cols <- c(ICD_diag_cols1)
+  # HCPCS_cols <- c(HCPCS_proc_cols1)
+  # all_code_cols <- c(ICD_diag_cols1,HCPCS_proc_cols1)
+  if (is.null(in_data) == T){
+    in_data <- NULL
+  }else{
+    for (t in 1:length(all_code_cols)){
+      curr_col <- all_code_cols[t]
+      curr_codes_list <- in_data[,curr_col]
+      
+      if (curr_col %in% ICD_cols){
+        curr_codes_type_list <- rep("ICD",length(curr_codes_list))
+      }else if (curr_col %in% HCPCS_cols){
+        curr_codes_type_list <- rep("HCPC",length(curr_codes_list))
+      }else{
+        curr_codes_type_list <- rep("Drug",length(curr_codes_list))
+      }
+      in_data[,curr_col] <- clean_code_func2(curr_codes_list,curr_codes_type_list)
+      
+    }
+  }
+  return(in_data)
+}
+
+
+get_uniquecodes_perMonth <- function(code_type, in_data1,in_data2,code_cols1,code_cols2){
+  codes1 <- as.vector(unlist(in_data1[,code_cols1]))
+  codes2 <- as.vector(unlist(in_data2[,code_cols2]))      
+  all_codes <- unique(c(codes1,codes2))
+  
+  #remove NA or balnks
+  na_orBlanks <- which(is.na(all_codes)==T | all_codes == "")
+  if (length(na_orBlanks) != 0){
+    all_codes <- all_codes[-na_orBlanks]
+  }
+  
+  #Add type info
+  if (length(all_codes) > 0){
+    all_codes <- paste0(code_type,"_",all_codes)
+  }else{
+    all_codes <- NULL
+  }
+  
+  return(all_codes)
+}
