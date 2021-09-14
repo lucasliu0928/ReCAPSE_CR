@@ -48,13 +48,14 @@ print(length(analysis_ID))
 
 foreach (i = 1: length(analysis_ID)) %dopar% {
   curr_id <- analysis_ID[i]
+  #print(paste0("Curr ID:",curr_id))
   data_res <- read_allClaims(curr_id,medicaid_heath_dir,medicaid_pharm_dir,medicare_dir)
-  
+
   #1. Read all raw claims, if not aval, return NULL
   medicaid_health_df <- data_res[[1]]
   medicaid_pharm_df  <- data_res[[2]]
   medicare_df        <- data_res[[3]]
-  
+
   #2. Clean codes in raw claims
   #2.1 Medicaid Codes columns
   ICD_diag_cols1   <- c("CDE_DIAG_PRIM","CDE_DIAG_2","CDE_DIAG_3","CDE_DIAG_4") #ICD 9 or ICD10
@@ -63,10 +64,10 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
   NDC_drug_cols1  <- c("CDE_NDC")
   all_medicaid_health_cols <- c(ICD_diag_cols1,HCPCS_proc_cols1)
   all_medicaid_pharms_cols <- c(AHFS_drug_cols1,NDC_drug_cols1)
-  
+
   cleaned_medicaid_health_df <- clean_codes_inPerPtsData(medicaid_health_df,all_medicaid_health_cols,ICD_diag_cols1,HCPCS_proc_cols1)
-  cleaned_medicaid_pharm_df <- clean_codes_inPerPtsData(medicaid_pharm_df,all_medicaid_pharms_cols,"","")
-  
+  cleaned_medicaid_pharm_df  <- clean_codes_inPerPtsData(medicaid_pharm_df,all_medicaid_pharms_cols,"","")
+
   #2.2 Medicare Code cols
   ICD_diag_cols2 <- paste0("DGNS_CD",seq(1,25))             #ICD9 or ICD10
   HCPCS_proc_cols2     <- "HCPCS_CD"                        #HCPCS
@@ -83,15 +84,15 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
   unique_dates2 <- as.character(unique(cleaned_medicaid_pharm_df[,"DTE_FIRST_SVC"]))
   unique_dates3 <- as.character(unique(cleaned_medicare_df[,"claims_date"]))
   all_unique_dates <- unique(c(unique_dates1,unique_dates2,unique_dates3))
-  
+
   #3.Get start and end dates (Always use frist day of the month)
   start_date <- ymd(paste0(c(strsplit(as.character(min(ymd(all_unique_dates))),"-")[[1]][1:2],"01"),collapse = "-"))
   end_date   <- ymd(paste0(c(strsplit(as.character(max(ymd(all_unique_dates))),"-")[[1]][1:2],"01"),collapse = "-")) + months(1) #ex: end date= 03/15, then changed to 03/01 + 1 month
-  
+
   #4.Get month seq
   month_seqs <- ymd(seq(start_date,end_date,by="months"))
-  
-  
+
+
   #5. Get unique code per month
   unique_codes_PerMonth_list <- list(NA)
   for (t in 1:(length(month_seqs) - 1)){
@@ -101,22 +102,33 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
     curr_month_df1_Health <- get_claims_inDateRange(cleaned_medicaid_health_df,"DTE_FIRST_SVC",curr_start,curr_end)
     curr_month_df1_Pharm  <- get_claims_inDateRange(cleaned_medicaid_pharm_df,"DTE_FIRST_SVC",curr_start,curr_end)
     curr_month_df2        <- get_claims_inDateRange(cleaned_medicare_df,"claims_date",curr_start,curr_end)
-    
+
     curr_unique_ICD_DIAG  <- get_uniquecodes_perMonth("DIAG_ICD",curr_month_df1_Health,curr_month_df2,ICD_diag_cols1,ICD_diag_cols2)
     curr_unique_ICD_PROC  <- get_uniquecodes_perMonth("PROC_ICD",curr_month_df1_Health,curr_month_df2,NULL,ICD_procedure_cols2)
     curr_unique_HCPC_PROC <- get_uniquecodes_perMonth("PROC_HCPCS",curr_month_df1_Health,curr_month_df2,HCPCS_proc_cols1,HCPCS_proc_cols2)
     curr_unique_NDC_DRUG  <- get_uniquecodes_perMonth("DRUG_NDC",curr_month_df1_Pharm,curr_month_df2,NDC_drug_cols1,NDC_drug_cols2)
     curr_unique_AHFS_DRUG  <- get_uniquecodes_perMonth("DRUG_AHFS",curr_month_df1_Pharm,curr_month_df2,AHFS_drug_cols1,NULL)
-    
+
     curr_unique_all_codes <- c(curr_unique_ICD_DIAG,curr_unique_ICD_PROC,curr_unique_HCPC_PROC,
                               curr_unique_NDC_DRUG,curr_unique_AHFS_DRUG)
-    unique_codes_PerMonth_list[[t]] <- curr_unique_all_codes
+    
+    if (is.null(curr_unique_all_codes) == T){ #This solve the issue of write last list entry as NA (Cuz NULL will not be saved in the last entry)
+      unique_codes_PerMonth_list[[t]] <- NA
+    }else {
+      unique_codes_PerMonth_list[[t]] <- curr_unique_all_codes
+    }
   }
-  
+
   #6. unique code all months
   all_unique_codes <- unique(unlist(unique_codes_PerMonth_list))
-  all_unique_codes <- sort(all_unique_codes)
+  #remove NA
+  na_indes <- which(is.na(all_unique_codes) == T)
+  if (length(na_indes) > 0 ){
+    all_unique_codes <- all_unique_codes[-na_indes]
+  }
   
+  all_unique_codes <- sort(all_unique_codes)
+
   #7. Unique code per month df (Row: month, Col: one code)
   perMonth_df <- as.data.frame(matrix(NA, nrow = length(month_seqs) - 1, ncol = length(all_unique_codes) + 3))
   colnames(perMonth_df) <- c("study_id","Month_Start","Month_End",all_unique_codes)
@@ -125,12 +137,11 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
     perMonth_df[t,"Month_Start"] <- as.character(month_seqs[t])
     perMonth_df[t,"Month_End"]   <- as.character(month_seqs[t+1])
     curr_codes <- unique_codes_PerMonth_list[[t]]
-    perMonth_df[t, curr_codes] <- 1
+    if (all(is.na(curr_codes)) == F){
+      perMonth_df[t, curr_codes] <- 1
+    }
   }
-  
+
   write.xlsx(perMonth_df,paste0(outdir,"ID",curr_id,"_","perMonth_Data.xlsx"))
 }
-
-
-
 
