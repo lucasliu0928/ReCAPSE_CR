@@ -1,7 +1,7 @@
 library(openxlsx)
 library(data.table)
 library(lubridate)
-library(parallel)
+library(parallel) 
 library(foreach)
 library(doParallel)
 library(stringr)
@@ -11,6 +11,8 @@ library(Matrix)
 library(fastDummies)
 library(pROC)
 library(caret)
+library(dplyr)
+
 compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
   #compute ROC-AUC
   auc_res <- compute_auc_func(predicted_prob,actual_label)
@@ -1172,4 +1174,44 @@ get_uniquecodes_perMonth <- function(code_type, in_data1,in_data2,code_cols1,cod
   }
   
   return(all_codes)
+}
+
+
+#4_XXXXXXX.R codes functions
+get_primary_site_date_func <- function(pt_kcr_df,CentralSequence_N) {
+  pri_idx <- which(pt_kcr_df[,"CentralSequenceNumber"] %in% CentralSequence_N) #primary index
+  if (length(pri_idx) > 0 ){  #if has primary idxes, it coulde be more than one
+    pri_dates <- paste0(pt_kcr_df[pri_idx,"Date_dx"],collapse = "$$$")
+    pri_sites <- paste0(pt_kcr_df[pri_idx,"PrimarySite"],collapse = "$$$")
+    if (identical(CentralSequence_N,c(0,1)) == T){ #if it is 1st primary, get recurrence date if there is recurrece
+      recur_date <- pt_kcr_df[pri_idx,"Date_1Recur"]
+    }else{
+      recur_date <- NA
+    }
+  }else{
+    pri_dates <- NA
+    pri_sites <- NA
+    recur_date <- NA
+  }
+  
+  return(list(pri_sites,pri_dates,recur_date))
+}
+
+
+get_cancer_info_func <- function(in_data, type_name){
+  idx  <- which(grepl(type_name,in_data[,"Type"]) == T) #use grepl, due to merged process, as long as it contains First primary, we consider it, just ignore the other ones
+  site <- in_data[idx,"Site"]
+  type <- in_data[idx,"Type"]
+  date <- in_data[idx,"Date"]
+  return(list(idx,site,type,date))
+}
+
+
+
+#5_XXXXXX.R codes functions
+#1.Convert column integer names to acutal date
+convert_intCol_toDate <- function(enroll_df,month_col_indexes, min_date,max_date, date_unit){
+  dates_seq <- seq(min_date,max_date,by = date_unit)
+  colnames(enroll_df)[month_col_indexes] <- as.character(dates_seq)
+  return(enroll_df)
 }
