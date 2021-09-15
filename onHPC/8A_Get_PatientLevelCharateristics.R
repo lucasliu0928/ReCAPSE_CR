@@ -214,14 +214,14 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
 raw_data_dir  <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 Proj_dir <- "/recapse/intermediate_data/"
 
-#local
-raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
-Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+# #local
+# raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
+# Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 data_dir1  <- paste0(Proj_dir, "4_RecurrDates_Outcome_Info/")
 data_dir2  <- paste0(Proj_dir, "7_PrePostLabels_AndAvailibility6mon/")
 data_dir3  <- paste0(Proj_dir, "1_ID_Sources_Info/")
-outdir     <- paste0(Proj_dir, "8_Characteristics/Patient_Level/")
+outdir     <- paste0(Proj_dir, "8_Characteristics2/Patient_Level/")
 
 
 #########################################################################################################
