@@ -10,10 +10,10 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 ################################################################################
 #Data dir
 ################################################################################
-data_dir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/"
+data_dir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes3/"
 outdir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/EnrolledMonths_WithEveryMonthsHasCodes/"
 
-# # #local
+# # # #local
 # data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/"
 # outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_CleanClaims_InValidMonth/EnrolledMonths_WithEveryMonthsHasCodes/"
 
@@ -40,10 +40,16 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
   #per month df all enrolled with possible no codes in the month
   enrolled_month_df <- read.xlsx(paste0(data_dir,curr_file),sheet = 1)
 
-  #Only keep the months that has at least one code
+  #Only keep the month rows that has at least one code
   codes_index <- 5:ncol(enrolled_month_df)
-  enrolled_month_df_filtered <- enrolled_month_df[rowSums(is.na(enrolled_month_df[,codes_index])) != ncol(enrolled_month_df[,codes_index]), ]
-
-  write.xlsx(enrolled_month_df_filtered,paste0(outdir,"ID",curr_id,"_","perMonthData_Enrolled_inPredictionWindow.xlsx"))
+  if (length(codes_index) > 2){
+    enrolled_month_df_filtered <- enrolled_month_df[rowSums(is.na(enrolled_month_df[,codes_index])) != ncol(enrolled_month_df[,codes_index]), ]
+  }else{
+    enrolled_month_df_filtered <- enrolled_month_df[which(is.na(enrolled_month_df[,codes_index])==F),]
+  }
+  if(nrow(enrolled_month_df_filtered) > 0 & ncol(enrolled_month_df_filtered) > 4){ #if output if ncols > 4 and nrow > 0 
+    write.xlsx(enrolled_month_df_filtered,paste0(outdir,"ID",curr_id,"_","perMonthData_Enrolled_inPredictionWindow.xlsx"))
+  }
+  
 
 }
