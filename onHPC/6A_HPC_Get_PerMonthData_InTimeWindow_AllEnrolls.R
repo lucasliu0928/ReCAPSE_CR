@@ -12,12 +12,12 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 ################################################################################
 valid_month_dir <- "/recapse/intermediate_data/5_Enrollment_And_Prediction_Months/"
 data_dir <- "/recapse/intermediate_data/3_CleanClaims_perPatient_perMonth/"
-outdir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/"
+outdir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/"
 
 # # #local
 # valid_month_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/5_Enrollment_And_Prediction_Months/"
 # data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/3_CleanClaims_perPatient_perMonth/"
-# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_CleanClaims_InValidMonth/"
+# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/"
 
 
 ############################################################
@@ -36,7 +36,7 @@ analysis_IDs <- as.numeric(gsub("_perMonth_Data.xlsx|ID","",perMonth_files))
 ########################################################################################################################
 #Use the following code to run in case out of memory when procssing all at one time
 ########################################################################################################################
-ID_processed <- as.numeric(gsub("_perMonthData_Enrolled_inPredictionWindow.xlsx|ID","",list.files(paste0(outdir,"/EnrolledMonths_WithPossibleNoCodes"))))
+ID_processed <- as.numeric(gsub("_perMonthData_Enrolled_inPredictionWindow.xlsx|ID","",list.files(outdir)))
 if (length(ID_processed) != 0 ){
   analysis_IDs <- analysis_IDs[-which(analysis_IDs %in% ID_processed)]
 }
@@ -83,6 +83,6 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
                       ymd(enrolled_month_df[,"Enrolled_Month"]) <= ymd(curr_prediction_end) )
   updated_enrolled_month_df <- enrolled_month_df[kept_idxes,]
 
-  write.xlsx(updated_enrolled_month_df,paste0(outdir,"EnrolledMonths_WithPossibleNoCodes/","ID",curr_id,"_","perMonthData_Enrolled_inPredictionWindow.xlsx"))
+  write.xlsx(updated_enrolled_month_df,paste0(outdir,"ID",curr_id,"_","perMonthData_Enrolled_inPredictionWindow.xlsx"))
 
 }
