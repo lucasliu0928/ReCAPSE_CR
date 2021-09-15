@@ -12,6 +12,7 @@ library(fastDummies)
 library(pROC)
 library(caret)
 library(dplyr)
+library(sas7bdat)
 
 compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
   #compute ROC-AUC
