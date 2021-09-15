@@ -1,76 +1,76 @@
-library(openxlsx)
-library(lubridate)
+source("Recapse_Ultility.R")
+exclusion_func <- function(in_data){
+  exclusion1_indxes <- which(in_data[,"HasEnoughMonths_InWindow"] ==0 | 
+                               is.na(in_data[,"HasEnoughMonths_InWindow"])==T) #999
+  exclusion2_indxes <- which(in_data[,"Stage"]  %in% c(0,4) |
+                               is.na(in_data[,"Stage"])==T) #3491
+  exclusion3_indxes <- which(in_data[,"Comb_SEERSummStg"]  %in% c(0,7,9) |
+                               is.na(in_data[,"Comb_SEERSummStg"])==T) #3382
+  exclusion4_indxes <- which(in_data[,"Diagnosis_Year"]<2004 | in_data[,"Diagnosis_Year"]>2015| 
+                               is.na(in_data[,"Diagnosis_Year"])==T) #7393
+  all_exc_indexes <- unique(c(exclusion1_indxes,exclusion2_indxes,exclusion3_indxes,exclusion4_indxes))
+  
+  updated_in_data <- in_data[-all_exc_indexes,]
+  return(updated_in_data)
+}
+
+
+################################################################################
+#Set up parallel computing envir
+################################################################################
+numCores <- detectCores() # get the number of cores available
+print(numCores)
+registerDoParallel(numCores)  # use multicore, set to the number of our cores
+
+################################################################################
+#Data dir
+################################################################################
 #onHPC
-data_dir <- "/recapse/intermediate_data/"
-outdir <- "/recapse/intermediate_data/"
+proj_dir  <- "/recapse/intermediate_data/"
 
-# #local
-# data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#local
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+
+#data dir
+data_dir1  <- paste0(proj_dir, "8_Characteristics/Patient_Level/")
+data_dir2  <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/A_PrePost_Labels/EnrolledMonths_WithEveryMonthsHasCodes/")
+
+outdir   <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
 
-################################################################################ 
-#1. Filter flag for per month data
-#this excludes pts has no valid claims in range 
-#1).  If SBCE, and 2nd event is not NA,  (e.g, 1st primary -> 2nd event -> death or other diagnise)
-#     3 months of claims before or after the SBCE    (have claims at least 3 months  before 2nd event or after)
-#2):  if SBCE, but 2nd event is NA: (e.g, 1st primary then death)
-#     # 6 month data
-#2).  or any 6 months of claims for non-SBCE patients (At least 6 month data avaiable)
-################################################################################ 
-PerMonthData_FilterFlag_df_df <- read.xlsx(paste0(data_dir,"7_PerMonthData_FilterFlag_df.xlsx"),sheet = 1)
 
 ################################################################################ 
-#2. Load patient level charateristics
+#1. Load pts level char
 ################################################################################ 
-Patient_Char_df <- read.xlsx(paste0(data_dir,"8_PatientLevel_charecteristics.xlsx"),sheet = 1)
+patient_level_char_df1 <- read.xlsx(paste0(data_dir1,"8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+patient_level_char_df2 <- read.xlsx(paste0(data_dir1,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"),sheet = 1)
 
-#########################################################################################################
-#3. Load outcome/event type data
-#########################################################################################################
-updated_All_event_df <- read.xlsx(paste0(data_dir,"4_updated_All_event_df.xlsx"),sheet = 1)
 
 ################################################################################ 
 #3.Analysis ID
 ################################################################################ 
-analysis_ID <- unique(Reduce(intersect, list(updated_All_event_df$study_id,PerMonthData_FilterFlag_df_df$study_id, Patient_Char_df$study_id)))
-
-################################################################################ 
-#4.Get exclusion dataframe
-################################################################################ 
-exclusion_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 4))
-colnames(exclusion_df) <- c("study_id","SEERSummStg2000","BestStageGrp","Has_ValidClaims_inRange")
-
-for (i in 1:length(analysis_ID)){
-  if (i %% 1000 == 0){ print(i)}
-  curr_id <- analysis_ID[i]
-   
-  #curr Patient_Char_df
-  curr_Patient_Char_df <- Patient_Char_df[which(Patient_Char_df[,"study_id"] == curr_id),]
-  
-  #curr PerMonthData_FilterFlag_df_df
-  curr_filterflag_df <- PerMonthData_FilterFlag_df_df[which(PerMonthData_FilterFlag_df_df[,"study_id"] == curr_id),]
-  
-  exclusion_df[i,"study_id"] <- curr_id
-  exclusion_df[i,"SEERSummStg2000"] <- curr_Patient_Char_df[,"Comb_SEERSummStg"]
-  exclusion_df[i,"BestStageGrp"] <- curr_Patient_Char_df[,"Stage"]
-  exclusion_df[i,"Has_ValidClaims_inRange"] <- curr_filterflag_df[,"Has_ValidClaims_inRange"]
-
-}
+analysis_ID1 <- unique(patient_level_char_df1$study_id)
+analysis_ID2 <- unique(patient_level_char_df2$study_id)
 
 ################################################################################ 
 #Exclusion 1: Has_ValidClaims_inRange == 0 
-#Exclusion 2 : non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5) #In-situ 0; Localized 1; Regional 2-5; Distant 7
-#Exclusion 3: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (BestStageGrp) 
+#Exclusion 2: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (Stage(BestStageGrp) )
+#Exclusion 3 : non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5) #In-situ 0; Localized 1; Regional 2-5; Distant 7
+#Exclusion 4: diagnoise of first primary BC not in 2004 to 2015
 ################################################################################ 
-exclusion1_indxes <- which(exclusion_df$Has_ValidClaims_inRange ==0 | is.na(exclusion_df$Has_ValidClaims_inRange)==T) #584
-exclusion2_indxes <- which((!exclusion_df$SEERSummStg2000 %in% c(1,2,3,4,5)) | is.na(exclusion_df$SEERSummStg2000)==T) #3491
-exclusion3_indxes <- which(exclusion_df$BestStageGrp %in% c(0,1,2,seq(70,99,1)) | is.na(exclusion_df$BestStageGrp)==T) #2789
+#1.For enrollment moths record that allow no codes in the months
+patient_level_char_df1 <- exclusion_func(patient_level_char_df1)
+patient_level_char_df2 <- exclusion_func(patient_level_char_df2)
 
-final_analysis_ID_df <- exclusion_df[-unique(c(exclusion1_indxes,exclusion2_indxes,exclusion3_indxes)),]
-colnames(final_analysis_ID_df)[2:4] <- paste0("ExcCrit_",colnames(final_analysis_ID_df)[2:4]) 
-write.xlsx(final_analysis_ID_df,paste0(outdir,"9_Final_Analysis_ID.xlsx")) #23378
+write.xlsx(patient_level_char_df1,paste0(outdir,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx")) #23378
+write.xlsx(patient_level_char_df2,paste0(outdir,"9_PtsCharForFinalID_WithEveryMonthsHasCodes.xlsx")) #23378
 
-table(final_analysis_ID_df$ExcCrit_BestStageGrp)
-table(final_analysis_ID_df$ExcCrit_BestStageGrp)
+
+final_IDs1 <- as.data.frame(patient_level_char_df1[,"study_id"])
+colnames(final_IDs1) <- "study_id"
+final_IDs2 <- as.data.frame(patient_level_char_df2[,"study_id"])
+colnames(final_IDs2) <- "study_id"
+
+write.xlsx(final_IDs1,paste0(outdir,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx")) #23378
+write.xlsx(final_IDs2,paste0(outdir,"9_Final_ID2_WithEveryMonthsHasCodes.xlsx")) #23378
 
