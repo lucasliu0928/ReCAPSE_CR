@@ -1,15 +1,18 @@
 source("Recapse_Ultility.R")
-get_codes_func <- function(cols_inData,code_type){
-  colnames_indata <- cols_inData[which(grepl(code_type,cols_inData)==T)]
+get_codes_func <- function(codes_colnames,code_type){
+  colnames_indata <- codes_colnames[which(grepl(code_type,codes_colnames)==T)]
   codes   <- gsub(paste0(code_type,"_"),"",colnames_indata)
-  
-  code_df <- data.frame(COLNAMES = colnames_indata, CODE = codes,TYPE = code_type)
+  if (length(colnames_indata) == 0){
+    code_df <- NULL
+  }else{
+    code_df <- data.frame(COLNAMES = colnames_indata, CODE = codes,TYPE = code_type)
+  }
   return(code_df)
 }
 
 find_grp_func <- function(list_of_codes,type_of_codes,diag_grp_df,proc_grp_df,drug_grp_df){
-  list_of_codes <- as.character(all_code_df$CODE)
-  type_of_codes <- as.character(all_code_df$TYPE)
+  #list_of_codes <- as.character(all_code_df$CODE)
+  #type_of_codes <- as.character(all_code_df$TYPE)
   GRPs <- NA
   for (i in 1:length(list_of_codes)){
     curr_code <- list_of_codes[i]
@@ -20,7 +23,7 @@ find_grp_func <- function(list_of_codes,type_of_codes,diag_grp_df,proc_grp_df,dr
       if(length(idx) > 0){
         curr_grp <- diag_grp_df[idx,"CCS_CATEGORY"]
       }else{
-        curr_grp <- NA
+        curr_grp <- paste0("CCS_",NA)
       }
     }else if (curr_type == "PROC_ICD"){
       idx <- which(proc_grp_df[,"CODE"] == curr_code & 
@@ -28,7 +31,7 @@ find_grp_func <- function(list_of_codes,type_of_codes,diag_grp_df,proc_grp_df,dr
       if(length(idx) > 0){
         curr_grp <- proc_grp_df[idx,"CCS_CATEGORY"]
       }else{
-        curr_grp <- NA
+        curr_grp <- paste0("CCS_",NA)
       }
     }else if (curr_type == "PROC_HCPCS"){
       idx <- which(proc_grp_df[,"CODE"] == curr_code & 
@@ -36,7 +39,7 @@ find_grp_func <- function(list_of_codes,type_of_codes,diag_grp_df,proc_grp_df,dr
       if(length(idx) > 0){
         curr_grp <- proc_grp_df[idx,"CCS_CATEGORY"]
       }else{
-        curr_grp <- NA
+        curr_grp <- paste0("CCS_",NA)
       }
     }else if (curr_type == "DRUG_AHFS"){
       idx <- which(drug_grp_df[,"CODE"] == curr_code & 
@@ -44,7 +47,7 @@ find_grp_func <- function(list_of_codes,type_of_codes,diag_grp_df,proc_grp_df,dr
       if(length(idx) > 0){
         curr_grp <- drug_grp_df[idx,"specific_group"]
       }else{
-        curr_grp <- NA
+        curr_grp <- paste0("DM3_SPE_",NA)
       }
     }else if (curr_type == "DRUG_NDC"){
       idx <- which(drug_grp_df[,"CODE"] == curr_code & 
@@ -52,7 +55,7 @@ find_grp_func <- function(list_of_codes,type_of_codes,diag_grp_df,proc_grp_df,dr
       if(length(idx) > 0){
         curr_grp <- drug_grp_df[idx,"specific_group"]
       }else{
-        curr_grp <- NA
+        curr_grp <- paste0("DM3_SPE_",NA)
       }
     }
     
@@ -80,11 +83,11 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1  <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
-data_dir2  <- paste0(proj_dir, "6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/")
+data_dir2  <- paste0(proj_dir, "6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes3/")
 data_dir3  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-outdir   <- paste0(proj_dir, "/10A_CCSGrpedFeatures_inValidMonth/WithPossibleMonthsHasNoCodes")
-outdir2  <- paste0(proj_dir, "/Pts_Level_Unique_Grps_inValidMonths/WithPossibleMonthsHasNoCodes")
+outdir   <- paste0(proj_dir, "10A_CCSDiagProcF_And_DM3SPEF_inValidMonth/WithPossibleMonthsHasNoCodes/")
+outdir2  <- paste0(proj_dir, "10A_UniqueGrps_inValidMonths_PtsLevel/WithPossibleMonthsHasNoCodes/")
 ################################################################################
 #1.Load group df
 ################################################################################
@@ -120,43 +123,48 @@ print(length(analysis_IDs))
 foreach (i = 1: length(analysis_IDs)) %dopar% {
   curr_id <- analysis_IDs[i]
   curr_file <- paste0("ID",curr_id,"_perMonthData_Enrolled_inPredictionWindow.xlsx")
-  
+
   #per month df
   curr_perMonth_df <- read.xlsx(paste0(data_dir2,curr_file),sheet = 1)
-  
-  #'@TODO: this can also be updated later in previous code when generate in predictino Window
-  #updated per month df, remove code has all NAs in rows (This is due to when filter valid month, code in non-valid month are still kept)
-  curr_perMonth_df <- curr_perMonth_df[,colSums(is.na(curr_perMonth_df))<nrow(curr_perMonth_df)]  
-  col_names <- colnames(curr_perMonth_df)
-  
-  #current codes
-  curr_diag_ICD_codes   <- get_codes_func(col_names,"DIAG_ICD")
-  curr_proc_ICD_codes   <-  get_codes_func(col_names,"PROC_ICD")
-  curr_proc_HCPCS_codes <-   get_codes_func(col_names,"PROC_HCPCS")
-  curr_drug_AHFS_codes  <-   get_codes_func(col_names,"DRUG_AHFS")
-  curr_drug_NDC_codes   <-  get_codes_func(col_names,"DRUG_NDC")
-  
-  all_code_df <- rbind(curr_diag_ICD_codes,curr_proc_ICD_codes,curr_proc_HCPCS_codes,curr_drug_AHFS_codes,curr_drug_NDC_codes)
-  all_code_df$GRPS <- find_grp_func(all_code_df[,"CODE"],all_code_df[,"TYPE"],diag_grp_df,proc_grp_df,drug_grp_df)
 
-  #update per month df col names with ccs grp
-  unique_grps <- unique(all_code_df[,"GRPS"])
+  #Make sure no code has all NAs rows
+  #NOTE this was also done in previous code when generate in prediction Window
+  curr_perMonth_df <- curr_perMonth_df[,colSums(is.na(curr_perMonth_df))<nrow(curr_perMonth_df)]
   
-  curr_grp_feature_df <- curr_perMonth_df[,1:4] #keep id and month
-  curr_grp_feature_df[,unique_grps] <- NA #new grp feature cols
-  
-  for (j in 5:ncol(curr_grp_feature_df)){
-    curr_grp <- colnames(curr_grp_feature_df)[j]
-    curr_codes_ingrp <- as.character(all_code_df[which(all_code_df[,"GRPS"] == curr_grp),"COLNAMES"])
-    curr_col_idx_ingrps <- which(colnames(curr_perMonth_df) %in% curr_codes_ingrp)
+  if (ncol(curr_perMonth_df) > 4){ #Make sure there is any code left in the df, if not, this pts should be excluded for final
+      code_names <- colnames(curr_perMonth_df)[5:ncol(curr_perMonth_df)]
     
-    curr_df <- as.data.frame(curr_perMonth_df[,curr_col_idx_ingrps])
-    curr_grp_feature_df[,j] <- rowSums(curr_df,na.rm = T)
+      #current codes
+      curr_diag_ICD_codes   <- get_codes_func(code_names,"DIAG_ICD")
+      curr_proc_ICD_codes   <-  get_codes_func(code_names,"PROC_ICD")
+      curr_proc_HCPCS_codes <-   get_codes_func(code_names,"PROC_HCPCS")
+      curr_drug_AHFS_codes  <-   get_codes_func(code_names,"DRUG_AHFS")
+      curr_drug_NDC_codes   <-  get_codes_func(code_names,"DRUG_NDC")
     
+      all_code_df <- rbind(curr_diag_ICD_codes,curr_proc_ICD_codes,curr_proc_HCPCS_codes,curr_drug_AHFS_codes,curr_drug_NDC_codes)
+      all_code_df$GRPS <- find_grp_func(all_code_df[,"CODE"],all_code_df[,"TYPE"],diag_grp_df,proc_grp_df,drug_grp_df)
+    
+      #update per month df col names with ccs grp
+      unique_grps <- unique(all_code_df[,"GRPS"])
+    
+      curr_grp_feature_df <- curr_perMonth_df[,1:4] #keep id and month
+      curr_grp_feature_df[,unique_grps] <- NA #new grp feature cols
+    
+      for (j in 5:ncol(curr_grp_feature_df)){
+        curr_grp <- colnames(curr_grp_feature_df)[j]
+        curr_codes_ingrp <- as.character(all_code_df[which(all_code_df[,"GRPS"] == curr_grp),"COLNAMES"])
+        curr_col_idx_ingrps <- which(colnames(curr_perMonth_df) %in% curr_codes_ingrp)
+    
+        curr_df <- as.data.frame(curr_perMonth_df[,curr_col_idx_ingrps])
+        curr_grp_feature_df[,j] <- rowSums(curr_df,na.rm = T)
+    
+      }
+      write.xlsx(curr_grp_feature_df,paste0(outdir,"ID",curr_id,"_Month_Grp_Feature.xlsx"))
+    
+      #Ouput unique grps for each patients
+      unique_grps_df <- as.data.frame(unique_grps)
+      write.xlsx(unique_grps_df,paste0(outdir2,"ID",curr_id,"_Month_Unique_Grps.xlsx"))
   }
-  write.xlsx(curr_grp_feature_df,paste0(outdir,"ID",curr_id,"_Month_Grp_Feature.xlsx"))
-  
-  #Ouput unique grps for each patients
-  unique_grps_df <- as.data.frame(unique_grps)
-  write.xlsx(unique_grps_df,paste0(outdir2,"ID",curr_id,"_Month_Unique_Grps.xlsx"))
 }
+
+
