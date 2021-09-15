@@ -30,19 +30,23 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
   # kcr_df   <- kcr_data
   # All_cancer_site_date_df <- All_cancer_site_date_data
 
-  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 38))
+  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 41))
   colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE",
-                         "Diagnosis_Year","Race","Site","Stage","Laterality",
+                         "Diagnosis_Year","Race","Site",
+                         "BestStageGrp","Stage",
+                         "Comb_SEERSummStg","regional","Laterality",
                          "Grade","er_stat","pr_stat","surg_prim_site","her2_stat",
                          "radiation","reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                          "cs_tum_size","cs_tum_ext","chemo","hormone","cs_tum_nodes",
-                         "num_nonbc","regional","Comb_SEERSummStg","date_Birth",
-                         "Site_1st_Event","Year_1st_Event",
-                         "Site_2nd_Event","Type_2nd_Event","Year_2nd_Event",
+                         "num_nonbc","date_Birth",
+                         "Site_1st_Event","Date_1st_Event",
+                         "Site_2nd_Event","Type_2nd_Event","Date_2nd_Event",
                          "Event_2nd_Is1stPrimaryBCDeath","Year_1stPrimaryBCDeath",
+                         "Days_1stEventTODeath","Days_1stTO2nd",
                          "Num_Enrolled_Prediction_Months","most_recent_enrollment_year",
                          "Num_Month_before_2ndEvent","Num_Month_AfterOrEqual_2ndEvent","HasEnoughMonths_InWindow")
-  
+
+
   for (i in 1:length(analysis_ID)){
     if (i %% 1000 == 0){
       print(i)
@@ -86,24 +90,29 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
     char_df[i,"Site_1st_Event"] <- curr_1stprimary_site
     
     curr_1stevent_date <- curr_event[,"Date_1st_Event"]
-    char_df[i,"Year_1st_Event"] <-  as.numeric(unlist(strsplit(curr_1stevent_date,split = "/"))[3])
+    char_df[i,"Date_1st_Event"] <-  curr_1stevent_date
     
     
     #2nd event site, type and year
     char_df[i,"Type_2nd_Event"] <-  curr_event[,"Type_2nd_Event"]
     char_df[i,"Site_2nd_Event"] <-  curr_event[,"Site_2nd_Event"]
-    char_df[i,"Year_2nd_Event"] <-  as.numeric(unlist(strsplit(curr_event[,"Date_2nd_Event"],split = "/"))[3])
+    char_df[i,"Date_2nd_Event"] <-  curr_event[,"Date_2nd_Event"]
     
     
     #2nd event is 1st primary BC related death
     if (grepl("Death",char_df[i,"Type_2nd_Event"]) == T){
       char_df[i,"Event_2nd_Is1stPrimaryBCDeath"] <- 1
       char_df[i,"Year_1stPrimaryBCDeath"] <-  as.numeric(unlist(strsplit(curr_event[,"Primary_1stBC_Death_Date"],split = "/"))[3])
+      char_df[i,"Days_1stEventTODeath"]   <-  curr_event[,"Days_1stEventTODeath"]
+      char_df[i,"Days_1stTO2nd"]          <-  curr_event[,"Days_1stTO2nd"]
+      
+
     }else{
       char_df[i,"Event_2nd_Is1stPrimaryBCDeath"] <- 0
-      char_df[i,"Year_1stPrimaryBCDeath"] <- NA
+      char_df[i,"Year_1stPrimaryBCDeath"]  <- NA
+      char_df[i,"Days_1stEventTODeath"]    <-  NA
+      char_df[i,"Days_1stTO2nd"]           <-  NA
     }
-    
     
     #KCR Data
     curr_kcr <- kcr_df[which(kcr_df[,"study_id"] == curr_id & 
@@ -111,11 +120,30 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
                                kcr_df[,"Date_dx"] ==  curr_1stevent_date &
                                kcr_df[,"CentralSequenceNumber"] %in% c(0,1)),] #Acutal first priamry
     
-    
+    char_df[i,"Diagnosis_Year"] <- curr_kcr[,"Year_Diag"]
     char_df[i,"date_Birth"] <- curr_kcr[,"date_Birth"]
     char_df[i,"Race"] <- curr_kcr[,"Race1"]
     char_df[i,"Site"] <- curr_kcr[,"PrimarySite"]
-    char_df[i,"Stage"] <- curr_kcr[,"BestStageGrp"]
+    
+    #For BestStageGrp: Stage 0 (0-2) Stage I [10-30) Stage II [30-50) Stage III [50-70) Stage IV [70-80)
+    curr_BestStageGrp <- curr_kcr[,"BestStageGrp"]
+    char_df[i,"BestStageGrp"] <- curr_BestStageGrp
+    if (is.na(curr_BestStageGrp) == T){
+      char_df[i,"Stage"] <- NA
+    }else if(curr_BestStageGrp >= 0 & curr_BestStageGrp < 2){
+      char_df[i,"Stage"] <- 0
+    }else if (curr_BestStageGrp >=10 & curr_BestStageGrp < 30){
+      char_df[i,"Stage"] <- 1
+    }else if(curr_BestStageGrp >=30 & curr_BestStageGrp < 50){
+      char_df[i,"Stage"] <- 2
+    }else if(curr_BestStageGrp >=50 & curr_BestStageGrp < 70){
+      char_df[i,"Stage"] <- 3
+    }else if (curr_BestStageGrp >=70 & curr_BestStageGrp < 80){
+      char_df[i,"Stage"] <- 4
+    }else{
+      char_df[i,"Stage"] <- NA
+    }
+    
     char_df[i,"Grade"] <- curr_kcr[,"Grade"]
     char_df[i,"Laterality"] <- curr_kcr[,"Laterality"]
     char_df[i,"er_stat"] <- curr_kcr[,"er_stat"]
@@ -162,9 +190,6 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
     }
     
     char_df[i,"Comb_SEERSummStg"] <- curr_kcr[,"Comb_SEERSummStg"]
-    
-    
-    
     #Local or regional
     curr_seer_stage <- curr_kcr[,"Comb_SEERSummStg"]
     if (is.na(curr_seer_stage) == F){
