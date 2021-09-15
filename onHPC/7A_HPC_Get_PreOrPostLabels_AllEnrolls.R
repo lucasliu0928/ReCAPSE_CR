@@ -14,13 +14,13 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 #onHPC
 proj_dir  <- "/recapse/intermediate_data/"
-data_dir  <- paste0(proj_dir, "6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/")
+data_dir  <- paste0(proj_dir, "6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes3/")
 data_dir2 <- paste0(proj_dir, "4_RecurrDates_Outcome_Info/")
 outdir    <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/A_PrePost_Labels/EnrolledMonths_WithPossibleMonthsHasNoCodes/")
 
 # # #local
 # proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-# data_dir  <- paste0(proj_dir, "6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/")
+# data_dir  <- paste0(proj_dir, "6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes3/")
 # data_dir2 <- paste0(proj_dir, "4_RecurrDates_Outcome_Info/")
 # outdir    <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/A_PrePost_Labels/EnrolledMonths_WithPossibleMonthsHasNoCodes/")
 
