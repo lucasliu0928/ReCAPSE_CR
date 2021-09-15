@@ -12,7 +12,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 ################################################################################
 valid_month_dir <- "/recapse/intermediate_data/5_Enrollment_And_Prediction_Months/"
 data_dir <- "/recapse/intermediate_data/3_CleanClaims_perPatient_perMonth/"
-outdir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes/"
+outdir <- "/recapse/intermediate_data/6_CleanClaims_InValidMonth/EnrolledMonths_WithPossibleMonthsHasNoCodes3/"
 
 # # #local
 # valid_month_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/5_Enrollment_And_Prediction_Months/"
@@ -83,6 +83,12 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
                       ymd(enrolled_month_df[,"Enrolled_Month"]) <= ymd(curr_prediction_end) )
   updated_enrolled_month_df <- enrolled_month_df[kept_idxes,]
 
-  write.xlsx(updated_enrolled_month_df,paste0(outdir,"ID",curr_id,"_","perMonthData_Enrolled_inPredictionWindow.xlsx"))
+  #Only keep the Code columns if not all rows are NAs
+  updated_enrolled_month_df <- updated_enrolled_month_df[,colSums(is.na(updated_enrolled_month_df))<nrow(updated_enrolled_month_df)]
+  
+  #if ncol = 4, then there is no Code left nad nrow >0
+  if(ncol(updated_enrolled_month_df) > 4 & nrow(updated_enrolled_month_df) > 0 ){ #if output if ncols > 4
+    write.xlsx(updated_enrolled_month_df,paste0(outdir,"ID",curr_id,"_","perMonthData_Enrolled_inPredictionWindow.xlsx"))
+  }
 
 }
