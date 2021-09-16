@@ -196,36 +196,3 @@ write.csv(importance_matrix,paste0(outdir,"16_importance_matrix_withDS_POSweight
 # print(perf)
 # 
 
-
-
-# #statitiscs
-# pre_recurrence_indxes <- which(model_data$y_PRE_OR_POST_2ndEvent==0)
-# post_recurrence_indxes <- which(model_data$y_PRE_OR_POST_2ndEvent==1)
-# features_tocompute <- c("months_since_dx","reg_age_at_dx","reg_nodes_exam","Age","reg_nodes_pos","CCS_D_42","CCS_D_24","C504","surg_prim_site_23","Laterality_1")
-# stat_tb <- as.data.frame(matrix(NA, nrow = 10, ncol = 3))
-# colnames(stat_tb) <- c("Features","Stats_Pre","Stats_Post")
-# for (i in 1:length(features_tocompute)){
-#   curr_f <- features_tocompute[i]
-#   stat_tb[i,"Features"] <- curr_f
-#   if (i <= 5){
-#     avg0 <- round(mean(model_data[pre_recurrence_indxes,curr_f],na.rm = T),1)
-#     sd0 <- round(sd(model_data[pre_recurrence_indxes,curr_f],na.rm = T),1)
-#     
-#     avg1 <- round(mean(model_data[post_recurrence_indxes,curr_f],na.rm = T),1)
-#     sd1  <- round(sd(model_data[post_recurrence_indxes,curr_f],na.rm = T),1)
-#     
-#     stat_tb[i,"Stats_Pre"] <-  paste0(avg0," (",sd0,")")
-#     stat_tb[i,"Stats_Post"] <- paste0(avg1," (",sd1,")")
-#   }else{
-#     n0 <- length(which(model_data[pre_recurrence_indxes,curr_f] == 1))
-#     p0 <- round(n0/length(pre_recurrence_indxes)*100,1)
-#     
-#     n1 <- length(which(model_data[post_recurrence_indxes,curr_f] == 1))
-#     p1 <- round(n1/length(post_recurrence_indxes)*100,1)
-#     
-#     stat_tb[i,"Stats_Pre"] <-  paste0(n0," (",p0,"%)")
-#     stat_tb[i,"Stats_Post"] <- paste0(n1," (",p1,"%)")
-#   }
-# }
-# 
-# write.csv(stat_tb,"/Users/lucasliu/Desktop/stats.csv")
