@@ -601,13 +601,21 @@ apply_code_transforamtion_func <- function(counting_df){
 
 add_time_since_func <-function(pt_perMonth_df){
   #the time since the most recent occurrence of this code group
-  
-  #pt_perMonth_df <- curr_CCS_counting_df_diag
+  #pt_perMonth_df <- curr_grp_f_df
   
   #reoder and add month sqeuence
   pt_perMonth_df <- pt_perMonth_df[order(ymd(pt_perMonth_df[,"Month_Start"])),]  #sort pt data by month
-  pt_perMonth_df$Month_Index <- seq(1,nrow(pt_perMonth_df),1) #Use interger as month sequence for easier computation
-  pt_perMonth_df <- pt_perMonth_df[,c(1,2,ncol(pt_perMonth_df),3:(ncol(pt_perMonth_df)-1))] #    #reorder columns
+  
+  #get the month index as the actuall month difference to the first month,  #Use interger as month sequence for easier computation
+  pt_perMonth_df$Month_Index <-   abs(interval(ymd(pt_perMonth_df[,"Month_Start"]), ymd(pt_perMonth_df[1,"Month_Start"])) %/% months(1)) + 1 
+  
+  #relocate cols
+  pt_perMonth_df <- pt_perMonth_df %>% relocate(Month_Index, .after = Month_Start)
+  
+  #'@NEW Find  the columns has all 0s (no months of this pts has the code group)
+  count_forallgrps    <- colSums(pt_perMonth_df[,4:ncol(pt_perMonth_df)])
+  colnames_toskip     <- names(which(count_forallgrps == 0))  #columns to skip in the following computation
+  colindex_toskip     <- which(colnames(pt_perMonth_df) %in% colnames_toskip)
   
   time_since_df <-as.data.frame(matrix(NA, nrow = nrow(pt_perMonth_df),ncol =ncol(pt_perMonth_df)))
   colnames(time_since_df) <- colnames(pt_perMonth_df)
@@ -617,23 +625,26 @@ add_time_since_func <-function(pt_perMonth_df){
   for(j in 4:ncol(time_since_df)){ #for each code group 
     most_recent_month <- Inf #initial a most recent month as Future for each code group
     
-    for (i in 1:nrow(pt_perMonth_df)){ #for each month
-      curr_month_df <- pt_perMonth_df[i,]
-      time_since_df[i,"study_id"] <- curr_month_df[,"study_id"]
-      time_since_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
-      time_since_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
-      
-      curr_count <- curr_month_df[,j]
-      curr_month <- curr_month_df[,"Month_Index"]
-      if (curr_count >= 1){ #if count of group in current month is >=1
-        time_since_df[i,j] <- 0
-        most_recent_month <- curr_month #update most recent month
-      }else { #if count og group in current moneth is 0
-        time_since_df[i,j] <- curr_month - most_recent_month
-      }
-    }
+    if (!j %in% colindex_toskip){ #'@NEW
+          for (i in 1:nrow(pt_perMonth_df)){ #for each month
+            curr_month_df <- pt_perMonth_df[i,]
+            time_since_df[i,"study_id"] <- curr_month_df[,"study_id"]
+            time_since_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+            time_since_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+            
+            curr_count <- curr_month_df[,j]
+            curr_month <- curr_month_df[,"Month_Index"]
+            if (curr_count >= 1){ #if count of group in current month is >=1
+              time_since_df[i,j] <- 0
+              most_recent_month <- curr_month #update most recent month
+            }else { #if count og group in current moneth is 0
+              time_since_df[i,j] <- curr_month - most_recent_month
+            }
+          }
+     }
   }
-  
+   
+  time_since_df[which(is.na(time_since_df)==T,arr.ind = T)] <- -1 #'@NEW recode NA to -1, NAs is from skiping columns
   time_since_df[which(time_since_df== "-Inf",arr.ind = T)] <- -1 #recode -INF to -1 for months that has never seen a code
   return(time_since_df)
 }
@@ -645,8 +656,18 @@ add_time_until_func <-function(pt_perMonth_df){
   
   #reoder and add month sqeuence
   pt_perMonth_df <- pt_perMonth_df[order(ymd(pt_perMonth_df[,"Month_Start"])),]  #sort pt data by month
-  pt_perMonth_df$Month_Index <- seq(1,nrow(pt_perMonth_df),1) #Use interger as month sequence for easier computation
-  pt_perMonth_df <- pt_perMonth_df[,c(1,2,ncol(pt_perMonth_df),3:(ncol(pt_perMonth_df)-1))] #    #reorder columns
+  
+  #get the month index as the actuall month difference to the first month,  #Use interger as month sequence for easier computation
+  pt_perMonth_df$Month_Index <-   abs(interval(ymd(pt_perMonth_df[,"Month_Start"]), ymd(pt_perMonth_df[1,"Month_Start"])) %/% months(1)) + 1 
+  
+  #relocate cols
+  pt_perMonth_df <- pt_perMonth_df %>% relocate(Month_Index, .after = Month_Start)
+  
+  #'@NEW Find  the columns has all 0s (no months of this pts has the code group)
+  count_forallgrps    <- colSums(pt_perMonth_df[,4:ncol(pt_perMonth_df)])
+  colnames_toskip     <- names(which(count_forallgrps == 0))  #columns to skip in the following computation
+  colindex_toskip     <- which(colnames(pt_perMonth_df) %in% colnames_toskip)
+  
   
   time_until_df <-as.data.frame(matrix(NA, nrow = nrow(pt_perMonth_df),ncol =ncol(pt_perMonth_df)))
   colnames(time_until_df) <- colnames(pt_perMonth_df)
@@ -655,24 +676,26 @@ add_time_until_func <-function(pt_perMonth_df){
   #code group col started at index 4
   for(j in 4:ncol(time_until_df)){ #for each code group 
     soonest_future_month <- -Inf #initial a soonest future month as past(-INF) for each code group
-    
-    for (i in nrow(pt_perMonth_df):1){ #for each month from latest to oldest
-      curr_month_df <- pt_perMonth_df[i,]
-      time_until_df[i,"study_id"] <- curr_month_df[,"study_id"]
-      time_until_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
-      time_until_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
-      
-      curr_count <- curr_month_df[,j]
-      curr_month <- curr_month_df[,"Month_Index"]
-      if (curr_count >= 1){ #if count of group in current month is >=1
-        time_until_df[i,j] <- 0
-        soonest_future_month <- curr_month #update soonest future month 
-      }else { #if count og group in current moneth is 0
-        time_until_df[i,j] <- soonest_future_month - curr_month
+    if (!j %in% colindex_toskip){ #'@NEW
+       for (i in nrow(pt_perMonth_df):1){ #for each month from latest to oldest
+        curr_month_df <- pt_perMonth_df[i,]
+        time_until_df[i,"study_id"] <- curr_month_df[,"study_id"]
+        time_until_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+        time_until_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+        
+        curr_count <- curr_month_df[,j]
+        curr_month <- curr_month_df[,"Month_Index"]
+        if (curr_count >= 1){ #if count of group in current month is >=1
+          time_until_df[i,j] <- 0
+          soonest_future_month <- curr_month #update soonest future month 
+        }else { #if count og group in current moneth is 0
+          time_until_df[i,j] <- soonest_future_month - curr_month
+        }
       }
     }
   }
   
+  time_until_df[which(is.na(time_until_df)==T,arr.ind = T)] <- -1 #'@NEW recode NA to -1, NAs is from skiping columns
   time_until_df[which(time_until_df== "-Inf",arr.ind = T)] <- -1 #recode -INF to -1 for months that has never seen a code
   return(time_until_df)
 }
@@ -680,12 +703,20 @@ add_time_until_func <-function(pt_perMonth_df){
 
 add_cumul_ratio_func <-function(pt_perMonth_df){
   #the total number of occurrences in each patient up to the time in question of that grouping divided by total elapsed time
-  #pt_perMonth_df <- curr_CCS_counting_df_diag
+  #pt_perMonth_df <- curr_grp_f_df
   
   #reoder and add month sqeuence
   pt_perMonth_df <- pt_perMonth_df[order(ymd(pt_perMonth_df[,"Month_Start"])),]  #sort pt data by month
-  pt_perMonth_df$Month_Index <- seq(1,nrow(pt_perMonth_df),1) #Use interger as month sequence for easier computation
-  pt_perMonth_df <- pt_perMonth_df[,c(1,2,ncol(pt_perMonth_df),3:(ncol(pt_perMonth_df)-1))] #    #reorder columns
+  #get the month index as the actuall month difference to the first month,  #Use interger as month sequence for easier computation
+  pt_perMonth_df$Month_Index <-   abs(interval(ymd(pt_perMonth_df[,"Month_Start"]), ymd(pt_perMonth_df[1,"Month_Start"])) %/% months(1)) + 1 
+  #relocate cols
+  pt_perMonth_df <- pt_perMonth_df %>% relocate(Month_Index, .after = Month_Start)
+  
+  #'@NEW Find  the columns has all 0s (no months of this pts has the code group)
+  count_forallgrps    <- colSums(pt_perMonth_df[,4:ncol(pt_perMonth_df)])
+  colnames_toskip     <- names(which(count_forallgrps == 0))  #columns to skip in the following computation
+  colindex_toskip     <- which(colnames(pt_perMonth_df) %in% colnames_toskip)
+  
   
   cumul_ratio_df <-as.data.frame(matrix(NA, nrow = nrow(pt_perMonth_df),ncol =ncol(pt_perMonth_df)))
   colnames(cumul_ratio_df) <- colnames(pt_perMonth_df)
@@ -694,22 +725,26 @@ add_cumul_ratio_func <-function(pt_perMonth_df){
   #code group col started at index 4
   for(j in 4:ncol(cumul_ratio_df)){ #for each code group 
     curr_cum_count <- 0 #inital cumalitive count as 0 
-    for (i in 1:nrow(pt_perMonth_df)){ #for each month
-      #get month data and assign to the new dataframe
-      curr_month_df <- pt_perMonth_df[i,]
-      cumul_ratio_df[i,"study_id"] <- curr_month_df[,"study_id"]
-      cumul_ratio_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
-      cumul_ratio_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
-      
-      #get count and month index
-      curr_count <- curr_month_df[,j]
-      curr_month <- curr_month_df[,"Month_Index"]
-      
-      #cumalative count 
-      curr_cum_count <- curr_cum_count + curr_count
-      cumul_ratio_df[i,j] <- round(curr_cum_count/curr_month,4)
+    if (!j %in% colindex_toskip){ #'@NEW
+        for (i in 1:nrow(pt_perMonth_df)){ #for each month
+          #get month data and assign to the new dataframe
+          curr_month_df <- pt_perMonth_df[i,]
+          cumul_ratio_df[i,"study_id"] <- curr_month_df[,"study_id"]
+          cumul_ratio_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+          cumul_ratio_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+          
+          #get count and month index
+          curr_count <- curr_month_df[,j]
+          curr_month <- curr_month_df[,"Month_Index"]
+          
+          #cumalative count 
+          curr_cum_count <- curr_cum_count + curr_count
+          cumul_ratio_df[i,j] <- round(curr_cum_count/curr_month,4)
+        }
     }
   }
+  
+  cumul_ratio_df[which(is.na(cumul_ratio_df)==T,arr.ind = T)] <- -1 #'@NEW recode NA to -1, NAs is from skiping columns
   
   return(cumul_ratio_df)
 }
