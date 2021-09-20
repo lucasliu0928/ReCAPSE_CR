@@ -18,6 +18,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1  <- paste0(proj_dir, "8_Characteristics2/Month_Level/MonthChar_WithPossibleMonthsHasNoCodes/")
+data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
 outdir   <- paste0(proj_dir, "11B_ModelReady_CharFatures/WithPossibleMonthsHasNoCodes/")
 
@@ -26,6 +27,18 @@ outdir   <- paste0(proj_dir, "11B_ModelReady_CharFatures/WithPossibleMonthsHasNo
 #1.get original char files
 ################################################################################
 perMonth_char_files <- list.files(data_dir1)
+perMonth_char_IDs <- gsub("_MonthChar.xlsx|ID","",perMonth_char_files)
+
+################################################################################
+#2.Final IDs
+################################################################################
+Final_ID_df <- read.xlsx(paste0(data_dir2,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+analysis_IDs <- Final_ID_df[,"study_id"]
+
+################################################################################
+#.Only select files for analysis IDs
+################################################################################
+perMonth_char_files <- perMonth_char_files[which(perMonth_char_IDs %in% analysis_IDs)]
 
 ########################################################################################################################
 #1.Combine all pts binary char
@@ -59,6 +72,6 @@ all_binary_char_df <- dummy_cols(updated_all_char_df, remove_first_dummy = FALSE
 #remove original columns
 all_binary_char_df <- all_binary_char_df[, -which(colnames(all_binary_char_df) %in% col_toconvert)]
 
-write.xlsx(all_binary_char_df,paste0(outdir,"All_Binary_Chars.xlsx"))
-
+#Save it as csv instead of xlsx cuz there is an error for xlsx when open the file due to large number of rows
+write.csv(all_binary_char_df,paste0(outdir,"All_Binary_Chars.csv"),row.names = F)
 
