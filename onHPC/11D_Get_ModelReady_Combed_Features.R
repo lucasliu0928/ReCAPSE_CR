@@ -14,7 +14,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir1  <- paste0(proj_dir, "11A_ModelReady_GrpFatures/WithPossibleMonthsHasNoCodes/")
@@ -29,11 +29,7 @@ outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures/WithPossibleMonthsHasNo
 ################################################################################
 All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars.csv"),stringsAsFactors = F)
 
-################################################################################
-#1.get grp feature and trans feature files
-################################################################################
-grpfeature_files <- list.files(data_dir1)
-transfeature_files <- list.files(data_dir2)
+
 ################################################################################
 #2.Final IDs
 ################################################################################
@@ -55,19 +51,38 @@ print(length(analysis_IDs))
 ########################################################################################################################
 foreach (i = 1: length(analysis_IDs)) %dopar% {
   curr_id <- analysis_IDs[i]
-  curr_file <- paste0("ID",curr_id,"_Selected_Grp_Features.xlsx")
   
   #groups feature df
-  curr_grp_f_df <- read.xlsx(paste0(data_dir1,curr_file),sheet = 1)
+  curr_grpfile <- paste0("ID",curr_id,"_Selected_Grp_Features.xlsx")
+  curr_grpf_df <- read.xlsx(paste0(data_dir1,curr_grpfile),sheet = 1)
   
-  #get transformation data
-  system.time(curr_transf_df <- apply_code_transforamtion_func(curr_grp_f_df))
+  #get transformation feature df 
+  curr_transffile <- paste0("ID",curr_id,"_Transf_Features.xlsx")
+  curr_transf_df <- read.xlsx(paste0(data_dir3,curr_transffile),sheet = 1)
   
-  #remove redudant month index and others from three transforamtion func
-  index_toremove <- which(colnames(curr_transf_df) %in% c("study_id","Month_Start","Month_Index"))
-  index_toremove <- index_toremove[3:length(index_toremove)]
-  curr_transf_df <- curr_transf_df[,-index_toremove]
+  #get char feature df
+  curr_idxes      <- which(All_Char_df[,"study_id"] == curr_id)
+  curr_charf_df   <- All_Char_df[curr_idxes,]
   
-  write.xlsx(curr_transf_df,paste0(outdir,"ID",curr_id,"_Transf_Features.xlsx"))
+  #match all the time rows
+  all_time_inOrder <- sort(curr_grpf_df[,"Month_Start"],decreasing = F)
+  curr_grpf_df     <- curr_grpf_df[match(all_time_inOrder, curr_grpf_df[,"Month_Start"]),]
+  curr_transf_df   <- curr_transf_df[match(all_time_inOrder, curr_transf_df[,"Month_Start"]),]
+  curr_charf_df    <- curr_charf_df[match(all_time_inOrder, curr_charf_df[,"Month_Start"]),]
+  
+  #comb df
+  curr_comb_df <- cbind(curr_charf_df,curr_grpf_df,curr_transf_df)
+  
+  #change rowname to sample ID (ptID + rowID)
+  curr_comb_df$sample_id <- paste0("ID",curr_id,"@",all_time_inOrder)
+  
+  #remove redudant columns,keep the 1st Id and month start
+  indexes_toremove <- which(colnames(curr_comb_df) %in% c("study_id","Month_Start"))
+  curr_comb_df <- curr_comb_df[, -indexes_toremove]
+  
+  #reorder column, put sample ID first
+  sample_ID_idxes <- ncol(curr_comb_df)
+  curr_comb_df <- curr_comb_df[, c(sample_ID_idxes,1:(sample_ID_idxes - 1))]
+  write.xlsx(curr_comb_df,paste0(outdir,"ID",curr_id,"_Comb_Features.xlsx"))
   
 }
