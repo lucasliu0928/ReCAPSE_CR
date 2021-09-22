@@ -144,31 +144,40 @@ get_avg_perf_5times_sampling_func <-function(predition_df,NEGtoPOS_ratio,pts_lev
   return(avg_perf)
 }
 
-
-
+################################################################################
+#Data dir
+################################################################################
 #onHPC
-project_dir            <- "/recapse/intermediate_data/"
-perfdir                 <- paste0(project_dir,"16_Performance/")
+proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-project_dir            <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-perfdir                 <- paste0(project_dir,"16_Performance/")
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+
+#data dir
+data_dir1        <- paste0(proj_dir, "16_Performance/")
+data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+
+outdir           <- paste0(proj_dir, "16_Performance/")
 
 ######################################################################################################## 
 #1.Load predictions 
 ######################################################################################################## 
 #Load prediction data
-test_prediction_df <- read.csv(paste0(perfdir,"16_prediction_tb_withDS.csv"))
+test_prediction_df <- read.csv(paste0(data_dir1,"16_Prediction_Table_posweight0.5.csv"))
 
 #Get predicted Class by different threshold
 ths <- seq(0.1,0.8,0.1)
 test_prediction_df <- add_predicted_class_byThreshold(test_prediction_df,ths)
 
+#Add study_id and month start
+original_IDs <- strsplit(as.character(test_prediction_df$sample_id),split = "@")
+test_prediction_df$study_id    <- gsub("ID","",sapply(original_IDs, "[[", 1))
+test_prediction_df$month_start <- sapply(original_IDs, "[[", 2)
 
 ################################################################################ 
 #3. Load patient level char to get SBCE or not 
 ################################################################################ 
-pts_level_char_df <- read.xlsx(paste0(project_dir,"/8_PatientLevel_charecteristics.xlsx"),sheet = 1)
+pts_level_char_df <- read.xlsx(paste0(data_dir2,"/8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
 
 
 ######################################################################################################## 
@@ -183,6 +192,6 @@ perf_tb_pos1_neg2 <-  get_avg_perf_5times_sampling_func(test_prediction_df,2,pts
 perf_tb_pos1_neg5 <-  get_avg_perf_5times_sampling_func(test_prediction_df,5,pts_level_char_df,ths)
 
 
-write.csv(perf_tb_pos1_neg1,paste0(perfdir,"perf_tb_pos1_neg1",".csv"),row.names = T)
-write.csv(perf_tb_pos1_neg2,paste0(perfdir,"perf_tb_pos1_neg2",".csv"),row.names = T)
-write.csv(perf_tb_pos1_neg5,paste0(perfdir,"perf_tb_pos1_neg5",".csv"),row.names = T)
+write.csv(perf_tb_pos1_neg1,paste0(outdir,"perf_tb_pos1_neg1",".csv"),row.names = T)
+write.csv(perf_tb_pos1_neg2,paste0(outdir,"perf_tb_pos1_neg2",".csv"),row.names = T)
+write.csv(perf_tb_pos1_neg5,paste0(outdir,"perf_tb_pos1_neg5",".csv"),row.names = T)
