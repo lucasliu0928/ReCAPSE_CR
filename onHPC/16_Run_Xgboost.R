@@ -1,10 +1,4 @@
 source("Recapse_Ultility.R")
-#This script:
-#for each patient for selected features(By freq) combines:
-#1.CodeCount feature
-#2.CodeTrans feature
-#3.BinaryChar feature
-
 Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,random_perc = 0.8){
   # upsample_flag <- 0
   # train_data <- train_data
@@ -54,41 +48,45 @@ numCores <- detectCores() # get the number of cores available
 print(numCores)
 registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
-
+################################################################################
+#Data dir
+################################################################################
 #onHPC
-project_dir            <- "/recapse/intermediate_data/"
-modelReady_dir         <- paste0(project_dir,"12_ModelReadyData/")
-outdir                 <- paste0(project_dir,"16_Performance/")
+proj_dir  <- "/recapse/intermediate_data/"
 
-# #local
-# project_dir            <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-# modelReady_dir         <- paste0(project_dir,"12_ModelReadyData/")
-# outdir                 <- paste0(project_dir,"16_Performance/")
+#local
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
+#data dir
+data_dir1        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
+data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures/WithPossibleMonthsHasNoCodes/")
+outdir           <- paste0(proj_dir, "16_Performance/")
 
 ######################################################################################################## 
-#1. Load and combine all patient data
+#1. Load and combine all patient model ready data
 ######################################################################################################## 
-pt_files <-list.files(modelReady_dir,full.names = T)
+pt_files <-list.files(data_dir2,full.names = T)
 model_data <- do.call(rbind, lapply(pt_files,read.xlsx))
-Final_ID <- unique(model_data$study_id)
-print("Original pre vs post : ")
+print("Original pre vs post samples: ")
 table(model_data$y_PRE_OR_POST_2ndEvent)
 
 ################################################################################ 
 #2. Load patient level char to get SBCE or not to make sure original ID not in both train and validation
 ################################################################################ 
-pts_level_char_df <- read.xlsx(paste0(project_dir,"/8_PatientLevel_charecteristics.xlsx"),sheet = 1)
+Final_ID_df <- read.xlsx(paste0(data_dir1,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+Final_ID    <- unique(Final_ID_df$study_id)
+
+pts_level_char_df <- read.xlsx(paste0(data_dir1,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
 pts_level_char_df <- pts_level_char_df[which(pts_level_char_df$study_id %in% Final_ID),] #only keep char for final ID
 print("Original non-SBCE vs SBCE : ")
-table(pts_level_char_df$SBCE)
+table(pts_level_char_df$SBCE) #16917  1322
 
 ################################################################################ 
 #3. Get SBCE and non-SBCE IDs
 ################################################################################ 
 sbce_pt_Ids <-   unique(pts_level_char_df$study_id[which(pts_level_char_df$SBCE == 1)])
 nosbce_pt_Ids <- unique(pts_level_char_df$study_id[which(pts_level_char_df$SBCE == 0)])
-original_noSBCE_toSBCEratio <- round(length(nosbce_pt_Ids)/length(sbce_pt_Ids))
+original_noSBCE_toSBCEratio <- round(length(nosbce_pt_Ids)/length(sbce_pt_Ids)) #13: 1
 
 ##########START HERE##########
 ######################################################################################################## 
