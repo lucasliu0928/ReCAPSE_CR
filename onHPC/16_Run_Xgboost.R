@@ -136,12 +136,13 @@ optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                                     subsample=c(0.3, 0.9), colsample_by_tree=c(0.2, 0.8)),
                                         init_points=10,
                                         n_iter=10)
+pos_weight <- 0.5
 current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                      subsample = as.numeric(optimal_results$Best_Par['subsample']),
                      colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']),
-                     scale_pos_weight = 10) #for weight more on pos samples
+                     scale_pos_weight = pos_weight) #for weight more on pos samples
 mod_optimal <- xgb.train(objective="binary:logistic",
                          params=current_best, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
                          watchlist= list(train = dtrain, eval = dtest), verbose=TRUE, print_every_n=10, eval_metric="error", eval_metric="error@0.2", eval_metric="auc")
@@ -149,16 +150,16 @@ mod_optimal <- xgb.train(objective="binary:logistic",
 pred   <- predict(mod_optimal, dtest)
 actual <- test_label
 prediction_tb <- cbind.data.frame(sample_id = test_data[,"sample_id"],pred,actual)
-write.csv(prediction_tb,paste0(outdir,"16_Prediction_Table.csv"),row.names = F)
+write.csv(prediction_tb,paste0(outdir,"16_Prediction_Table","_posweight",pos_weight,".csv"),row.names = F)
 
 #Performance table 
 perf <- compute_binaryclass_perf_func(pred,actual)
 print(perf)
-write.csv(perf,paste0(outdir,"16_Performance_Table.csv"),row.names = F)
+write.csv(perf,paste0(outdir,"16_Performance_Table","_posweight",pos_weight,".csv"),row.names = F)
 
 #Importantant matrix
 importance_matrix <- xgb.importance(model = mod_optimal)
-write.csv(importance_matrix,paste0(outdir,"16_importance_matrix",".csv"),row.names = F)
+write.csv(importance_matrix,paste0(outdir,"16_importance_matrix","_posweight",pos_weight,".csv"),row.names = F)
 
 
 # 
