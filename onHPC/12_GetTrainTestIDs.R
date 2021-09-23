@@ -40,7 +40,7 @@ original_noSBCE_toSBCEratio <- round(length(nosbce_pt_Ids)/length(sbce_pt_Ids)) 
 total_n <- length(Final_ID)
 set.seed(123)
 test_ID   <- sample(Final_ID,0.2*total_n)
-train_ID  <- sample(Final_ID,0.8*total_n)
+train_ID  <- Final_ID[-which(Final_ID %in% test_ID)]
 
 test_ID_withLabel_df <- pts_level_char_df[which(pts_level_char_df$study_id %in% test_ID),c("study_id" , "SBCE")]
 train_ID_withLabel_df <- pts_level_char_df[which(pts_level_char_df$study_id %in% train_ID),c("study_id" , "SBCE")]
