@@ -1,40 +1,37 @@
 source("Recapse_Ultility.R")
 
+################################################################################
+#Data dir
+################################################################################
 #onHPC
-project_dir            <- "/recapse/intermediate_data/"
-outdir                  <- project_dir
+proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-project_dir            <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
-outdir                  <-project_dir
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
+#data dir
+data_dir1        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-
-################################################################################ 
-#1. Load Finaly ID
-################################################################################ 
-FinalID_df <- read.xlsx(paste0(project_dir,"/9_Final_Analysis_ID.xlsx"),sheet = 1)
-Final_IDs <- FinalID_df$study_id
+outdir           <- paste0(proj_dir, "17_Discrip_Statistics/")
 
 ################################################################################ 
-#2. Load patient level char 
+#1. Load pts level char for final IDs
 ################################################################################ 
-pts_level_char_df <- read.xlsx(paste0(project_dir,"/8_PatientLevel_charecteristics.xlsx"),sheet = 1)
-pts_level_char_df <- pts_level_char_df[which(pts_level_char_df$study_id %in% Final_IDs),] #only keep char for test ID
+pts_level_char_df <- read.xlsx(paste0(data_dir1,"/9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+final_Ids <- pts_level_char_df$study_id
 
 ################################################################################ 
 #3. Report some stats
 ################################################################################ 
 sbce_pt_Ids <-   unique(pts_level_char_df$study_id[which(pts_level_char_df$SBCE == 1)])
 nosbce_pt_Ids <- unique(pts_level_char_df$study_id[which(pts_level_char_df$SBCE == 0)])
-n_sbce0   <- length(sbce_pt_Ids)
-n_sbce1 <- length(nosbce_pt_Ids)
+n_sbce1   <- length(sbce_pt_Ids)
+n_sbce0   <- length(nosbce_pt_Ids)
+n_sbce0/n_sbce1
 
-perc_sbce0 <- round(n_sbce0/length(Final_IDs)*100,2)
 
-#Number of patients with first primary recurrence
-table(pts_level_char_df$Type_2nd_Event)
-table(pts_level_char_df$First_Primary_BC_related_Death)
+#type of 2nd event
+type_2ndevnet_tb <- as.data.frame(table(pts_level_char_df$Type_2nd_Event))
 
 missingtable <- get_missing_rate_table(pts_level_char_df, colnames(pts_level_char_df))
 
