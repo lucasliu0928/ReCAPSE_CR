@@ -136,7 +136,7 @@ optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                                     subsample=c(0.3, 0.9), colsample_by_tree=c(0.2, 0.8)),
                                         init_points=10,
                                         n_iter=10)
-pos_weight <- 0.5
+pos_weight <- 10
 current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
