@@ -71,7 +71,7 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
   idx_inEnroll <- match(curr_perMonth_df[,"Month_Start"] , enrolled_month_df[,"Enrolled_Month"])
   enrolled_month_df[idx_inEnroll,2:ncol(enrolled_month_df)] <- curr_perMonth_df
 
-  #Fill the enrollment month time and ID when there is no claims available
+  #Filter the enrollment month time and ID when there is no claims available
   noclaims_rows <- which(is.na(enrolled_month_df[,"Month_Start"])==T)
   enrolled_month_df[noclaims_rows,"Month_Start"]  <- enrolled_month_df[noclaims_rows,"Enrolled_Month"]
   enrolled_month_df[noclaims_rows,"study_id"]     <- curr_id
@@ -83,7 +83,7 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
                       ymd(enrolled_month_df[,"Enrolled_Month"]) <= ymd(curr_prediction_end) )
   updated_enrolled_month_df <- enrolled_month_df[kept_idxes,]
 
-  #Only keep the Code columns if not all rows are NAs
+  #Only keep the Code columns if not all rows are NAs (Due to the exclusion of time, some unique Code found before might now has NA time rows)
   updated_enrolled_month_df <- updated_enrolled_month_df[,colSums(is.na(updated_enrolled_month_df))<nrow(updated_enrolled_month_df)]
   
   #if ncol = 4, then there is no Code left nad nrow >0
