@@ -17,30 +17,33 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1  <- paste0(proj_dir, "10A_CCSDiagProcF_And_DM3SPEF_inValidMonth/WithPossibleMonthsHasNoCodes/")
+data_dir_diag  <- paste0(proj_dir, "10B_CCSDiagFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
+data_dir_proc  <- paste0(proj_dir, "10C_CCSProcFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
+data_dir_drug  <- paste0(proj_dir, "10D_DM3SPEFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
+
 data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
-data_dir3  <- paste0(proj_dir, "10B_Counts_UniqueCodes_PtsLevel/")
+data_dir3  <- paste0(proj_dir, "10H_Selected_Grps/WithPossibleMonthsHasNoCodes/")
 
 outdir   <- paste0(proj_dir, "11A_ModelReady_GrpFatures/WithPossibleMonthsHasNoCodes/")
 
-
 ################################################################################
-#1.get original per months grp feature files
-################################################################################
-perMonth_grpfeature_files_original <- list.files(data_dir1)
-
-################################################################################
-#2.Final IDs
+#1.Final IDs
 ################################################################################
 Final_ID_df <- read.xlsx(paste0(data_dir2,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
 analysis_IDs <- Final_ID_df[,"study_id"]
 
 ################################################################################
-#3.Final model ready grps
+#2.Final model ready grps
 ################################################################################
-modelready_grps_df <- read.xlsx(paste0(data_dir3,"Selected_Unique_Grps_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,colNames = F)
-modelready_grps_features <- sort(modelready_grps_df[,1])
+modelready_grps_df1 <- read.xlsx(paste0(data_dir3,"Selected_CCSDiag_Unique_Grps.xlsx"),sheet = 1,colNames = F)
+modelready_grps_df2 <- read.xlsx(paste0(data_dir3,"Selected_CCSProc_Unique_Grps.xlsx"),sheet = 1,colNames = F)
+modelready_grps_df3 <- read.xlsx(paste0(data_dir3,"Selected_DM3SPEDrug_Unique_Grps.xlsx"),sheet = 1,colNames = F)
 
+modelready_Diag_features <- sort(modelready_grps_df1[,1])
+modelready_Proc_features <- sort(modelready_grps_df2[,1])
+modelready_Drug_features <- sort(modelready_grps_df3[,1])
+#All features
+modelready_grps_features <- sort(c(modelready_Diag_features,modelready_Proc_features,modelready_Drug_features))
 ########################################################################################################################
 #Use the following code to run in case out of memory when procssing all at one time
 ########################################################################################################################
@@ -56,10 +59,22 @@ print(length(analysis_IDs))
 ########################################################################################################################
 foreach (i = 1: length(analysis_IDs)) %dopar% {
   curr_id <- analysis_IDs[i]
-  curr_file <- paste0("ID",curr_id,"_Month_Grp_Feature.xlsx")
+  
+  curr_file1 <- paste0("ID",curr_id,"_Month_CCS_DIAG_Feature.xlsx")
+  curr_file2 <- paste0("ID",curr_id,"_Month_CCS_PROC_Feature.xlsx")
+  curr_file3 <- paste0("ID",curr_id,"_Month_DM3_SPE_Feature.xlsx")
   
   #old per month groups df
-  old_perMonth_df <- read.xlsx(paste0(data_dir1,curr_file),sheet = 1)
+  old_perMonth_df1 <- read.xlsx(paste0(data_dir_diag,curr_file1),sheet = 1)
+  old_perMonth_df2 <- read.xlsx(paste0(data_dir_proc,curr_file2),sheet = 1)
+  old_perMonth_df3 <- read.xlsx(paste0(data_dir_drug,curr_file3),sheet = 1)
+  
+  #Match rows
+  old_perMonth_df2 <- old_perMonth_df2[match(old_perMonth_df2[,"Enrolled_Month"],old_perMonth_df1[,"Enrolled_Month"]),]
+  old_perMonth_df3 <- old_perMonth_df3[match(old_perMonth_df3[,"Enrolled_Month"],old_perMonth_df1[,"Enrolled_Month"]),]
+  
+  #Comm three df
+  old_perMonth_df <- cbind(old_perMonth_df1,old_perMonth_df2,old_perMonth_df3)
   
   #get study_id list
   old_study_id <- old_perMonth_df[,"study_id"]
