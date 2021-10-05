@@ -1,4 +1,156 @@
 source("Recapse_Ultility.R")
+
+#This function update KCR data 
+#1. Update TNMPathM,TNMClinM, 
+#2. add  Comb seer summ_stg
+#3. re-code race
+#4. re-code RXSummSurgPrimSite (two versions)
+updated_kcr_data_func <- function(kcr_df, new_kcr_df){
+  # kcr_df     <- kcr_data
+  # new_kcr_df <- new_kcr_data
+  # 
+  #Match ids
+  new_kcr_df <- new_kcr_df[match(new_kcr_df[,c("study_id")],kcr_df[,c("study_id")]),]
+  
+  #Update TNMPathM,TNMClinM
+  kcr_df$TNMPathM <- as.character(new_kcr_df$TNMPathM)
+  kcr_df$TNMClinM <- as.character(new_kcr_df$TNMClinM)
+  
+  #Add DerivedSS2000
+  kcr_df$DerivedSS2000 <- new_kcr_df$DerivedSS2000
+  
+  #Get comb SEERSummStg
+  #1. for not missing original SEER stage, use "SEERSummStg2000 ('SEERSummStg2000’ only captures SEER summary stage from the years 2001-2003. )
+  #2. for missing original SEER stage, use "DerivedSS2000 (‘DerivedSS2000’ was added for the summary stage between the years 2004-2015. )
+  #No such information was captured for the year 2000.
+  kcr_df$Comb_SEERSummStg <- NA
+  NOTmissing_idxes <- which(is.na(kcr_df[,"SEERSummStg2000"])== F)
+  missing_idxes    <- which(is.na(kcr_df[,"SEERSummStg2000"])== T)
+  
+  kcr_df[NOTmissing_idxes,"Comb_SEERSummStg"] <- kcr_df[NOTmissing_idxes,"SEERSummStg2000"] #use "SEERSummStg2000
+  kcr_df[missing_idxes,"Comb_SEERSummStg"]    <- kcr_df[missing_idxes,"DerivedSS2000"] #use "DerivedSS2000
+  
+  #Re-code race
+  #1: original 1
+  #2: original 2
+  #3: others
+  kcr_df$Race_Recoded <- NA
+  race1_idxes <-  which(kcr_df$Race1 == 1)
+  race2_idxes <-  which(kcr_df$Race1 == 2)
+  kcr_df[race1_idxes,"Race_Recoded"] <- 1
+  kcr_df[race2_idxes,"Race_Recoded"] <- 2
+  kcr_df[-c(race1_idxes,race2_idxes),"Race_Recoded"] <- 3 
+  
+  #recode RXSummSurgPrimSite
+  #'@Qestion: what about 43,44,45,46,47,48,49, 75 and 76?
+  #Version1 (Dr.Huang): 0, 19, (20-24), 30, (40-42), (50-59,63),  (60-62, 64-69, 73,74), 70-72, 80, 90, 99
+  #Version2 (Quan):  00,19,20 (21-24),30,40,41,42,50,51(53-56),52(57,58,59,63),60,61(64-67),62(68,69,73,74),70,71,72,80,90,99
+  kcr_df$RXSummSurgPrimSite_RecodedV1 <- NA
+  kcr_df$RXSummSurgPrimSite_RecodedV2 <- NA
+  
+  kcr_df[,"RXSummSurgPrimSite_RecodedV1"] <- recode_SurgPrimSite_func_v1(kcr_df[,"RXSummSurgPrimSite"])
+  kcr_df[,"RXSummSurgPrimSite_RecodedV2"] <- recode_SurgPrimSite_func_v2(kcr_df[,"RXSummSurgPrimSite"])
+  
+  #remove reduantant old columns
+  kcr_df <- kcr_df[, -which(colnames(kcr_df) %in% c("RXSummSurgPrimSite","Race1","SEERSummStg2000","DerivedSS2000"))]
+  
+  return(kcr_df)
+}
+
+
+recode_SurgPrimSite_func_v1 <- function(SurgPrimSite_values){
+  #SurgPrimSite_values <- kcr_df[,"RXSummSurgPrimSite"] 
+  
+  grp0_idxes  <- which(SurgPrimSite_values == 0)
+  grp19_idxes <- which(SurgPrimSite_values == 19)
+  grp20_idxes <- which(SurgPrimSite_values %in% c(20,21,22,23,24))
+  grp30_idxes <- which(SurgPrimSite_values ==30 )
+  grp40_idxes <- which(SurgPrimSite_values %in% c(40,41,42))
+  grp50_idxes <- which(SurgPrimSite_values %in% c(50,51,52,53,54,55,56,57,58,59,63))
+  grp60_idxes <- which(SurgPrimSite_values %in% c(60,61,62,64,65,66,67,68,69,73,74))
+  grp70_idxes <- which(SurgPrimSite_values %in% c(70,71,72))
+  grp80_idxes <- which(SurgPrimSite_values == 80)
+  grp90_idxes <- which(SurgPrimSite_values == 90)
+  grp99_idxes <- which(SurgPrimSite_values == 99)
+  
+  SurgPrimSite_values[grp0_idxes]  <- 0
+  SurgPrimSite_values[grp19_idxes] <- 19
+  SurgPrimSite_values[grp20_idxes] <- 20
+  SurgPrimSite_values[grp30_idxes] <- 30
+  SurgPrimSite_values[grp40_idxes] <- 40
+  SurgPrimSite_values[grp50_idxes] <- 50
+  SurgPrimSite_values[grp60_idxes] <- 60
+  SurgPrimSite_values[grp70_idxes] <- 70
+  SurgPrimSite_values[grp80_idxes] <- 80
+  SurgPrimSite_values[grp90_idxes] <- 90
+  SurgPrimSite_values[grp99_idxes] <- 99
+  
+  #Recode other values as NA
+  all_idxes <- c(grp0_idxes,grp19_idxes,grp20_idxes,grp30_idxes,grp40_idxes,grp50_idxes,grp60_idxes,
+                 grp70_idxes,grp80_idxes,grp90_idxes,grp99_idxes)
+  SurgPrimSite_values[-all_idxes] <- NA
+  
+  return(SurgPrimSite_values)
+}
+
+recode_SurgPrimSite_func_v2 <- function(SurgPrimSite_values){
+  #SurgPrimSite_values <- kcr_df[,"RXSummSurgPrimSite"] 
+  
+  #Version2 (Quan): 
+  grp0_idxes  <- which(SurgPrimSite_values == 0)
+  grp19_idxes <- which(SurgPrimSite_values == 19)
+  grp20_idxes <- which(SurgPrimSite_values %in% c(20,21,22,23,24))
+  grp30_idxes <- which(SurgPrimSite_values == 30 )
+  grp40_idxes <- which(SurgPrimSite_values == 40 )
+  grp41_idxes <- which(SurgPrimSite_values == 41 )
+  grp42_idxes <- which(SurgPrimSite_values == 42 )
+  grp50_idxes <- which(SurgPrimSite_values == 50 )
+  grp51_idxes <- which(SurgPrimSite_values %in% c(51,53,54,55,56))
+  grp52_idxes <- which(SurgPrimSite_values %in% c(52,57,58,59,63))
+  grp60_idxes <- which(SurgPrimSite_values == 60)
+  grp61_idxes <- which(SurgPrimSite_values %in% c(61,64,65,66,67))
+  grp62_idxes <- which(SurgPrimSite_values %in% c(62,68,69,73,74))
+  grp70_idxes <- which(SurgPrimSite_values == 70)
+  grp71_idxes <- which(SurgPrimSite_values == 71)
+  grp72_idxes <- which(SurgPrimSite_values == 72)
+  grp80_idxes <- which(SurgPrimSite_values == 80)
+  grp90_idxes <- which(SurgPrimSite_values == 90)
+  grp99_idxes <- which(SurgPrimSite_values == 99)
+  
+  SurgPrimSite_values[grp0_idxes]  <- 0
+  SurgPrimSite_values[grp19_idxes] <- 19
+  SurgPrimSite_values[grp20_idxes] <- 20
+  SurgPrimSite_values[grp30_idxes] <- 30
+  SurgPrimSite_values[grp40_idxes] <- 40
+  SurgPrimSite_values[grp41_idxes] <- 41
+  SurgPrimSite_values[grp42_idxes] <- 42
+  SurgPrimSite_values[grp50_idxes] <- 50
+  SurgPrimSite_values[grp51_idxes] <- 51
+  SurgPrimSite_values[grp52_idxes] <- 52
+  SurgPrimSite_values[grp60_idxes] <- 60
+  SurgPrimSite_values[grp61_idxes] <- 61
+  SurgPrimSite_values[grp62_idxes] <- 62
+  SurgPrimSite_values[grp70_idxes] <- 70
+  SurgPrimSite_values[grp71_idxes] <- 71
+  SurgPrimSite_values[grp72_idxes] <- 72
+  SurgPrimSite_values[grp80_idxes] <- 80
+  SurgPrimSite_values[grp90_idxes] <- 90
+  SurgPrimSite_values[grp99_idxes] <- 99
+  
+  #Recode other values as NA
+  all_idxes <- c(grp0_idxes,grp19_idxes,grp20_idxes,grp30_idxes,
+                 grp40_idxes,grp41_idxes,grp42_idxes,
+                 grp50_idxes,grp51_idxes,grp52_idxes,
+                 grp60_idxes,grp61_idxes,grp62_idxes,
+                 grp70_idxes,grp71_idxes,grp72_idxes,
+                 grp80_idxes,grp90_idxes,grp99_idxes)
+  SurgPrimSite_values[-all_idxes] <- NA
+  
+  return(SurgPrimSite_values)
+}
+
+
+#This function compute DAJCC
 get_DAJCC_var_funtion <- function(kcr_data, pathology_results_col,clinical_results_col){
   #Rules : consider the values from 'TNMPathT' first (which is pathology results), 
   #       if TNMPathT is in value of '88' or 'pX' (unknown) then you check the value from 'TNMClinT' (clinical diagnosis results
@@ -30,12 +182,12 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
   # kcr_df   <- kcr_data
   # All_cancer_site_date_df <- All_cancer_site_date_data
 
-  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 41))
+  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 42))
   colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE",
                          "Diagnosis_Year","Race","Site",
                          "BestStageGrp","Stage",
                          "Comb_SEERSummStg","regional","Laterality",
-                         "Grade","er_stat","pr_stat","surg_prim_site","her2_stat",
+                         "Grade","er_stat","pr_stat","surg_prim_site_V1","surg_prim_site_V2","her2_stat",
                          "radiation","reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                          "cs_tum_size","cs_tum_ext","chemo","hormone","cs_tum_nodes",
                          "num_nonbc","date_Birth",
@@ -122,7 +274,7 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
     
     char_df[i,"Diagnosis_Year"] <- curr_kcr[,"Year_Diag"]
     char_df[i,"date_Birth"] <- curr_kcr[,"date_Birth"]
-    char_df[i,"Race"] <- curr_kcr[,"Race1"]
+    char_df[i,"Race"] <- curr_kcr[,"Race_Recoded"]
     char_df[i,"Site"] <- curr_kcr[,"PrimarySite"]
     
     #For BestStageGrp: Stage 0 (0-2) Stage I [10-30) Stage II [30-50) Stage III [50-70) Stage IV [70-80)
@@ -149,7 +301,8 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
     char_df[i,"er_stat"] <- curr_kcr[,"er_stat"]
     char_df[i,"pr_stat"] <- curr_kcr[,"pr_stat"]
     char_df[i,"her2_stat"] <- curr_kcr[,"her2_stat"]
-    char_df[i,"surg_prim_site"] <- curr_kcr[,"RXSummSurgPrimSite"]
+    char_df[i,"surg_prim_site_V1"] <- curr_kcr[,"RXSummSurgPrimSite_RecodedV1"]
+    char_df[i,"surg_prim_site_V2"] <- curr_kcr[,"RXSummSurgPrimSite_RecodedV2"]
     
     char_df[i,"radiation"] <- curr_kcr[,"RXSummRadiation"]
     char_df[i,"chemo"] <- curr_kcr[,"RXSummChemo"]
@@ -207,6 +360,7 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
 }
 
 
+
 #########################################################################################################
 #Data dir
 #########################################################################################################
@@ -215,8 +369,8 @@ raw_data_dir  <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 Proj_dir <- "/recapse/intermediate_data/"
 
 # #local
-# raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
-# Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
+#Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 data_dir1  <- paste0(Proj_dir, "4_RecurrDates_Outcome_Info/")
 data_dir2  <- paste0(Proj_dir, "7_PrePostLabels_AndAvailibility6mon/")
@@ -233,45 +387,22 @@ SBCE_df      <- read.xlsx(paste0(data_dir1,"4_SBCE_Label.xlsx"),sheet = 1)
 #########################################################################################################
 ### 2.  Load patinet char data
 #########################################################################################################
+#Old Kcr data
 kcr_data <- read.csv(paste0(raw_data_dir, "uh3_kcrdata.csv"),stringsAsFactors = F)
-
-#Feature Missing_N_Perc
-#1        TNMPathM   49244 (100%)
-#2        TNMClinM   49246 (100%)
-#3 SEERSummStg2000 37225 (75.59%)
-
 kcr_data[which(kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
 kcr_data[which(kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
+#Compute missing N in old kcr data
 get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","SEERSummStg2000"))
 
-#Add updated columns to kcr_data
+#new kcr data
 new_kcr_data <- read.sas7bdat(paste0(raw_data_dir, "ky0015_update_DerivedSS2000_andTNM.sas7bdat"),debug = FALSE)
-new_kcr_data <- new_kcr_data[match(new_kcr_data[,c("study_id")],kcr_data[,c("study_id")]),]
 new_kcr_data[which(new_kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
 new_kcr_data[which(new_kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
 
-#Update 
-kcr_data$TNMPathM <- as.character(new_kcr_data$TNMPathM)
-kcr_data$TNMClinM <- as.character(new_kcr_data$TNMClinM)
-kcr_data$DerivedSS2000 <- new_kcr_data$DerivedSS2000
+#Update old KCR data TNMPathM,TNMClinM, and add comb seer summstg
+kcr_data <- updated_kcr_data_func(kcr_data,new_kcr_data)
 
-
-#'SEERSummStg2000’ only captures SEER summary stage from the years 2001-2003. 
-# ‘DerivedSS2000’ was also added for the summary stage between the years 2004-2015. 
-#No such information was captured for the year 2000.
-kcr_data$Comb_SEERSummStg <- NA
-#for not missing original SEER stage, use "SEERSummStg2000
-NOTmissing_idxes <- which(is.na(kcr_data[,"SEERSummStg2000"])== F)
-kcr_data[NOTmissing_idxes,"Comb_SEERSummStg"] <- kcr_data[NOTmissing_idxes,"SEERSummStg2000"]
-#formissing original SEER stage, use "DerivedSS2000
-missing_idxes    <- which(is.na(kcr_data[,"SEERSummStg2000"])== T)
-kcr_data[missing_idxes,"Comb_SEERSummStg"] <- kcr_data[missing_idxes,"DerivedSS2000"]
-kcr_data <- kcr_data[, -which(colnames(kcr_data) %in% c("SEERSummStg2000","DerivedSS2000"))]
-
-#           Feature Missing_N_Perc
-#1         TNMPathM  23443 (47.6%)
-#2         TNMClinM  12945 (26.29%)
-#3 Comb_SEERSummStg   3329 (6.76%)
+#Compute missing N in updated kcr data
 get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","Comb_SEERSummStg"))
 
 #########################################################################################################
@@ -326,6 +457,6 @@ All_cancer_site_date_data <- read.xlsx(paste0(data_dir1,"4_All_cancer_site_date_
 pts_level_char_df1 <- get_pts_level_char_func(analysis_ID1_Allenrolled,ID_Sources_data,NUM_Month_df1_Allenrolled,All_event_df,kcr_data,All_cancer_site_date_data)
 write.xlsx(pts_level_char_df1,paste0(outdir,"8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"))
 
-#1. For using all enrollment data with possible months has no codes at all
+#1. For using all enrollment data with  months has at one codes
 pts_level_char_df2 <- get_pts_level_char_func(analysis_ID2_EnrolledHasCode,ID_Sources_data,NUM_Month_df2_EnrolledHasCodes,All_event_df,kcr_data,All_cancer_site_date_data)
 write.xlsx(pts_level_char_df2,paste0(outdir,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"))
