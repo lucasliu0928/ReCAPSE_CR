@@ -1140,6 +1140,7 @@ load_and_clean_DM3_data<- function(file_dir){
   return(drug_group_df)
 }
 
+#this function use drug name to group
 group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
   claim_code_df$specific_group <- NA
   claim_code_df$general_group <- NA
@@ -1155,6 +1156,21 @@ group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
   return(claim_code_df)
 }
 
+#this function use short_GNN to group
+group_drugcodes_into_DM3_funcV2 <- function(claim_code_df,DM3_df){
+  claim_code_df$specific_group <- NA
+  claim_code_df$general_group <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_gnn <- claim_code_df[i,"short_GNN"]
+    curr_idxes <- which(DM3_df[,"short_code"] == curr_gnn)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"specific_group"] <-  unique(DM3_df[curr_idxes,"specific_group"])[1] #if there is still multiple, choose the 1st one
+      claim_code_df[i,"general_group"]  <-  unique(DM3_df[curr_idxes,"general_group"])[1]
+    }
+  }
+  return(claim_code_df)
+}
 
 #3A_HPC_Get_PerMonth with clean codes
 get_claims_inDateRange <- function(in_data,time_col,start_d, end_d){
@@ -1250,4 +1266,59 @@ convert_intCol_toDate <- function(enroll_df,month_col_indexes, min_date,max_date
   dates_seq <- seq(min_date,max_date,by = date_unit)
   colnames(enroll_df)[month_col_indexes] <- as.character(dates_seq)
   return(enroll_df)
+}
+
+
+##10_XXXXX.R functions
+get_codes_func <- function(codes_colnames,code_type){
+  colnames_indata <- codes_colnames[which(grepl(code_type,codes_colnames)==T)]
+  codes   <- gsub(paste0(code_type,"_"),"",colnames_indata)
+  if (length(colnames_indata) == 0){
+    code_df <- NULL
+  }else{
+    code_df <- data.frame(COLNAMES = colnames_indata, CODE = codes,TYPE = code_type)
+  }
+  return(code_df)
+}
+
+find_individual_code_grp_func <- function(code ,codetype, grp_df,grptype){
+  idx <- which(grp_df[,"CODE"] == code & grp_df[,"TYPE"] == codetype)
+  if(length(idx) > 0){
+    grp <- grp_df[idx,grptype]
+  }else{
+    grp <- paste0(grptype, "_" , NA) #if code cannot be found
+  }
+  return(grp)
+}
+
+
+
+find_listofcode_grp_func <- function(code_df,grp_type,grp_df){
+  GRPs <- NA
+  for (i in 1:nrow(code_df)){
+    curr_code     <- as.character(code_df[i, "CODE"])
+    curr_codetype <- as.character(code_df[i, "TYPE"])
+    curr_grp <- find_individual_code_grp_func(curr_code,curr_codetype,grp_df,grp_type)
+    GRPs[i] <- curr_grp
+    
+  }
+  return(GRPs)
+}
+
+
+#create a group feature df
+create_grp_feature_df_func <- function(perMonth_df,unique_grps, unique_codes_df){
+  grp_feature_df <- perMonth_df[,1:4] #keep id and month
+  grp_feature_df[,unique_grps] <- NA #new grp feature cols
+  
+  for (j in 5:ncol(grp_feature_df)){
+    curr_grp             <- colnames(grp_feature_df)[j]
+    curr_codes_ingrp     <- as.character(unique_codes_df[which(unique_codes_df[,"GRPS"] == curr_grp),"COLNAMES"])
+    curr_col_idx_ingrps  <- which(colnames(perMonth_df) %in% curr_codes_ingrp)
+    
+    curr_df <- as.data.frame(perMonth_df[,curr_col_idx_ingrps])
+    grp_feature_df[,j] <- rowSums(curr_df,na.rm = T)
+  }
+  
+  return(grp_feature_df)
 }
