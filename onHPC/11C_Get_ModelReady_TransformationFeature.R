@@ -43,25 +43,27 @@ if (length(ID_processed) != 0 ){
 }
 print(length(analysis_IDs))
 
+if (length(analysis_IDs) > 0 ){
+    ########################################################################################################################
+    #For each pt, generate a dataframe with all selected group feature as columns
+    ########################################################################################################################
+    foreach (i = 1: length(analysis_IDs)) %dopar% {
+      curr_id <- analysis_IDs[i]
+      curr_file <- paste0("ID",curr_id,"_Selected_Grp_Features.xlsx")
+      
+      #groups feature df
+      curr_grp_f_df <- read.xlsx(paste0(data_dir1,curr_file),sheet = 1)
+      
+      #get transformation data
+      system.time(curr_transf_df <- apply_code_transforamtion_func(curr_grp_f_df))
+    
+      #remove redudant month index and others from three transforamtion func
+      index_toremove <- which(colnames(curr_transf_df) %in% c("study_id","Month_Start","Month_Index"))
+      index_toremove <- index_toremove[3:length(index_toremove)]
+      curr_transf_df <- curr_transf_df[,-index_toremove]
+      
+      write.xlsx(curr_transf_df,paste0(outdir,"ID",curr_id,"_Transf_Features.xlsx"))
+      
+    }
 
-########################################################################################################################
-#For each pt, generate a dataframe with all selected group feature as columns
-########################################################################################################################
-foreach (i = 1: length(analysis_IDs)) %dopar% {
-  curr_id <- analysis_IDs[i]
-  curr_file <- paste0("ID",curr_id,"_Selected_Grp_Features.xlsx")
-  
-  #groups feature df
-  curr_grp_f_df <- read.xlsx(paste0(data_dir1,curr_file),sheet = 1)
-  
-  #get transformation data
-  system.time(curr_transf_df <- apply_code_transforamtion_func(curr_grp_f_df))
-
-  #remove redudant month index and others from three transforamtion func
-  index_toremove <- which(colnames(curr_transf_df) %in% c("study_id","Month_Start","Month_Index"))
-  index_toremove <- index_toremove[3:length(index_toremove)]
-  curr_transf_df <- curr_transf_df[,-index_toremove]
-  
-  write.xlsx(curr_transf_df,paste0(outdir,"ID",curr_id,"_Transf_Features.xlsx"))
-  
 }
