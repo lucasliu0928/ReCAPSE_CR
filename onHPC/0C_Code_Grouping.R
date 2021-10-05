@@ -5,12 +5,12 @@ source("Recapse_Ultility.R")
 #######################################################################
 code_data_dir <- "/recapse/intermediate_data/0_Codes/AfterClean_UniqueCodes/"
 grping_data_dir <- "/recapse/data/"
-outdir   <- "/recapse/intermediate_data/0_Codes/"
+outdir   <- "/recapse/intermediate_data/0_Codes/Grouped_CleanUniqueCodes/"
 
 #local
 code_data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/AfterClean_UniqueCodes/"
 grping_data_dir <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/"
-outdir   <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/"
+outdir   <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/Grouped_CleanUniqueCodes/"
 
 
 ################################################################################
@@ -61,7 +61,9 @@ grouped_unique_proc_df <- group_codes_into_Ritzwoller_func(grouped_unique_proc_d
 write.xlsx(grouped_unique_proc_df,paste0(outdir,"Unique_Proc_And_Groups_inALLClaims.xlsx"))
 
 #3. DM3 drug codes
-grouped_unique_drug_df <- group_drugcodes_into_DM3_func(unique_drug_df,DM3_df)
+#grouped_unique_drug_df <- group_drugcodes_into_DM3_func(unique_drug_df,DM3_df) #use drug_name to group
+grouped_unique_drug_df <- group_drugcodes_into_DM3_funcV2(unique_drug_df,DM3_df) #use short GNN to group
+
 write.xlsx(grouped_unique_drug_df,paste0(outdir,"Unique_Drug_And_Groups_inALLClaims.xlsx"))
 
 ################################################################################
@@ -116,6 +118,10 @@ DM3_stats2 <- report_code_grps_func(grouped_unique_drug_df,"general_group")
 Drug_stats <- rbind(DM3_stats1,DM3_stats2)
 rownames(Drug_stats) <- c("DM3_specific","DM3_general")
 
+#Check the intersection between DM3 short code and short GNN in claims data
+length(intersect(DM3_df$short_code,grouped_unique_drug_df$short_GNN)) #359
+length(unique(grouped_unique_drug_df$short_GNN))  #unique short_GNN: 4180
+length(unique(DM3_df$short_code))                 #unique short_GNN: 420
 
 #All stats
 all_stats <- rbind(Diag_stats,Proc_stats,Drug_stats)
