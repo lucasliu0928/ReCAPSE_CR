@@ -1,10 +1,10 @@
 source("Recapse_Ultility.R")
-get_pts_list_ofgrps <- function(dat_dir,ID_list){
+get_pts_list_ofgrps <- function(dat_dir,ID_list,file_suffix){
   Unique_Grp_list <- list(NA)
   for (i in 1:length(ID_list)){
     if(i %% 1000 == 0){print(i)}
     curr_id <- ID_list[i]
-    curr_file <- paste0("ID",curr_id,"_Month_Unique_Grps.xlsx")
+    curr_file <- paste0("ID",curr_id, file_suffix)
     if (file.exists(paste0(dat_dir,curr_file)) == T){
       curr_df <- read.xlsx(paste0(dat_dir,curr_file),sheet = 1)
     }else{
@@ -74,7 +74,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1  <- paste0(proj_dir, "10A_UniqueGrps_inValidMonths_PtsLevel/WithPossibleMonthsHasNoCodes/")
+file_suffix <- "_Month_CCS_DIAG_UniqueGrps.xlsx"
+data_dir1  <- paste0(proj_dir, "10B_CCSDiagFeature_inValidMonth/WithPossibleMonthsHasNoCodes/UniqueGrp/")
 data_dir2  <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 data_dir3  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
@@ -86,7 +87,7 @@ outdir   <- paste0(proj_dir, "10B_Counts_UniqueCodes_PtsLevel/")
 #Unique Groups Per Patient File
 ################################################################################
 unique_grps_files <- list.files(data_dir1)
-file_PTs_IDs <- gsub("_Month_Unique_Grps.xlsx|ID","",unique_grps_files) #18239
+file_PTs_IDs <- gsub(paste0(file_suffix,"|ID"),"",unique_grps_files) #18239
 
 ################################################################################
 #'Load pts SBCElabel
@@ -114,14 +115,14 @@ drug_disp_df <- read.xlsx(paste0(data_dir2,"Unique_Drug_And_Groups_inALLClaims.x
 #Load Pt Ids and list of unique grps for each patients
 ################################################################################
 #For all pts
-Unique_Grp_list_ALL <- get_pts_list_ofgrps(data_dir1,Anlaysis_All_PTS)
+Unique_Grp_list_ALL <- get_pts_list_ofgrps(data_dir1,Anlaysis_All_PTS,file_suffix)
 all_unique_grps_ALL <- unique(unlist(Unique_Grp_list_ALL))
 
 #For SBCE pts
-Unique_Grp_list_SBCE <- get_pts_list_ofgrps(data_dir1,Anlaysis_SBCE_PTs)
+Unique_Grp_list_SBCE <- get_pts_list_ofgrps(data_dir1,Anlaysis_SBCE_PTs,file_suffix)
 
 #For nonSBCE pts
-Unique_Grp_list_nonSBCE <- get_pts_list_ofgrps(data_dir1,Anlaysis_nonSBCE_PTs)
+Unique_Grp_list_nonSBCE <- get_pts_list_ofgrps(data_dir1,Anlaysis_nonSBCE_PTs,file_suffix)
 
 ################################################################################
 #For each unique grps feature in all data, count the number of pts who has it
