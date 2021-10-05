@@ -4,12 +4,12 @@ source("Recapse_Ultility.R")
 ##############              Data dir                     ############## 
 #######################################################################
 data_dir <- "/recapse/intermediate_data/0_Codes/BeforeClean_UniqueCodes/"
-drug_name_dir <- "/recapse/data/"
+drug_name_dir <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 outdir   <- "/recapse/intermediate_data/0_Codes/AfterClean_UniqueCodes/"
 
 # #local
 data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/BeforeClean_UniqueCodes/"
-drug_name_dir <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/"
+drug_name_dir <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
 outdir   <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/0_Codes/AfterClean_UniqueCodes/"
 #######################################################################
 ############################## Medicaid  ############################## 
@@ -82,12 +82,14 @@ Comb_proc_cleaned <- Comb_proc_cleaned[-which(is.na(Comb_proc_cleaned[,"CODE"])=
 Comb_drug_cleaned <- Comb_drug_cleaned[-which(is.na(Comb_drug_cleaned[,"CODE"])==T | Comb_drug_cleaned[,"CODE"] ==""),]
 
 
+#write.xlsx(Comb_diag_cleaned,paste0(outdir,"0_Cleaned_Unique_Diag_Codes.xlsx"))
+#write.xlsx(Comb_proc_cleaned,paste0(outdir,"0_Cleaned_Unique_Proc_Codes.xlsx"))
 
 #######################################################################
 ## Add Drug names
 #######################################################################
 #1. Get drung names
-drug_name_df <- read.csv(paste0(drug_name_dir,"Testing data for UH3 - Dec 16 2020/DrugList.csv"),stringsAsFactors = F,header = F)
+drug_name_df <- read.csv(paste0(drug_name_dir,"DrugList.csv"),stringsAsFactors = F,header = F)
 drug_name_df$V1 <- as.character(drug_name_df$V1)
 
 #2.clean code in drug name df
@@ -114,6 +116,74 @@ for (i in 1:nrow(Comb_drug_cleaned)){
   }
 }
 
-write.xlsx(Comb_diag_cleaned,paste0(outdir,"0_Cleaned_Unique_Diag_Codes.xlsx"))
-write.xlsx(Comb_proc_cleaned,paste0(outdir,"0_Cleaned_Unique_Proc_Codes.xlsx"))
+
+
+#######################################################################
+#Add GNN (Added Sep24 21)
+#######################################################################
+#1. Read Drug name list
+options(scipen=999) #disable scientific numbers showing
+drug_name_list1 <- read.csv(paste0(drug_name_dir,"NDC Drug List/Medicaid DrugList.csv"), stringsAsFactors = F)
+colnames(drug_name_list1) <- c("CODE","GNN")
+
+drug_name_list2 <- read.csv(paste0(drug_name_dir,"NDC Drug List/Medicare DrugList.csv"), stringsAsFactors = F)
+colnames(drug_name_list2) <- c("CODE","BN","GNN")
+
+
+drug_name_list_comb <- rbind(drug_name_list1, drug_name_list2[,c("CODE","GNN")]) #Comb two source
+drug_name_list_comb_updated <- drug_name_list_comb[!duplicated(drug_name_list_comb[,"CODE"]),] #remove duplicates
+drug_name_list_comb_updated[,"CODE"] <- str_remove(drug_name_list_comb_updated[,"CODE"], "^0+") #remove leading zeros 
+
+
+#2.Create a column for Code used for matching GNN data (remove leading zeros)
+Comb_drug_cleaned$CODE_ForMatchGNNData<- str_remove(Comb_drug_cleaned$CODE, "^0+") #remove leading zeros
+
+#3.Add GNN to cleaned unique drug codes
+Comb_drug_cleaned$GNN <- NA
+for (i in 1:nrow(Comb_drug_cleaned)){
+  if (i %% 1000 == 0){print(i)}
+  curr_code  <- Comb_drug_cleaned[i,"CODE_ForMatchGNNData"]
+  curr_index <- which(drug_name_list_comb_updated[,"CODE"] == curr_code)
+  if (length(curr_index) > 0 ){
+    Comb_drug_cleaned[i,"GNN"] <- drug_name_list_comb_updated[curr_index,"GNN"]
+  }
+}
+
+#check_df <- Comb_drug_cleaned[which(is.na(Comb_drug_cleaned$GNN) == T),] #Two DRUG_NDC has no GNN, and  469 DRUG_THERA_CLS_AHFS  has no GNN
+
+
+#4. Create short GNN     # This functions is from Teresa   
+#'@Question:  what is exclude list
+get_first_word_of_name <- function(str_vec,exclude_list){
+  str_vec <- as.character(str_vec)
+  
+  # get the first term or word of a multi-word generic name
+  str_pair <- str_split(trimws(str_vec, which='both'), ',', simplify=TRUE)
+  
+  if (str_pair[,1] %in% exclude_list)
+  {
+    str_pair[,1] <- trimws(str_pair[,2], which='both')
+  }
+  
+  str_pair <- str_split(str_pair[,1], ' ', simplify=TRUE)
+  
+  if (ncol(str_pair) > 1 & (str_pair[,1] %in% exclude_list))
+  {
+    str_pair[,1] <- trimws(str_pair[,2], which='both')
+  }
+  
+  str_pair <- str_split(str_pair[,1], '/', simplify=TRUE)
+  
+  return (str_pair[,1])
+}
+
+exclude_list <- NULL
+Comb_drug_cleaned$short_GNN <- NA
+for (i in 1:nrow(Comb_drug_cleaned)){
+  if (i %% 1000 == 0){print(i)}
+  curr_gnn       <- Comb_drug_cleaned[i,"GNN"]
+  curr_short_gnn <- get_first_word_of_name(curr_gnn,exclude_list)
+  Comb_drug_cleaned[i,"short_GNN"] <- curr_short_gnn
+}
+
 write.xlsx(Comb_drug_cleaned,paste0(outdir,"0_Cleaned_Unique_Drug_Codes.xlsx"))
