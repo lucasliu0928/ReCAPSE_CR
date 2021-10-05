@@ -40,6 +40,26 @@ Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,
   return(sampled_train_data)
 }
 
+print_n_prepostsamples_func <- function(in_data, data_name){
+  #in_data <- model_data
+  tb      <- table(in_data[,"y_PRE_OR_POST_2ndEvent"])
+  n_pre   <- as.numeric(tb[which(names(tb)==0)])
+  n_post  <- as.numeric(tb[which(names(tb)==1)])
+  
+  print(paste0(data_name, "Pre:" , n_pre, " Post:",n_post))
+}
+
+get_modeldata_withDSLabels <-function(in_data,downsampled_sampleIDs){
+  model_data_IDandLabels <- in_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
+  
+  #Add downsample train flag col
+  model_data_IDandLabels$DownSampled_Train <- NA
+  train_idxes2 <- which(model_data_IDandLabels[,"sample_id"] %in% downsampled_sampleIDs)
+  model_data_IDandLabels[train_idxes2,"DownSampled_Train"] <- 1
+  
+  return(model_data_IDandLabels)
+}
+
 
 ################################################################################
 #Set up parallel computing envir
@@ -59,8 +79,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "12_TrainTestIDs/")
-data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures/WithPossibleMonthsHasNoCodes/")
-outdir           <- paste0(proj_dir, "16_Performance/")
+data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
 
 #User input
 sampling_flag    <- "Down"
@@ -72,9 +92,6 @@ pt_files <-list.files(data_dir2,full.names = T)
 #model_data <- do.call(rbind, lapply(pt_files,read.xlsx))
 model_data <- do.call(rbind,mclapply(pt_files, mc.cores= numCores, function(z){read.xlsx(z, sheet = 1)}))
 
-print("Original pre vs post samples: ")
-table(model_data$y_PRE_OR_POST_2ndEvent)
-
 #Add a column for original study ID 
 original_IDs <- strsplit(model_data$sample_id,split = "@")
 model_data$study_id <- sapply(original_IDs, "[[", 1)
@@ -84,10 +101,6 @@ model_data$study_id <- sapply(original_IDs, "[[", 1)
 ################################################################################ 
 train_ID_df <- read.xlsx(paste0(data_dir1,"train_ID_withLabel.xlsx"),sheet = 1)
 test_ID_df  <- read.xlsx(paste0(data_dir1,"test_ID_withLabel.xlsx"),sheet = 1)
-print("Train non-SBCE vs SBCE : ")
-table(train_ID_df$SBCE) #13542  1049 
-print("Test non-SBCE vs SBCE : ")
-table(test_ID_df$SBCE)  #3362  285 
 
 train_ID <- paste0("ID", train_ID_df$study_id)
 test_ID  <- paste0("ID", test_ID_df$study_id)
@@ -100,21 +113,28 @@ test_ID  <- paste0("ID", test_ID_df$study_id)
 if (sampling_flag ==  "None"){
   #1. Train data without down sampling
   train_data <- model_data[which(model_data[,"study_id"] %in% train_ID),]
-  print("Training Pre vs Post:")
-  table(train_data$y_PRE_OR_POST_2ndEvent) 
+  #Print num of pre and post samples 
+  print_n_prepostsamples_func(train_data,"Train: ")
+  
 }else if (sampling_flag ==  "Down"){
   #2. Train data with down sampling
   seed_num <- 123
   train_data <- model_data[which(model_data[,"study_id"] %in% train_ID),]
   train_data <- Data_Sampling_Func(0,train_data,"y_PRE_OR_POST_2ndEvent",seed_num)
   train_data$y_PRE_OR_POST_2ndEvent <- as.numeric(train_data$y_PRE_OR_POST_2ndEvent) -1
-  print("Training DownSampled Pre vs Post:")
-  table(train_data$y_PRE_OR_POST_2ndEvent) 
+  #Print num of pre and post samples 
+  print_n_prepostsamples_func(train_data,"Train: ")
 }
+
+#Output model data ID and labels and down sampled train flag
+model_data_IDandLabels <- get_modeldata_withDSLabels(model_data,train_data[,"sample_id"])
+write.csv(model_data_IDandLabels,paste0(outdir,"DownSampled_TrainInfo/Model_Data_WithDSFlag.csv"),row.names = F)
+
+
 #2. Test
 test_data <- model_data[which(model_data[,"study_id"] %in% test_ID),]
-print("Test: Pre vs Post:")
-table(test_data$y_PRE_OR_POST_2ndEvent) 
+#Print num of pre and post samples 
+print_n_prepostsamples_func(test_data,"Test: ")
 
 #II. Create xgb input
 train_label      <- as.numeric(train_data[,"y_PRE_OR_POST_2ndEvent"])
@@ -136,7 +156,7 @@ optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                                     subsample=c(0.3, 0.9), colsample_by_tree=c(0.2, 0.8)),
                                         init_points=10,
                                         n_iter=10)
-pos_weight <- 0.01
+pos_weight <- 0.5
 current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
