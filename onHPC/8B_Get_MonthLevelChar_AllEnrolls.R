@@ -66,23 +66,25 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
     
 
     #construct per patient month level data
-    curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(enrolled_month_df) ,ncol = 20))
-    colnames(curr_month_level_char_df) <- c("Age","months_since_dx",                                            "has_second_event",
+    curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(enrolled_month_df) ,ncol = 22))
+    colnames(curr_month_level_char_df) <- c("Enrolled_year","Age","months_since_dx",                                            "has_second_event",
                                             "months_to_second_event",
                                             "Race", "Site", "Stage","Grade","Laterality",
-                                            "er_stat","pr_stat","her2_stat","surg_prim_site",
+                                            "er_stat","pr_stat","her2_stat",
+                                            "surg_prim_site_V1","surg_prim_site_V2",
                                             "reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                                             "cs_tum_size","cs_tum_ext","cs_tum_nodes","regional")
     curr_month_level_char_df <- cbind(enrolled_month_df,curr_month_level_char_df)
     
     #add features (This are the same across all rows)
     feature_cols <- c("Race","Site","Stage","Grade","Laterality",
-                      "er_stat","pr_stat","her2_stat","surg_prim_site",
+                      "er_stat","pr_stat","her2_stat","surg_prim_site_V1","surg_prim_site_V2",
                       #"DAJCC_T","DAJCC_M","DAJCC_N",
                       "reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                       "cs_tum_size","cs_tum_ext","cs_tum_nodes","regional")
     curr_month_level_char_df[,feature_cols] <- curr_pt_level_df[,feature_cols]
     curr_month_level_char_df[,"has_second_event"] <- curr_pt_level_df[,"SBCE"]
+    curr_month_level_char_df[,"Enrolled_year"]    <- year(curr_month_level_char_df$Enrolled_Month)
     
     #for each month row, add feature
     for (j in 1:nrow(curr_month_level_char_df)){
