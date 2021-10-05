@@ -79,11 +79,14 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "12_TrainTestIDs/")
-data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
+#data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
+data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
+
+#outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2/")
 
 #User input
-sampling_flag    <- "Down"
+sampling_flag    <- "None"
 
 ######################################################################################################## 
 #1. Load and combine all patient model ready data
