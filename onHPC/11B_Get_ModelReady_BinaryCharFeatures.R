@@ -44,18 +44,20 @@ perMonth_char_files <- perMonth_char_files[which(perMonth_char_IDs %in% analysis
 #1.Combine all pts binary char
 #2. Select features
 #3. Recode feature to binary columns 
+#'@Updated 10/05 added surg_prim_site_V1
+#'@Updated 10/05 added enrolled year
 ##'@TODO: ADD "DAJCC_T" ,"DAJCC_M","DAJCC_N" and num_claims later
 ########################################################################################################################
-selected_charfeatures <- c("Age","months_since_dx","Race" , "Site" , "Stage","Grade",
+selected_charfeatures <- c("Enrolled_year","Age","months_since_dx","Race" , "Site" , "Stage","Grade",
                            "Laterality" ,"er_stat","pr_stat",	"her2_stat",	
-                           "surg_prim_site", "reg_age_at_dx",	"reg_nodes_exam", 
+                           "surg_prim_site_V1","reg_age_at_dx",	"reg_nodes_exam", 
                            "reg_nodes_pos",	"cs_tum_size", "cs_tum_ext", 
                            "cs_tum_nodes", "regional")
 outcome_label <- "y_PRE_OR_POST_2ndEvent"
 other_cols <- c("study_id","Month_Start")
 
 col_toconvert <- c("Race","Site","Stage","Grade","Laterality","er_stat","pr_stat","her2_stat",
-                   "surg_prim_site")
+                   "surg_prim_site_V1") #note regional does not need to be convert cuz it is 0 or 1
 
 #1.Combine all pts df
 #all_char_df_list <- lapply(paste0(data_dir1,perMonth_char_files), read.xlsx)
@@ -73,5 +75,46 @@ all_binary_char_df <- dummy_cols(updated_all_char_df, remove_first_dummy = FALSE
 all_binary_char_df <- all_binary_char_df[, -which(colnames(all_binary_char_df) %in% col_toconvert)]
 
 #Save it as csv instead of xlsx cuz there is an error for xlsx when open the file due to large number of rows
-write.csv(all_binary_char_df,paste0(outdir,"All_Binary_Chars.csv"),row.names = F)
+write.csv(all_binary_char_df,paste0(outdir,"All_Binary_Chars_WithSurgPrimSite_V1.csv"),row.names = F)
+
+
+
+########################################################################################################################
+#1.Combine all pts binary char
+#2. Select features
+#3. Recode feature to binary columns 
+#'@Updated 10/05 added surg_prim_site_V2
+#'@Updated 10/05 added enrolled year
+##'@TODO: ADD "DAJCC_T" ,"DAJCC_M","DAJCC_N" and num_claims later
+########################################################################################################################
+selected_charfeatures <- c("Enrolled_year","Age","months_since_dx","Race" , "Site" , "Stage","Grade",
+                           "Laterality" ,"er_stat","pr_stat",	"her2_stat",	
+                           "surg_prim_site_V2","reg_age_at_dx",	"reg_nodes_exam", 
+                           "reg_nodes_pos",	"cs_tum_size", "cs_tum_ext", 
+                           "cs_tum_nodes", "regional")
+outcome_label <- "y_PRE_OR_POST_2ndEvent"
+other_cols <- c("study_id","Month_Start")
+
+col_toconvert <- c("Race","Site","Stage","Grade","Laterality","er_stat","pr_stat","her2_stat",
+                   "surg_prim_site_V2") #note regional does not need to be convert cuz it is 0 or 1
+
+#1.Combine all pts df
+#all_char_df_list <- lapply(paste0(data_dir1,perMonth_char_files), read.xlsx)
+all_char_df_list <- mclapply(paste0(data_dir1,perMonth_char_files), mc.cores= numCores, function(z){read.xlsx(z, sheet = 1)})
+all_char_df <- do.call(rbind,all_char_df_list)
+
+
+#2. Select features
+updated_all_char_df <- all_char_df[,c(other_cols,selected_charfeatures,outcome_label)]
+
+#3.covert to binary
+all_binary_char_df <- dummy_cols(updated_all_char_df, remove_first_dummy = FALSE,select_columns = col_toconvert)
+
+#remove original columns
+all_binary_char_df <- all_binary_char_df[, -which(colnames(all_binary_char_df) %in% col_toconvert)]
+
+#Save it as csv instead of xlsx cuz there is an error for xlsx when open the file due to large number of rows
+write.csv(all_binary_char_df,paste0(outdir,"All_Binary_Chars_WithSurgPrimSite_V2.csv"),row.names = F)
+
+
 
