@@ -154,10 +154,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
 data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
 
-outdir           <- paste0(proj_dir, "16_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
 
 ######################################################################################################## 
 #1.Load predictions 
@@ -195,3 +195,9 @@ perf_tb_pos1_neg5 <-  get_avg_perf_5times_sampling_func(test_prediction_df,5,pts
 write.csv(perf_tb_pos1_neg1,paste0(outdir,"perf_tb_pos1_neg1",".csv"),row.names = T)
 write.csv(perf_tb_pos1_neg2,paste0(outdir,"perf_tb_pos1_neg2",".csv"),row.names = T)
 write.csv(perf_tb_pos1_neg5,paste0(outdir,"perf_tb_pos1_neg5",".csv"),row.names = T)
+
+######################################################################################################## 
+#Compute performance for all samples
+######################################################################################################## 
+perf_tb_alltest <- get_perf_table_func(test_prediction_df,pts_level_char_df)
+write.csv(perf_tb_alltest,paste0(outdir,"perf_tb_alltest",".csv"),row.names = T)
