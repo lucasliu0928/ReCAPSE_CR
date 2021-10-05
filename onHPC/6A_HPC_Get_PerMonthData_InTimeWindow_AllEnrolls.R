@@ -71,7 +71,7 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
   idx_inEnroll <- match(curr_perMonth_df[,"Month_Start"] , enrolled_month_df[,"Enrolled_Month"])
   enrolled_month_df[idx_inEnroll,2:ncol(enrolled_month_df)] <- curr_perMonth_df
 
-  #Filter the enrollment month time and ID when there is no claims available
+  #Fill and keep the enrollment month time and ID when there is no claims available
   noclaims_rows <- which(is.na(enrolled_month_df[,"Month_Start"])==T)
   enrolled_month_df[noclaims_rows,"Month_Start"]  <- enrolled_month_df[noclaims_rows,"Enrolled_Month"]
   enrolled_month_df[noclaims_rows,"study_id"]     <- curr_id
