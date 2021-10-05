@@ -1322,3 +1322,98 @@ create_grp_feature_df_func <- function(perMonth_df,unique_grps, unique_codes_df)
   
   return(grp_feature_df)
 }
+
+
+get_pts_list_ofgrps <- function(dat_dir,ID_list,code_grp_type){
+  
+  Unique_Grp_list <- list(NA)
+  for (i in 1:length(ID_list)){
+    if(i %% 1000 == 0){print(i)}
+    curr_id <- ID_list[i]
+    curr_file <- paste0("ID",curr_id, paste0("_Month_",code_grp_type,"_UniqueGrps.xlsx"))
+    if (file.exists(paste0(dat_dir,curr_file)) == T){
+      curr_df <- read.xlsx(paste0(dat_dir,curr_file),sheet = 1)
+    }else{
+      curr_df <- NULL
+    }
+    
+    Unique_Grp_list[[i]] <- curr_df[,"unique_grps"]
+  }
+  return(Unique_Grp_list)
+}
+
+#count num and fraction of patient for each group feature
+count_numPts_forGrp<- function(grp_list,unique_grps){
+  total_num_pts <- length(grp_list)
+  
+  print(paste("Total Unique Grps:",length(unique_grps)))
+  print(paste("Total Pts:",total_num_pts))
+  
+  count_df <- as.data.frame(matrix(NA, nrow = length(unique_grps), ncol = 3))
+  colnames(count_df) <- c("Code_Grp","Num_PtsHasTheGrp","Frac_PtsHasTheGrp")
+  for (i in 1:length(unique_grps)){
+    if(i %% 50 == 0){print(i)}
+    curr_grp <- unique_grps[i]
+    
+    #Find the index of list which contians current group
+    pts_indexes <- which(sapply(grp_list, FUN=function(X) curr_grp %in% X))
+    
+    count_df[i,"Code_Grp"] <- curr_grp
+    count_df[i,"Num_PtsHasTheGrp"]  <- length(pts_indexes)
+    count_df[i,"Frac_PtsHasTheGrp"] <- length(pts_indexes) /total_num_pts
+  }
+  return(count_df)
+}
+
+#This function get count table for one code grp type
+get_count_table_func <- function(data_dir,code_grp_type,SBCE_PTs,nonSBCE_PTs){
+  #For SBCE pts
+  grp_list_SBCE    <- get_pts_list_ofgrps(data_dir,SBCE_PTs,code_grp_type)
+  
+  #For nonSBCE pts
+  grp_list_nonSBCE <- get_pts_list_ofgrps(data_dir,nonSBCE_PTs,code_grp_type)
+  
+  #From all pts, get unique grps
+  all_unique_grps <- unique(c(unlist(grp_list_SBCE),unlist(grp_list_nonSBCE)))
+  all_unique_grps  <- all_unique_grps[-which(all_unique_grps == "NONE")] #this is due to patient might not have any code of this type
+  
+  ################################################################################
+  #For each unique grps feature in all data, count the number of pts who has it
+  ################################################################################
+  count_df_SBCE              <- count_numPts_forGrp(grp_list_SBCE,all_unique_grps)
+  colnames(count_df_SBCE)    <- paste0(colnames(count_df_SBCE), "_SBCE")
+  
+  count_df_nonSBCE           <- count_numPts_forGrp(grp_list_nonSBCE,all_unique_grps)
+  colnames(count_df_nonSBCE) <- paste0(colnames(count_df_nonSBCE),"_nonSBCE")
+  
+  comb_count_df <- cbind(count_df_SBCE,count_df_nonSBCE)
+  
+  colnames(comb_count_df)[1] <- "Code_Grp"
+  comb_count_df <- comb_count_df[,-4] #remove duplicated group name col
+  
+  return(comb_count_df)
+}
+
+#This function add group discrption
+add_grp_discrption_func <- function(analysis_count_tb,disrip_df,grp_col,grp_disrip_col){
+  analysis_count_tb[,"Grp_Discrip"] <- NA
+  for (i in 1:nrow(analysis_count_tb)){
+    curr_grp <- analysis_count_tb[i,1]
+    curr_grp <- gsub("CCS_DIAG_|CCS_PROC_|DM3_SPE_|DM3_GEN_|S_GNN_","",curr_grp)
+    
+    curr_idxes  <-  which(disrip_df[,grp_col] == curr_grp)
+    curr_discrp <-  unique(disrip_df[curr_idxes,grp_disrip_col])
+    
+    if (length(curr_discrp) == 0 ){
+      curr_discrp <- NA
+    }else if (is.na(curr_discrp) == T){
+      curr_discrp <- NA
+    }else{
+      longer_disp_idxes <- which(nchar(curr_discrp) == max(nchar(curr_discrp),na.rm = T))[1] ##use the longer name to get the longer name if multiple
+      curr_discrp <- curr_discrp[longer_disp_idxes]
+    }
+    analysis_count_tb[i,"Grp_Discrip"] <- curr_discrp
+  }
+  return(analysis_count_tb)
+}
+
