@@ -211,3 +211,15 @@ output_hist_forSBCEand_nonSBCE(Both_PTs_Char_df,"most_recent_enrollment_year","M
 # print(p)
 # dev.off()
 # 
+
+################################################################################ 
+#Report number of patient and SBCE status in final model data
+################################################################################ 
+final_modelIDs_df <- read.csv(paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/DownSampled_TrainInfo/Model_Data_WithDSFlag.csv"), stringsAsFactors = F)
+DS_ModelIDs_df <-  final_modelIDs_df[which(final_modelIDs_df$DownSampled_Train==1),]
+DS_ModelIDs_df_SBCE <- DS_ModelIDs_df[which(DS_ModelIDs_df$study_id %in% paste0("ID",SBCE_PTs_Char_df$study_id)),]
+length(unique(DS_ModelIDs_df_SBCE$study_id)) #num of SBCE in DS train
+
+DS_ModelIDs_df_nonSBCE <- DS_ModelIDs_df[which(DS_ModelIDs_df$study_id %in% paste0("ID",noSBCE_PTs_Char_df$study_id)),]
+length(unique(DS_ModelIDs_df_nonSBCE$study_id)) #num of nonSBBE in DStrain
+
