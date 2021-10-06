@@ -39,10 +39,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
 data_dir2        <- paste0(proj_dir, "12_TrainTestIDs/")
 
-outdir           <- paste0(proj_dir, "16_Performance/Individual_Plot2/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/Individual_Plot/")
 ######################################################################################################## 
 #1.Load predictions 
 ######################################################################################################## 
