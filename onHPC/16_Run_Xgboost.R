@@ -79,14 +79,14 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "12_TrainTestIDs/")
-#data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
-data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
+data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
+#data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
 
-#outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/")
+#outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2/")
 
 #User input
-sampling_flag    <- "None"
+sampling_flag    <- "Down"
 
 ######################################################################################################## 
 #1. Load and combine all patient model ready data
@@ -159,13 +159,13 @@ optimal_results <- BayesianOptimization(xgb_cv_bayes,
                                                     subsample=c(0.3, 0.9), colsample_by_tree=c(0.2, 0.8)),
                                         init_points=10,
                                         n_iter=10)
-pos_weight <- 0.5
+pos_weight <- "NONE"
 current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                      max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                      min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                      subsample = as.numeric(optimal_results$Best_Par['subsample']),
-                     colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']),
-                     scale_pos_weight = pos_weight) #for weight more on pos samples
+                     colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']))
+                     #scale_pos_weight = pos_weight) #for weight more on pos samples
 mod_optimal <- xgb.train(objective="binary:logistic",
                          params=current_best, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
                          watchlist= list(train = dtrain, eval = dtest), verbose=TRUE, print_every_n=10, eval_metric="error", eval_metric="error@0.2", eval_metric="auc")
