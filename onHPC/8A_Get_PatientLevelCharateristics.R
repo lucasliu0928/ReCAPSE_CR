@@ -369,8 +369,8 @@ raw_data_dir  <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 Proj_dir <- "/recapse/intermediate_data/"
 
 # #local
-#raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
-#Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
+Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 data_dir1  <- paste0(Proj_dir, "4_RecurrDates_Outcome_Info/")
 data_dir2  <- paste0(Proj_dir, "7_PrePostLabels_AndAvailibility6mon/")
@@ -388,16 +388,16 @@ SBCE_df      <- read.xlsx(paste0(data_dir1,"4_SBCE_Label.xlsx"),sheet = 1)
 ### 2.  Load patinet char data
 #########################################################################################################
 #Old Kcr data
-kcr_data <- read.csv(paste0(raw_data_dir, "uh3_kcrdata.csv"),stringsAsFactors = F)
+kcr_data <- read.csv(paste0(raw_data_dir, "UH3_KCR data_1018Updates.csv"),stringsAsFactors = F)
 kcr_data[which(kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
 kcr_data[which(kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
 #Compute missing N in old kcr data
 get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","SEERSummStg2000"))
 
 #new kcr data
-new_kcr_data <- read.sas7bdat(paste0(raw_data_dir, "ky0015_update_DerivedSS2000_andTNM.sas7bdat"),debug = FALSE)
-new_kcr_data[which(new_kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
-new_kcr_data[which(new_kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
+# new_kcr_data <- read.sas7bdat(paste0(raw_data_dir, "ky0015_update_DerivedSS2000_andTNM.sas7bdat"),debug = FALSE)
+# new_kcr_data[which(new_kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
+# new_kcr_data[which(new_kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
 
 #Update old KCR data TNMPathM,TNMClinM, and add comb seer summstg
 kcr_data <- updated_kcr_data_func(kcr_data,new_kcr_data)
@@ -415,9 +415,9 @@ kcr_data$DAJCC_N <- get_DAJCC_var_funtion(kcr_data,"TNMPathN","TNMClinN")
 DAJCC_T_tb <- as.data.frame(table(kcr_data$DAJCC_T))
 DAJCC_M_tb <- as.data.frame(table(kcr_data$DAJCC_M))
 DAJCC_N_tb <- as.data.frame(table(kcr_data$DAJCC_N))
-# write.csv(DAJCC_T_tb,"/Users/lucasliu/Desktop/DAJCC_T_tb.csv")
-# write.csv(DAJCC_M_tb,"/Users/lucasliu/Desktop/DAJCC_M_tb.csv")
-# write.csv(DAJCC_N_tb,"/Users/lucasliu/Desktop/DAJCC_N_tb.csv")
+write.csv(DAJCC_T_tb,"/Users/lucasliu/Desktop/DAJCC_T_tb.csv")
+write.csv(DAJCC_M_tb,"/Users/lucasliu/Desktop/DAJCC_M_tb.csv")
+write.csv(DAJCC_N_tb,"/Users/lucasliu/Desktop/DAJCC_N_tb.csv")
 
 get_missing_rate_table(kcr_data,c("DAJCC_T","DAJCC_M","DAJCC_N"))
 
