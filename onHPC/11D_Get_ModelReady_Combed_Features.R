@@ -22,14 +22,14 @@ data_dir2  <- paste0(proj_dir, "11B_ModelReady_CharFatures/WithPossibleMonthsHas
 data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFatures/WithPossibleMonthsHasNoCodes/")
 data_dir4  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-#outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
-outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
+outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1_1201updated/WithPossibleMonthsHasNoCodes/")
+#outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
 
 ################################################################################
 #1.Load all char feature df
 ################################################################################
-#All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V1.csv"),stringsAsFactors = F)
-All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V2.csv"),stringsAsFactors = F)
+All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V1.csv"),stringsAsFactors = F)
+#All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V2.csv"),stringsAsFactors = F)
 
 
 ################################################################################
