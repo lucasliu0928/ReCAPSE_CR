@@ -60,8 +60,9 @@ analysis_ID2 <- unique(patient_level_char_df2$study_id)
 patient_level_char_df1 <- exclusion_func(patient_level_char_df1)
 patient_level_char_df2 <- exclusion_func(patient_level_char_df2)
 
-write.xlsx(patient_level_char_df1,paste0(outdir,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx")) #23378
-write.xlsx(patient_level_char_df2,paste0(outdir,"9_PtsCharForFinalID_WithEveryMonthsHasCodes.xlsx")) #23378
+#Check
+write.xlsx(patient_level_char_df1,paste0(outdir,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx")) #18239
+write.xlsx(patient_level_char_df2,paste0(outdir,"9_PtsCharForFinalID_WithEveryMonthsHasCodes.xlsx")) #17468
 
 
 final_IDs1 <- as.data.frame(patient_level_char_df1[,"study_id"])
@@ -69,6 +70,6 @@ colnames(final_IDs1) <- "study_id"
 final_IDs2 <- as.data.frame(patient_level_char_df2[,"study_id"])
 colnames(final_IDs2) <- "study_id"
 
-write.xlsx(final_IDs1,paste0(outdir,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx")) #23378
-write.xlsx(final_IDs2,paste0(outdir,"9_Final_ID2_WithEveryMonthsHasCodes.xlsx")) #23378
+write.xlsx(final_IDs1,paste0(outdir,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx")) #18239
+write.xlsx(final_IDs2,paste0(outdir,"9_Final_ID2_WithEveryMonthsHasCodes.xlsx")) #17468
 
