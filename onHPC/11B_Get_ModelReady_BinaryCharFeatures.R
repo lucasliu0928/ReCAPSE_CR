@@ -46,11 +46,14 @@ perMonth_char_files <- perMonth_char_files[which(perMonth_char_IDs %in% analysis
 #3. Recode feature to binary columns 
 #'@Updated 10/05 added surg_prim_site_V1
 #'@Updated 10/05 added enrolled year
-##'@TODO: ADD "DAJCC_T" ,"DAJCC_M","DAJCC_N" and num_claims later
+##'@updated 11/11: added "DAJCC_T" ,"DAJCC_M","DAJCC_N" 
+##''@TODO ADD num_claims later
 ########################################################################################################################
 selected_charfeatures <- c("Enrolled_year","Age","months_since_dx","Race" , "Site" , "Stage","Grade",
                            "Laterality" ,"er_stat","pr_stat",	"her2_stat",	
-                           "surg_prim_site_V1","reg_age_at_dx",	"reg_nodes_exam", 
+                           "surg_prim_site_V1",
+                           "DAJCC_T" ,"DAJCC_M","DAJCC_N",
+                           "reg_age_at_dx",	"reg_nodes_exam", 
                            "reg_nodes_pos",	"cs_tum_size", "cs_tum_ext", 
                            "cs_tum_nodes", "regional")
 outcome_label <- "y_PRE_OR_POST_2ndEvent"
@@ -85,11 +88,14 @@ write.csv(all_binary_char_df,paste0(outdir,"All_Binary_Chars_WithSurgPrimSite_V1
 #3. Recode feature to binary columns 
 #'@Updated 10/05 added surg_prim_site_V2
 #'@Updated 10/05 added enrolled year
-##'@TODO: ADD "DAJCC_T" ,"DAJCC_M","DAJCC_N" and num_claims later
+#'@updated 11/11 and 12/01: added and updated "DAJCC_T" ,"DAJCC_M","DAJCC_N" 
+#'@TODO ADD num_claims later
 ########################################################################################################################
 selected_charfeatures <- c("Enrolled_year","Age","months_since_dx","Race" , "Site" , "Stage","Grade",
                            "Laterality" ,"er_stat","pr_stat",	"her2_stat",	
-                           "surg_prim_site_V2","reg_age_at_dx",	"reg_nodes_exam", 
+                           "surg_prim_site_V2",
+                           "DAJCC_T" ,"DAJCC_M","DAJCC_N",
+                           "reg_age_at_dx",	"reg_nodes_exam", 
                            "reg_nodes_pos",	"cs_tum_size", "cs_tum_ext", 
                            "cs_tum_nodes", "regional")
 outcome_label <- "y_PRE_OR_POST_2ndEvent"
