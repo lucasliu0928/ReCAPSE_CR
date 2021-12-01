@@ -1,22 +1,14 @@
 source("Recapse_Ultility.R")
 
-#This function update KCR data 
-#1. Update TNMPathM,TNMClinM, 
-#2. add  Comb seer summ_stg
-#3. re-code race
-#4. re-code RXSummSurgPrimSite (two versions)
-updated_kcr_data_func <- function(kcr_df, new_kcr_df){
-  # kcr_df     <- kcr_data
-  # new_kcr_df <- new_kcr_data
-  # 
+#This function update seer summ_stg  
+updated_SEERSummStg2000_func <- function(kcr_df, new_kcr_df){
+  #kcr_df     <- kcr_data
+  #new_kcr_df <- new_kcr_data2
+  
   #Match ids
   new_kcr_df <- new_kcr_df[match(new_kcr_df[,c("study_id")],kcr_df[,c("study_id")]),]
   
-  #Update TNMPathM,TNMClinM
-  kcr_df$TNMPathM <- as.character(new_kcr_df$TNMPathM)
-  kcr_df$TNMClinM <- as.character(new_kcr_df$TNMClinM)
-  
-  #Add DerivedSS2000
+  #Add DerivedSS2000 in old kcr data
   kcr_df$DerivedSS2000 <- new_kcr_df$DerivedSS2000
   
   #Get comb SEERSummStg
@@ -30,6 +22,46 @@ updated_kcr_data_func <- function(kcr_df, new_kcr_df){
   kcr_df[NOTmissing_idxes,"Comb_SEERSummStg"] <- kcr_df[NOTmissing_idxes,"SEERSummStg2000"] #use "SEERSummStg2000
   kcr_df[missing_idxes,"Comb_SEERSummStg"]    <- kcr_df[missing_idxes,"DerivedSS2000"] #use "DerivedSS2000
   
+  
+  
+  #remove reduantant old columns
+  kcr_df <- kcr_df[, -which(colnames(kcr_df) %in% c("SEERSummStg2000","DerivedSS2000"))]
+  
+  return(kcr_df)
+}
+
+#This funcion update TNM
+updated_TNM_func <- function(kcr_df, new_kcr_df){
+  #kcr_df     <- kcr_data
+  #new_kcr_df <- new_kcr_data3
+  
+  #replace blank as NA
+  new_kcr_df[which(new_kcr_df$TNMPathT == ""),"TNMPathT"] <- NA
+  new_kcr_df[which(new_kcr_df$TNMPathN == ""),"TNMPathN"] <- NA
+  new_kcr_df[which(new_kcr_df$TNMPathM == ""),"TNMPathM"] <- NA
+  new_kcr_df[which(new_kcr_df$TNMClinT == ""),"TNMClinT"] <- NA
+  new_kcr_df[which(new_kcr_df$TNMClinN == ""),"TNMClinN"] <- NA
+  new_kcr_df[which(new_kcr_df$TNMClinM == ""),"TNMClinM"] <- NA
+  
+  #Match ids
+  new_kcr_df <- new_kcr_df[match(new_kcr_df[,c("study_id")],kcr_df[,c("study_id")]),]
+  
+  #Update TNM in old kcr data
+  kcr_df$TNMPathT <- as.character(new_kcr_df$TNMPathT)
+  kcr_df$TNMPathN <- as.character(new_kcr_df$TNMPathN)
+  kcr_df$TNMPathM <- as.character(new_kcr_df$TNMPathM)
+  kcr_df$TNMClinT <- as.character(new_kcr_df$TNMClinT)
+  kcr_df$TNMClinN <- as.character(new_kcr_df$TNMClinN)
+  kcr_df$TNMClinM <- as.character(new_kcr_df$TNMClinM)
+  
+  return(kcr_df)
+}
+
+
+#This function re-code race
+recode_Race_func <- function(kcr_df){
+  #kcr_df     <- kcr_data
+  
   #Re-code race
   #1: original 1
   #2: original 2
@@ -39,7 +71,17 @@ updated_kcr_data_func <- function(kcr_df, new_kcr_df){
   race2_idxes <-  which(kcr_df$Race1 == 2)
   kcr_df[race1_idxes,"Race_Recoded"] <- 1
   kcr_df[race2_idxes,"Race_Recoded"] <- 2
-  kcr_df[-c(race1_idxes,race2_idxes),"Race_Recoded"] <- 3 
+  kcr_df[-c(race1_idxes,race2_idxes),"Race_Recoded"] <- 3
+  
+  kcr_df <- kcr_df[, -which(colnames(kcr_df) %in% c("Race1"))]
+  
+  return(kcr_df)
+  
+}
+
+#This function recode  RXSummSurgPrimSite (two versions)
+recode_SPS_func <- function(kcr_df){
+  #kcr_df     <- kcr_data
   
   #recode RXSummSurgPrimSite
   #'@Qestion: what about 43,44,45,46,47,48,49, 75 and 76?
@@ -47,14 +89,13 @@ updated_kcr_data_func <- function(kcr_df, new_kcr_df){
   #Version2 (Quan):  00,19,20 (21-24),30,40,41,42,50,51(53-56),52(57,58,59,63),60,61(64-67),62(68,69,73,74),70,71,72,80,90,99
   kcr_df$RXSummSurgPrimSite_RecodedV1 <- NA
   kcr_df$RXSummSurgPrimSite_RecodedV2 <- NA
-  
+
   kcr_df[,"RXSummSurgPrimSite_RecodedV1"] <- recode_SurgPrimSite_func_v1(kcr_df[,"RXSummSurgPrimSite"])
   kcr_df[,"RXSummSurgPrimSite_RecodedV2"] <- recode_SurgPrimSite_func_v2(kcr_df[,"RXSummSurgPrimSite"])
-  
-  #remove reduantant old columns
-  kcr_df <- kcr_df[, -which(colnames(kcr_df) %in% c("RXSummSurgPrimSite","Race1","SEERSummStg2000","DerivedSS2000"))]
-  
+  kcr_df <- kcr_df[, -which(colnames(kcr_df) %in% c("RXSummSurgPrimSite"))]
+
   return(kcr_df)
+  
 }
 
 
@@ -174,6 +215,112 @@ get_DAJCC_var_funtion <- function(kcr_data, pathology_results_col,clinical_resul
   return(computed_value)
 }
 
+#According to "pedsf_attachment_a.pdf", convert DAJCC variable to numeric code
+convert_DAJCC_var_function <- function(in_data,var_name){
+  #in_data <- kcr_data
+  #var_name <- "DAJCC_N"
+  
+  in_values <- in_data[,var_name]
+  
+  if (var_name == "DAJCC_M"){
+    #Remove prefix c or p or I+
+    in_values <- gsub("c|p|I\\+","",in_values,ignore.case = F)
+    
+    #Convert
+    in_values[which(in_values == "X")] <- "99"
+    in_values[which(in_values == "0")] <- "00"
+    in_values[which(in_values == "1")] <- "10"
+    in_values[which(in_values == "1A")] <- "11"
+    in_values[which(in_values == "1B")] <- "12"
+    in_values[which(in_values == "1C")] <- "13"
+    in_values[which(in_values == "1 NOS")] <- "19"
+    in_values[which(is.na(in_values) == T)] <- "88"
+  }else if (var_name == "DAJCC_T"){
+    #Remove prefix c or p 
+    in_values <- gsub("c|p","",in_values,ignore.case = F)
+    #2D and ISD not found in table, so recode them as NA
+    in_values[which(in_values %in% c("ISD","2D"))] <- NA
+    
+    in_values[which(in_values == "X")] <- "99"
+    in_values[which(in_values == "0")] <- "00"
+    in_values[which(in_values == "A")] <- "01"
+    in_values[which(in_values == "IS")] <- "05"
+    in_values[which(in_values == "ISPU")] <- "06"
+    in_values[which(in_values == "ISPD")] <- "07"
+    
+    in_values[which(in_values == "1")] <- "10"
+    in_values[which(in_values %in% c("1MI","1MIC"))] <- "11"
+    in_values[which(in_values == "1 NOS")] <- "19"
+    in_values[which(in_values == "1A")] <- "12"
+    in_values[which(in_values == "1A1")] <- "13"
+    in_values[which(in_values == "1A2")] <- "14"
+    in_values[which(in_values == "1B")] <- "15"
+    in_values[which(in_values == "1B1")] <- "16"
+    in_values[which(in_values == "1B2")] <- "17"
+    in_values[which(in_values == "1C")] <- "18"
+    
+    in_values[which(in_values == "2")] <- "20"
+    in_values[which(in_values == "2 NOS")] <- "29"
+    in_values[which(in_values == "2A")] <- "21"
+    in_values[which(in_values == "2B")] <- "22"
+    in_values[which(in_values == "2C")] <- "23"
+    
+    in_values[which(in_values == "3")] <- "30"
+    in_values[which(in_values == "3 NOS")] <- "39"
+    in_values[which(in_values == "3A")] <- "31"
+    in_values[which(in_values == "3B")] <- "32"
+    in_values[which(in_values == "3C")] <- "33"
+    
+    in_values[which(in_values == "4")] <- "40"
+    in_values[which(in_values == "4 NOS")] <- "49"
+    in_values[which(in_values == "4A")] <- "41"
+    in_values[which(in_values == "4B")] <- "42"
+    in_values[which(in_values == "4C")] <- "43"
+    in_values[which(in_values == "4D")] <- "44"
+    
+    in_values[which(in_values == "1A NOS")] <- "80"
+    in_values[which(in_values == "1B NOS")] <- "81"
+    
+    in_values[which(is.na(in_values) == T)] <- "88"
+  }else if (var_name == "DAJCC_N"){
+    #Remove prefix c or p 
+    in_values <- gsub("c|p","",in_values,ignore.case = F)
+    
+    in_values[which(in_values == "X")] <- "99"
+    in_values[which(in_values == "0")] <- "00"
+    in_values[which(in_values == "0I-")] <- "01"
+    in_values[which(in_values == "0I+")] <- "02"
+    in_values[which(in_values == "0M-")] <- "03"
+    in_values[which(in_values == "0M+")] <- "04"
+    
+    in_values[which(in_values == "1")] <- "10"
+    in_values[which(in_values == "1 NOS")] <- "19"
+    in_values[which(in_values == "1A")] <- "11"
+    in_values[which(in_values == "1B")] <- "12"
+    in_values[which(in_values == "1C")] <- "13"
+    in_values[which(in_values == "1MI")] <- "18"
+    
+    in_values[which(in_values == "2")] <- "20"
+    in_values[which(in_values == "2 NOS")] <- "29"
+    in_values[which(in_values == "2A")] <- "21"
+    in_values[which(in_values == "2B")] <- "22"
+    in_values[which(in_values == "2C")] <- "23" 
+    
+    in_values[which(in_values == "3")] <- "30"
+    in_values[which(in_values == "3 NOS")] <- "39"
+    in_values[which(in_values == "3A")] <- "31"
+    in_values[which(in_values == "3B")] <- "32"
+    in_values[which(in_values == "3C")] <- "33"
+    
+    in_values[which(is.na(in_values) == T)] <- "88"
+  }
+  
+  in_data[,var_name] <- as.numeric(in_values)
+  return(in_data)
+  
+}
+
+
 get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event_df,kcr_df,All_cancer_site_date_df){
   # analysis_ID <- analysis_ID1_Allenrolled
   # ID_Sources_Df <- ID_Sources_data
@@ -182,7 +329,7 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
   # kcr_df   <- kcr_data
   # All_cancer_site_date_df <- All_cancer_site_date_data
 
-  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 42))
+  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 45))
   colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE",
                          "Diagnosis_Year","Race","Site",
                          "BestStageGrp","Stage",
@@ -191,6 +338,7 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
                          "radiation","reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                          "cs_tum_size","cs_tum_ext","chemo","hormone","cs_tum_nodes",
                          "num_nonbc","date_Birth",
+                         "DAJCC_T","DAJCC_M","DAJCC_N",
                          "Site_1st_Event","Date_1st_Event",
                          "Site_2nd_Event","Type_2nd_Event","Date_2nd_Event",
                          "Event_2nd_Is1stPrimaryBCDeath","Year_1stPrimaryBCDeath",
@@ -315,10 +463,10 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
     char_df[i,"reg_age_at_dx"] <- curr_kcr[,"DiagAge"]
     char_df[i,"cs_tum_nodes"] <- curr_kcr[,"CSLymphNodes"]
     
-    #'@NOTE: add back later when data issue solved
-    # char_df[i,"DAJCC_T"] <- curr_kcr[,"DAJCC_T"]
-    # char_df[i,"DAJCC_M"] <- curr_kcr[,"DAJCC_M"]
-    # char_df[i,"DAJCC_N"] <- curr_kcr[,"DAJCC_N"]
+    #Add DAJCC
+    char_df[i,"DAJCC_T"] <- curr_kcr[,"DAJCC_T"]
+    char_df[i,"DAJCC_M"] <- curr_kcr[,"DAJCC_M"]
+    char_df[i,"DAJCC_N"] <- curr_kcr[,"DAJCC_N"]
     
     #num_nonbc: number of primary cancer diagnoses that are not breast cancer that the patient has had
     #curr all cancer site df
@@ -368,7 +516,7 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
 raw_data_dir  <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 Proj_dir <- "/recapse/intermediate_data/"
 
-# #local
+#Local
 raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
 Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
@@ -386,24 +534,41 @@ SBCE_df      <- read.xlsx(paste0(data_dir1,"4_SBCE_Label.xlsx"),sheet = 1)
 
 #########################################################################################################
 ### 2.  Load patinet char data
+#'A. Data 1: uh3_kcrdata.csv
+#'B. Data 2  (@Add DerivedSS2000): ky0015_update_DerivedSS2000_andTNM.sas7bdat
+#'C. Data 3: (@Updated 12/01/21, TNM) UH3 Nov Update with TNM and Staging.csv
+#'@NOTE: Ignore UH3_KCR data_1018Updates.csv, cuz it does not exactly match the old data,(e.g, primary site)
 #########################################################################################################
-#Old Kcr data
-kcr_data <- read.csv(paste0(raw_data_dir, "UH3_KCR data_1018Updates.csv"),stringsAsFactors = F)
+#Kcr data 1
+kcr_data <- read.csv(paste0(raw_data_dir, "uh3_kcrdata.csv"),stringsAsFactors = F) #
+kcr_data[which(kcr_data$TNMPathT == ""),"TNMPathT"] <- NA
+kcr_data[which(kcr_data$TNMClinT == ""),"TNMClinT"] <- NA
 kcr_data[which(kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
 kcr_data[which(kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
-#Compute missing N in old kcr data
-get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","SEERSummStg2000"))
+kcr_data[which(kcr_data$TNMPathN == ""),"TNMPathN"] <- NA
+kcr_data[which(kcr_data$TNMClinN == ""),"TNMClinN"] <- NA
+get_missing_rate_table(kcr_data,c("TNMPathT","TNMClinT",
+                                  "TNMPathM","TNMClinM",
+                                  "TNMPathN","TNMClinN","SEERSummStg2000"))
 
-#new kcr data
-# new_kcr_data <- read.sas7bdat(paste0(raw_data_dir, "ky0015_update_DerivedSS2000_andTNM.sas7bdat"),debug = FALSE)
-# new_kcr_data[which(new_kcr_data$TNMPathM == ""),"TNMPathM"] <- NA
-# new_kcr_data[which(new_kcr_data$TNMClinM == ""),"TNMClinM"] <- NA
+#Recode race
+kcr_data <- recode_Race_func(kcr_data)
 
-#Update old KCR data TNMPathM,TNMClinM, and add comb seer summstg
-kcr_data <- updated_kcr_data_func(kcr_data,new_kcr_data)
+#recode SurgPrimSite
+kcr_data <- recode_SPS_func(kcr_data)
 
-#Compute missing N in updated kcr data
-get_missing_rate_table(kcr_data,c("TNMPathM","TNMClinM","Comb_SEERSummStg"))
+#KCr data 2 (Update SEERSummStg)
+new_kcr_data2 <- read.sas7bdat(paste0(raw_data_dir, "ky0015_update_DerivedSS2000_andTNM.sas7bdat"),debug = FALSE)
+kcr_data <- updated_SEERSummStg2000_func(kcr_data,new_kcr_data2)
+
+
+#Kcr data 3 (Updated TNM)
+new_kcr_data3 <- read.csv(paste0(raw_data_dir, "UH3 Nov Update with TNM and Staging.csv"),stringsAsFactors  = FALSE)
+kcr_data <- updated_TNM_func(kcr_data,new_kcr_data3)
+
+get_missing_rate_table(kcr_data,c("TNMPathT","TNMClinT",
+                                  "TNMPathM","TNMClinM",
+                                  "TNMPathN","TNMClinN","Comb_SEERSummStg"))
 
 #########################################################################################################
 #Compute DAJCC_T, DAJCC_M, DAJCC_N
@@ -412,13 +577,14 @@ kcr_data$DAJCC_T <- get_DAJCC_var_funtion(kcr_data,"TNMPathT","TNMClinT")
 kcr_data$DAJCC_M <- get_DAJCC_var_funtion(kcr_data,"TNMPathM","TNMClinM")
 kcr_data$DAJCC_N <- get_DAJCC_var_funtion(kcr_data,"TNMPathN","TNMClinN")
 
-DAJCC_T_tb <- as.data.frame(table(kcr_data$DAJCC_T))
-DAJCC_M_tb <- as.data.frame(table(kcr_data$DAJCC_M))
-DAJCC_N_tb <- as.data.frame(table(kcr_data$DAJCC_N))
-write.csv(DAJCC_T_tb,"/Users/lucasliu/Desktop/DAJCC_T_tb.csv")
-write.csv(DAJCC_M_tb,"/Users/lucasliu/Desktop/DAJCC_M_tb.csv")
-write.csv(DAJCC_N_tb,"/Users/lucasliu/Desktop/DAJCC_N_tb.csv")
+#convert DAJCC variable to numeric code
+kcr_data <- convert_DAJCC_var_function(kcr_data, "DAJCC_T")
+kcr_data <- convert_DAJCC_var_function(kcr_data, "DAJCC_N")
+kcr_data <- convert_DAJCC_var_function(kcr_data, "DAJCC_M")
 
+table(kcr_data$DAJCC_T)
+table(kcr_data$DAJCC_N)
+table(kcr_data$DAJCC_M)
 get_missing_rate_table(kcr_data,c("DAJCC_T","DAJCC_M","DAJCC_N"))
 
 ################################################################################ 
@@ -451,12 +617,11 @@ All_cancer_site_date_data <- read.xlsx(paste0(data_dir1,"4_All_cancer_site_date_
 
 #########################################################################################################
 #### 6.  get charastersitc for final anlaysis IDs
-#'@TODO: Add "DAJCC_T","DAJCC_M","DAJCC_N" back later due to data issue
 #########################################################################################################
 #1. For using all enrollment data with possible months has no codes at all
 pts_level_char_df1 <- get_pts_level_char_func(analysis_ID1_Allenrolled,ID_Sources_data,NUM_Month_df1_Allenrolled,All_event_df,kcr_data,All_cancer_site_date_data)
 write.xlsx(pts_level_char_df1,paste0(outdir,"8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"))
 
-#1. For using all enrollment data with  months has at one codes
+#1. For using enrollment data with  months has at least one codes
 pts_level_char_df2 <- get_pts_level_char_func(analysis_ID2_EnrolledHasCode,ID_Sources_data,NUM_Month_df2_EnrolledHasCodes,All_event_df,kcr_data,All_cancer_site_date_data)
 write.xlsx(pts_level_char_df2,paste0(outdir,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"))
