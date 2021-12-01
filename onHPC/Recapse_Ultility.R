@@ -13,6 +13,9 @@ library(pROC)
 library(caret)
 library(dplyr)
 library(sas7bdat)
+library(ggplot2)
+library(reshape2)
+library(xgboost)
 
 compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
   #compute ROC-AUC
@@ -1415,5 +1418,41 @@ add_grp_discrption_func <- function(analysis_count_tb,disrip_df,grp_col,grp_disr
     analysis_count_tb[i,"Grp_Discrip"] <- curr_discrp
   }
   return(analysis_count_tb)
+}
+
+#This func used in 18_CheckPTSFeatureTrajectory.R and 20_Importance Plot.R
+find_ccs_discrption_func <-function(grp_df,curr_code){
+  grp_idxes <- which(grp_df[,"CCS_CATEGORY"] == curr_code)
+  unique_discrptions <- unique(grp_df[grp_idxes,"CCS_CATEGORY_DESCRIPTION"])
+  n_char_discrip <- nchar(unique_discrptions)
+  final_discrip <- unique_discrptions[which(n_char_discrip == max(n_char_discrip))]
+  
+  final_discrip <- gsub('[[:punct:] ]+',' ',final_discrip)
+  final_discrip <- trimws(final_discrip) #trim white space and '
+   
+  return(final_discrip)
+}
+
+extract_ccs_typeAndcode <- function(feature_list){
+  #feature_list <- important_f_df[,"Feature"]
+  
+  feature_list <- gsub("time_since_|time_until_|cumul_ratio_","",feature_list)
+  
+  ccs_type <- NA
+  ccs_code <- NA
+  for (i in 1:length(feature_list)){
+    curr_f <- feature_list[i]
+    
+    if (grepl("CCS_",curr_f)==T){ #if CCS feature
+      curr_f_splited <- strsplit(curr_f,split = "_")
+      ccs_type[i] <- unlist(curr_f_splited)[[2]]
+      ccs_code[i] <- unlist(curr_f_splited)[[3]]
+    }else{
+      ccs_type[i] <- NA
+      ccs_code[i] <- NA
+    }
+  }
+  
+  return(list(ccs_type,ccs_code))
 }
 
