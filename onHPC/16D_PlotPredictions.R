@@ -44,10 +44,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/All_DS_Performance/")
-data_dir2        <- paste0(proj_dir, "12_TrainTestIDs/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
+data_dir2        <- paste0(proj_dir, "12C_TrainTestIDs/")
 
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/All_DS_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
 
 #User input
 ds_index <- 1
@@ -56,7 +56,7 @@ ds_index <- 1
 #1.Load predictions 
 ######################################################################################################## 
 #Load prediction data
-test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed","/16_Prediction_Table_DS",ds_index,"_posweight0.5.csv"))
+test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed","/16_Prediction_Table_DS",ds_index,".csv"))
 
 #Add study_id and month start
 original_IDs <- strsplit(as.character(test_prediction_df$sample_id),split = "@")
@@ -76,7 +76,7 @@ changepoint_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed
 
 ################################################################################ 
 #Plot
-#'@TODO: Maybe add event date lalter
+#'@TODO: Maybe add event date Later
 ################################################################################ 
 for (i in 1:length(test_ID)){
   if(i %% 100 == 0){print(i)}
