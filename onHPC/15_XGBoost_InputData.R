@@ -78,35 +78,33 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "12_TrainTestIDs/")
-data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1_1111updated/WithPossibleMonthsHasNoCodes/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/")
-
-#data_dir2        <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2_1111updated/WithPossibleMonthsHasNoCodes/")
-#outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2_1111updated/")
+data_dir1        <- paste0(proj_dir, "12C_TrainTestIDs/")
+data_dir2        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
+data_dir3        <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
+outdir           <- paste0(proj_dir, "15_XGB_Input/")
 
 #User input
-sampling_flag    <- "Down"
+sampling_flag    <- "None"
 n_sampling       <- 10
 
-######################################################################################################## 
-#1. Load and combine all patient model ready data
-######################################################################################################## 
-pt_files <-list.files(data_dir2,full.names = T)
-model_data <- do.call(rbind,mclapply(pt_files, mc.cores= numCores, function(z){read.xlsx(z, sheet = 1)}))
-
-#Add a column for original study ID 
-original_IDs <- strsplit(model_data$sample_id,split = "@")
-model_data$study_id <- sapply(original_IDs, "[[", 1)
-
 ################################################################################ 
-#2. Load patient level char to get SBCE or not to make sure original ID not in both train and validation
+#1. Load train and test IDs
 ################################################################################ 
 train_ID_df <- read.xlsx(paste0(data_dir1,"train_ID_withLabel.xlsx"),sheet = 1)
 test_ID_df  <- read.xlsx(paste0(data_dir1,"test_ID_withLabel.xlsx"),sheet = 1)
 
 train_ID <- paste0("ID", train_ID_df$study_id)
 test_ID  <- paste0("ID", test_ID_df$study_id)
+
+######################################################################################################## 
+#1. Load and combine all patient model ready data
+######################################################################################################## 
+load(file = paste0(data_dir2, "All_PTS_ModelReadyData.rda"))
+
+#remove the const feature (DM3_SPE_muscle.relaxant)
+const_fs <- read.csv(paste0(data_dir3,"ConstFeature_removed_ForPCAandtSNE.csv"),stringsAsFactors = F)
+model_data <- model_data[, -which(colnames(model_data) %in% const_fs[,2])]
+
 
 ######################################################################################################## 
 #3.Get model data for train and test
@@ -118,6 +116,13 @@ if (sampling_flag ==  "None"){
   train_data <- model_data[which(model_data[,"study_id"] %in% train_ID),]
   #Print num of pre and post samples 
   print_n_prepostsamples_func(train_data,"Train: ")
+  
+  #Output model ready binary data
+  save(train_data, file=paste0(outdir, "", "train_data","_DS" ,"0",".rda"))
+  
+  #Output Sample IDs and Label for later stats
+  train_IDsandLabels <- train_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
+  write.csv(train_IDsandLabels,paste0(outdir,"TrainSampleIDsAndLabels" , "0" , ".csv"),row.names = F)
   
 }else if (sampling_flag ==  "Down"){
   
@@ -131,11 +136,11 @@ if (sampling_flag ==  "None"){
     train_data$y_PRE_OR_POST_2ndEvent <- as.numeric(train_data$y_PRE_OR_POST_2ndEvent) -1
     
     #Output model ready binary data
-    save(train_data, file=paste0(outdir, "XGB_Input/", "train_data","_DS" ,i,".rda"))
+    save(train_data, file=paste0(outdir, "", "train_data","_DS" ,i,".rda"))
     
     #Output Sample IDs and Label for later stats
     train_IDsandLabels <- train_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
-    write.csv(train_IDsandLabels,paste0(outdir,"XGB_Input/TrainSampleIDsAndLabels" , i , ".csv"),row.names = F)
+    write.csv(train_IDsandLabels,paste0(outdir,"TrainSampleIDsAndLabels" , i , ".csv"),row.names = F)
     
 
     #Print num of pre and post samples 
@@ -159,4 +164,4 @@ test_data <- model_data[which(model_data[,"study_id"] %in% test_ID),]
 print_n_prepostsamples_func(test_data,"Test: ")
 
 #Output model ready binary data
-save(test_data, file=paste0(outdir, "XGB_Input/test_data.rda"))
+save(test_data, file=paste0(outdir, "test_data.rda"))
