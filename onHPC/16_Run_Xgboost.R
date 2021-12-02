@@ -17,19 +17,16 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/All_DS_Performance/")
+data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
 
-#data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2_1111updated/")
-#outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2_1111updated/All_DS_Performance/")
-
-#Run XGBoost 10 times for 10 Downsampled Training data
-for (i in 1:10){
+#Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
+for (i in 0:10){
   ################################################################################
   #Load train and test
   ################################################################################
-  load(file = paste0(data_dir1, "XGB_Input/train_data_DS", i, ".rda"))
-  load(file = paste0(data_dir1, "XGB_Input/test_data.rda"))
+  load(file = paste0(data_dir1, "train_data_DS", i, ".rda"))
+  load(file = paste0(data_dir1, "test_data.rda"))
   
   ################################################################################
   #Create xgb input
@@ -54,31 +51,38 @@ for (i in 1:10){
                                           init_points=10,
                                           n_iter=10)
   #Get best paramters
-  pos_weight <- 0.5
+  #pos_weight <- 0.5
   current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                        subsample = as.numeric(optimal_results$Best_Par['subsample']),
-                       colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']),
-                       scale_pos_weight = pos_weight) #for weight more on pos samples
+                       colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']))
+                      #scale_pos_weight = pos_weight) #for weight more on pos samples
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
                            params=current_best, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
                            watchlist= list(train = dtrain, eval = dtest), verbose=TRUE, print_every_n=10, eval_metric="error", eval_metric="error@0.2", eval_metric="auc")
+  ################################################################################
+  #Create sub dirctory for each DS data
+  ################################################################################
+  sub_dir <- paste0("train_DS",i,"/BeforeSmoothed")
+  dir.create(file.path(outdir, sub_dir),showWarnings = FALSE, recursive= TRUE)
+  out_dir2 <- paste0(outdir,"train_DS",i,"/BeforeSmoothed/")
+  
   #Prediction table
   pred   <- predict(mod_optimal, dtest)
   actual <- test_label
   prediction_tb <- cbind.data.frame(sample_id = test_data[,"sample_id"],pred,actual)
-  write.csv(prediction_tb,paste0(outdir,"train_DS",i, "/16_Prediction_Table_DS",i,"_posweight",pos_weight,".csv"),row.names = F)
+  write.csv(prediction_tb,paste0(out_dir2, "16_Prediction_Table_DS",i,".csv"),row.names = F)
   
   #Performance table 
   perf <- compute_binaryclass_perf_func(pred,actual)
   print(perf)
-  write.csv(perf,paste0(outdir,"train_DS",i,"/16_Performance_Table_DS", i , "_posweight",pos_weight,".csv"),row.names = F)
+  write.csv(perf,paste0(out_dir2,"16_Performance_Table_DS", i ,".csv"),row.names = F)
   
   #Importantant matrix
   importance_matrix <- xgb.importance(model = mod_optimal)
-  write.csv(importance_matrix,paste0(outdir,"train_DS",i,"/16_importance_matrix_DS", i , "_posweight",pos_weight,".csv"),row.names = F)
+  write.csv(importance_matrix,paste0(out_dir2,"/16_importance_matrix_DS", i , ".csv"),row.names = F)
 
 }
 
