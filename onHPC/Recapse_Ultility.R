@@ -624,6 +624,11 @@ add_time_since_func <-function(pt_perMonth_df){
   colnames(time_since_df) <- colnames(pt_perMonth_df)
   colnames(time_since_df)[4:ncol(time_since_df)] <- paste0("time_since_",colnames(time_since_df)[4:ncol(time_since_df)])
   
+  #'@Switched 1201 the position of the following code
+  time_since_df[,"study_id"]    <- pt_perMonth_df[,"study_id"]
+  time_since_df[,"Month_Start"] <- pt_perMonth_df[,"Month_Start"]
+  time_since_df[,"Month_Index"] <- pt_perMonth_df[,"Month_Index"]
+  
   #code group col started at index 4
   for(j in 4:ncol(time_since_df)){ #for each code group 
     most_recent_month <- Inf #initial a most recent month as Future for each code group
@@ -631,9 +636,9 @@ add_time_since_func <-function(pt_perMonth_df){
     if (!j %in% colindex_toskip){ #'@NEW
           for (i in 1:nrow(pt_perMonth_df)){ #for each month
             curr_month_df <- pt_perMonth_df[i,]
-            time_since_df[i,"study_id"] <- curr_month_df[,"study_id"]
-            time_since_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
-            time_since_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+            #time_since_df[i,"study_id"] <- curr_month_df[,"study_id"]
+            #time_since_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+            #time_since_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
             
             curr_count <- curr_month_df[,j]
             curr_month <- curr_month_df[,"Month_Index"]
@@ -676,15 +681,20 @@ add_time_until_func <-function(pt_perMonth_df){
   colnames(time_until_df) <- colnames(pt_perMonth_df)
   colnames(time_until_df)[4:ncol(time_until_df)] <- paste0("time_until_",colnames(time_until_df)[4:ncol(time_until_df)])
   
+  #'@Switched 1201 the position of the following code
+  time_until_df[,"study_id"]    <- pt_perMonth_df[,"study_id"]
+  time_until_df[,"Month_Start"] <- pt_perMonth_df[,"Month_Start"]
+  time_until_df[,"Month_Index"] <- pt_perMonth_df[,"Month_Index"]
+  
   #code group col started at index 4
   for(j in 4:ncol(time_until_df)){ #for each code group 
     soonest_future_month <- -Inf #initial a soonest future month as past(-INF) for each code group
     if (!j %in% colindex_toskip){ #'@NEW
        for (i in nrow(pt_perMonth_df):1){ #for each month from latest to oldest
         curr_month_df <- pt_perMonth_df[i,]
-        time_until_df[i,"study_id"] <- curr_month_df[,"study_id"]
-        time_until_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
-        time_until_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+        #time_until_df[i,"study_id"] <- curr_month_df[,"study_id"]
+        #time_until_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+        #time_until_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
         
         curr_count <- curr_month_df[,j]
         curr_month <- curr_month_df[,"Month_Index"]
@@ -725,6 +735,12 @@ add_cumul_ratio_func <-function(pt_perMonth_df){
   colnames(cumul_ratio_df) <- colnames(pt_perMonth_df)
   colnames(cumul_ratio_df)[4:ncol(cumul_ratio_df)] <- paste0("cumul_ratio_",colnames(cumul_ratio_df)[4:ncol(cumul_ratio_df)])
   
+  #'@Switched 1201 the position of the following code
+  cumul_ratio_df[,"study_id"]    <- pt_perMonth_df[,"study_id"]
+  cumul_ratio_df[,"Month_Start"] <- pt_perMonth_df[,"Month_Start"]
+  cumul_ratio_df[,"Month_Index"] <- pt_perMonth_df[,"Month_Index"]
+  
+  
   #code group col started at index 4
   for(j in 4:ncol(cumul_ratio_df)){ #for each code group 
     curr_cum_count <- 0 #inital cumalitive count as 0 
@@ -732,9 +748,9 @@ add_cumul_ratio_func <-function(pt_perMonth_df){
         for (i in 1:nrow(pt_perMonth_df)){ #for each month
           #get month data and assign to the new dataframe
           curr_month_df <- pt_perMonth_df[i,]
-          cumul_ratio_df[i,"study_id"] <- curr_month_df[,"study_id"]
-          cumul_ratio_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
-          cumul_ratio_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
+          #cumul_ratio_df[i,"study_id"] <- curr_month_df[,"study_id"]
+          #cumul_ratio_df[i,"Month_Start"] <- curr_month_df[,"Month_Start"]
+          #cumul_ratio_df[i,"Month_Index"] <- curr_month_df[,"Month_Index"]
           
           #get count and month index
           curr_count <- curr_month_df[,j]
