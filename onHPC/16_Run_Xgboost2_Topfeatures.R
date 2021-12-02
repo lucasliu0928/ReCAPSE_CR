@@ -17,24 +17,22 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1111updated/Use_ImportantFs_Performance/")
+data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
+data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/Use_ImportantFs_Performance/")
 
-#data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2_1111updated/")
-#outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V2_1111updated/Use_ImportantFs_Performance/")
-
-#Run XGBoost 10 times for 10 Downsampled Training data
-for (i in 1:10){
+#Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
+for (i in 2:10){
   ################################################################################
   #Load train and test
   ################################################################################
-  load(file = paste0(data_dir1, "XGB_Input/train_data_DS", i, ".rda"))
-  load(file = paste0(data_dir1, "XGB_Input/test_data.rda"))
+  load(file = paste0(data_dir1, "train_data_DS", i, ".rda"))
+  load(file = paste0(data_dir1, "test_data.rda"))
   
   ################################################################################
   #Load important features for each DS
   ################################################################################
-  important_f_df <- read.csv(paste0(data_dir1,"All_DS_Performance/train_DS",i,"/BeforeSmoothed/16_importance_matrix_DS", i ,"_posweight0.5.csv"), stringsAsFactors = F)
+  important_f_df <- read.csv(paste0(data_dir2,"train_DS",i,"/BeforeSmoothed/16_importance_matrix_DS", i ,".csv"), stringsAsFactors = F)
   important_f_df <- important_f_df[order(important_f_df[,"Gain"],decreasing = T),]
   top_fs <- important_f_df[1:50,"Feature"]
   
@@ -91,16 +89,16 @@ for (i in 1:10){
   pred   <- predict(mod_optimal, dtest)
   actual <- test_label
   prediction_tb <- cbind.data.frame(sample_id = test_data[,"sample_id"],pred,actual)
-  write.csv(prediction_tb,paste0(outdir,"train_DS",i, "/BeforeSmoothed/16_Prediction_Table_DS",i,"_posweight",pos_weight,".csv"),row.names = F)
+  write.csv(prediction_tb,paste0(outdir,"train_DS",i, "/BeforeSmoothed/16_Prediction_Table_DS",i,".csv"),row.names = F)
   
   #Performance table 
   perf <- compute_binaryclass_perf_func(pred,actual)
   print(perf)
-  write.csv(perf,paste0(outdir,"train_DS",i,"/BeforeSmoothed/16_Performance_Table_DS", i , "_posweight",pos_weight,".csv"),row.names = F)
+  write.csv(perf,paste0(outdir,"train_DS",i,"/BeforeSmoothed/16_Performance_Table_DS", i,".csv"),row.names = F)
   
   #Importantant matrix
   importance_matrix <- xgb.importance(model = mod_optimal)
-  write.csv(importance_matrix,paste0(outdir,"train_DS",i,"/BeforeSmoothed/16_importance_matrix_DS", i , "_posweight",pos_weight,".csv"),row.names = F)
+  write.csv(importance_matrix,paste0(outdir,"train_DS",i,"/BeforeSmoothed/16_importance_matrix_DS", i ,".csv"),row.names = F)
   
 }
 
