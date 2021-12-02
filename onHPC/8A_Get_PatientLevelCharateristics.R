@@ -84,7 +84,7 @@ recode_SPS_func <- function(kcr_df){
   #kcr_df     <- kcr_data
   
   #recode RXSummSurgPrimSite
-  #'@Qestion: what about 43,44,45,46,47,48,49, 75 and 76?
+  #'@Qestion: what about 43,44,45,46,47,48,49, 75 and 76? Coded as NA for NOW
   #Version1 (Dr.Huang): 0, 19, (20-24), 30, (40-42), (50-59,63),  (60-62, 64-69, 73,74), 70-72, 80, 90, 99
   #Version2 (Quan):  00,19,20 (21-24),30,40,41,42,50,51(53-56),52(57,58,59,63),60,61(64-67),62(68,69,73,74),70,71,72,80,90,99
   kcr_df$RXSummSurgPrimSite_RecodedV1 <- NA
