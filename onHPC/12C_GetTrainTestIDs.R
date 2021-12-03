@@ -6,7 +6,7 @@ source("Recapse_Ultility.R")
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
