@@ -44,14 +44,6 @@ model_data[,label_col] <- factor(model_data[,label_col],levels = c("Pre", "Post"
 colnames(model_data)[which(colnames(model_data) == label_col)] <- "Label" #Change label col name for plot
 
 ######################################################################################################## 
-#Load weighted sum scores of for each sample by top 10 contribtued features in Dim 1 
-######################################################################################################## 
-weighted_sum_df <-read.csv(paste0(data_dir2,"Dim1_Weighted_Sum_feature.csv"),stringsAsFactors = F)
-#add to model data
-weighted_sum_df <- weighted_sum_df[match(model_data[,"sample_id"],weighted_sum_df[,"sample_id"]),]
-model_data[,"Dim1Top10Fs_WeightedSumScore"] <- weighted_sum_df[,"Dim1Top10Fs_WeightedSumScore"]
-
-######################################################################################################## 
 #3.Find samples < threshold OR > threshold by Most contributed feature on PCA Dim1 by examing boxplot
 ######################################################################################################## 
 sample1_idxes <- which(model_data[,"cumul_ratio_CCS_PROC_202"] < 0)
