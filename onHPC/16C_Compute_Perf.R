@@ -52,10 +52,10 @@ compute_binaryclass_perf_func2 <- function(prediction_df,thresholdClass_col){
   cm<-confusionMatrix(final_pred, final_actual, positive = "1", dnn = c("Prediction", "TrueLabels"),mode = "everything")
   #Manually get TN, FP, TP, FN
   cm_tb <- cm$table
-  TN <- cm_tb[2,2]
-  FP <- cm_tb[1,2]
-  TP <- cm_tb[1,1]
-  FN <- cm_tb[2,1]
+  TN <- cm_tb[1,1]
+  FP <- cm_tb[2,1]
+  TP <- cm_tb[2,2]
+  FN <- cm_tb[1,2]
   
   #class 1
   performance_table <- cm$byClass[c("Sensitivity","Specificity",
@@ -364,13 +364,13 @@ compute_month_diff <- function(analysis_df){
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/Use_ImportantFs_Performance/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
 data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
 
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/Use_ImportantFs_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
 
 #User input
 ds_index <- 1
