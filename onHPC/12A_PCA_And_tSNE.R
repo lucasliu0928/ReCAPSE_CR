@@ -1,7 +1,5 @@
 source("Recapse_Ultility.R")
-library(Rtsne)
-library("FactoMineR")
-library("factoextra")
+
 
 ################################################################################
 #Set up parallel computing envir
@@ -17,10 +15,11 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
+data_dir3 <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 
 outdir   <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
 
@@ -70,6 +69,51 @@ dev.off()
 #Get varaible contribution
 var <- get_pca_var(res.pca)
 var_contribution <- var$contrib
+
+#2B.Load CCS cateogry names and add discrption to imporatance matrix
+Diag_grp <- read.xlsx(paste0(data_dir3,"Unique_Diag_And_Groups_inALLClaims.xlsx"), sheet = 1)
+Proc_grp <- read.xlsx(paste0(data_dir3,"Unique_Proc_And_Groups_inALLClaims.xlsx"), sheet = 1)
+
+#2C. Add CCS description
+#var_contribution <- read.csv(paste0(outdir,"PCA_Variable_Contribution.csv"),stringsAsFactors = F)
+var_contribution[,"CCS_descrption"] <- NA
+for(i in 1:nrow(var_contribution)){ 
+  if (i %% 50 == 0){print(i)}
+  curr_feature <- var_contribution[i,"X"]
+  
+  if (grepl("CCS",curr_feature) == T){
+    curr_feature <- gsub("CCS_|time_since_|time_until_|cumul_ratio_","",curr_feature)
+    
+    res <- unlist(strsplit(curr_feature,split = "_"))
+    curr_ccs_code <- res[2]
+    curr_ccs_type <- res[1]
+    
+    if (is.na(curr_ccs_code) == F & curr_ccs_code != "NA"){
+      #Check if diag or proc
+      if (curr_ccs_type == "DIAG"){
+        curr_discrip <- find_ccs_discrption_func(Diag_grp,curr_ccs_code)
+      }else if(curr_ccs_type == "PROC"){
+        curr_discrip <- find_ccs_discrption_func(Proc_grp,curr_ccs_code)
+      }
+      #check if multiple, if so keep the longest one
+      n_disc <- length(curr_discrip)
+      n_char <- nchar(curr_discrip)
+      if (n_disc > 1){ 
+        curr_discrip <- curr_discrip[which(n_char == max(n_char))][1] #if still multiple keep the first one
+      }else{
+        curr_discrip <- curr_discrip
+      }
+    }else{
+      curr_discrip <- NA
+    }
+    
+  }else{
+    curr_discrip <- NA
+  }
+  
+  var_contribution[i,"CCS_descrption"] <- curr_discrip #if multiple has the same nchar, use the first one
+}
+
 write.csv(var_contribution,paste0(outdir,"PCA_Variable_Contribution.csv"))
 
 
