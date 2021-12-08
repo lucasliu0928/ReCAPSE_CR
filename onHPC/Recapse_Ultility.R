@@ -16,6 +16,9 @@ library(sas7bdat)
 library(ggplot2)
 library(reshape2)
 library(xgboost)
+library(Rtsne)
+library("FactoMineR")
+library("factoextra")
 
 compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
   #compute ROC-AUC
@@ -1438,8 +1441,15 @@ add_grp_discrption_func <- function(analysis_count_tb,disrip_df,grp_col,grp_disr
 
 #This func used in 18_CheckPTSFeatureTrajectory.R and 20_Importance Plot.R
 find_ccs_discrption_func <-function(grp_df,curr_code){
+  #grp_df <- Proc_grp
+  #curr_code <- curr_ccs_code
+  
   grp_idxes <- which(grp_df[,"CCS_CATEGORY"] == curr_code)
   unique_discrptions <- unique(grp_df[grp_idxes,"CCS_CATEGORY_DESCRIPTION"])
+ 
+  unique_discrptions <-  gsub('[[:punct:] ]+',' ',unique_discrptions) 
+  unique_discrptions <-  trimws(unique_discrptions) #trim white space and '
+  
   n_char_discrip <- nchar(unique_discrptions)
   final_discrip <- unique_discrptions[which(n_char_discrip == max(n_char_discrip))]
   
