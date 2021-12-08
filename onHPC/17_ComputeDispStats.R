@@ -84,27 +84,85 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
-
-outdir           <- paste0(proj_dir, "17_Discrip_Statistics/")
+data_dir1        <- paste0(proj_dir, "12C_TrainTestIDs/")
+data_dir2        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
+data_dir3        <- paste0(proj_dir, "15_XGB_Input/")
+outdir           <- paste0(proj_dir, "17_Discrip_Statistics_1203Updated/")
+ds_index <- 1
 
 ################################################################################ 
-#1. Load pts level char for final IDs
+#1. Load train and test PTs' IDs after remove obvious neagtives
 ################################################################################ 
-Final_PTs_Char_df <- read.xlsx(paste0(data_dir1,"/9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
-final_Ids <- Final_PTs_Char_df$study_id
+train_ID_df <- read.xlsx(paste0(data_dir1,"train_ID_withLabel.xlsx"),sheet = 1)
+test_ID_df  <- read.xlsx(paste0(data_dir1,"test_ID_withLabel.xlsx"),sheet = 1)
+
+train_ID <- paste0("ID", train_ID_df$study_id)
+test_ID  <- paste0("ID", test_ID_df$study_id)
+all_ID   <- unique(c(train_ID,test_ID)) #11726
+
+################################################################################ 
+#2. Load PTS level char for all analysis IDs 
+################################################################################ 
+PTs_Char_df <- read.xlsx(paste0(data_dir2,"/9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+
+#Recode ID
+PTs_Char_df[,"study_id"] <- paste0("ID",PTs_Char_df[,"study_id"])
 
 #Recode Type 2 event:
 #1. As long as the string has "1Recur", it counted as "first primary recurrence", no matter if it has same date with others
-recode_idxes1 <- which(grepl("1Recur",Final_PTs_Char_df[,"Type_2nd_Event"]) == T)
-Final_PTs_Char_df[recode_idxes1,"Type_2nd_Event"] <- "1Recur"
+recode_idxes1 <- which(grepl("1Recur",PTs_Char_df[,"Type_2nd_Event"]) == T)
+PTs_Char_df[recode_idxes1,"Type_2nd_Event"] <- "1Recur"
 
+#Filter 
+Final_PTs_Char_df <- PTs_Char_df[which(PTs_Char_df[,"study_id"] %in% all_ID),]
 
 ################################################################################ 
-#Get SBCE and non-SBCE pts char df
+#3.Get SBCE and non-SBCE pts char df
 ################################################################################ 
 SBCE_PTs_Char_df   <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"SBCE"] == 1),]
 noSBCE_PTs_Char_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"SBCE"] == 0),]
+SBCE_PTS_IDs   <- SBCE_PTs_Char_df[,"study_id"]
+noSBCE_PTS_IDs <- noSBCE_PTs_Char_df[,"study_id"]
+
+
+################################################################################ 
+#4.(PT Level)Report number of patient and SBCE status in:
+#A. Entire Training
+#B. Entire Testing
+#C. Down sampled training
+################################################################################ 
+#A. Entire Training
+pt_char_train_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% train_ID),]
+table(pt_char_train_df$SBCE) #0:8547, 1:834
+
+#B. Entire Testing
+pt_char_test_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% test_ID),]
+table(pt_char_test_df$SBCE) #0:2133, 1:212
+
+#C.Down sampled training 
+ds_IDs_df <- read.csv(paste0(data_dir3,"TrainSampleIDsAndLabels",ds_index,".csv"),stringsAsFactors = F)
+DS_PT_IDs<- unique(ds_IDs_df$study_id)
+pt_char_dsTrain_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% DS_PT_IDs),]
+table(pt_char_dsTrain_df$SBCE) #0:7580, 1:834
+
+
+################################################################################ 
+#5.(SAMPLE Level) Report number of samples and pre/post status in:
+#A. Entire Training
+#B. Entire Testing
+#C. Down sampled training
+################################################################################ 
+#A. Entire Training (DS index = 0)
+DS0_df <- read.csv(paste0(data_dir3,"TrainSampleIDsAndLabels",0,".csv"),stringsAsFactors = F)
+table(DS0_df$y_PRE_OR_POST_2ndEvent) #0:686593, 1: 27777
+
+#B. Entire Testing
+load(file = paste0(data_dir3, "test_data.rda"))
+table(test_data$y_PRE_OR_POST_2ndEvent) #0:173862, 1: 6957 
+
+#C.Down sampled training 
+DS1_df <- read.csv(paste0(data_dir3,"TrainSampleIDsAndLabels",ds_index,".csv"),stringsAsFactors = F)
+table(DS1_df$y_PRE_OR_POST_2ndEvent) #0:27777 , 1: 27777
 
 ################################################################################ 
 #3. Report some stats
@@ -211,15 +269,4 @@ output_hist_forSBCEand_nonSBCE(Both_PTs_Char_df,"most_recent_enrollment_year","M
 # print(p)
 # dev.off()
 # 
-
-################################################################################ 
-#Report number of patient and SBCE status in final model data
-################################################################################ 
-final_modelIDs_df <- read.csv(paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1/DownSampled_TrainInfo/Model_Data_WithDSFlag.csv"), stringsAsFactors = F)
-DS_ModelIDs_df <-  final_modelIDs_df[which(final_modelIDs_df$DownSampled_Train==1),]
-DS_ModelIDs_df_SBCE <- DS_ModelIDs_df[which(DS_ModelIDs_df$study_id %in% paste0("ID",SBCE_PTs_Char_df$study_id)),]
-length(unique(DS_ModelIDs_df_SBCE$study_id)) #num of SBCE in DS train
-
-DS_ModelIDs_df_nonSBCE <- DS_ModelIDs_df[which(DS_ModelIDs_df$study_id %in% paste0("ID",noSBCE_PTs_Char_df$study_id)),]
-length(unique(DS_ModelIDs_df_nonSBCE$study_id)) #num of nonSBBE in DStrain
 
