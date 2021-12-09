@@ -24,8 +24,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/Use_ImportantFs_Performance/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/SHAP/")
+data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/SHAP/")
 
 #Downsampled index
 ds_index <- 1
