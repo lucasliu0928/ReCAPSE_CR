@@ -1,4 +1,15 @@
 source("Recapse_Ultility.R")
+compute_sp_label_ratio <- function(in_data){
+  label_tb <- table(in_data[,"Label"]) 
+  ct_total <- nrow(in_data)
+  ct_pre   <- label_tb["Pre"]
+  ct_post  <- label_tb["Post"]
+  neg_post_ratio <- round(ct_pre/ct_post,10)
+  ct_tb <- data.frame("Total" = ct_total,"Pre"=ct_pre,"Post"=ct_post,"Ratio"=neg_post_ratio)
+  rownames(ct_tb) <- NULL
+  return(ct_tb)
+}
+
 
 ################################################################################
 #Set up parallel computing envir
@@ -17,110 +28,174 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2 <- paste0(proj_dir, "12B_Boxplot_AndAfterRemovalPCA/WithPossibleMonthsHasNoCodes/")
+data_dir  <- paste0(proj_dir, "12B_TopPCAFeature_ModelReady_TrainData/WithPossibleMonthsHasNoCodes/")
 
-outdir2   <- paste0(proj_dir, "12B_Boxplot_AndAfterRemovalPCA/WithPossibleMonthsHasNoCodes/AfterRemovalPCA/")
+outdir   <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
 
 
 ######################################################################################################## 
-#1. Load all pts model data
+#1. Load all pts model data with four top features
 ######################################################################################################## 
 #1A. Load data
-load(file = paste0(data_dir, "All_PTS_ModelReadyData.rda"))
-label_col   <- "y_PRE_OR_POST_2ndEvent"
+load(file = paste0(data_dir, "4F_ModelReady_TrainData.rda"))
 
-#1B. Change the label value from 0,1 to Pre,Post
-pre_idxes  <- which(model_data[,label_col] == 0)
-post_idxes <- which(model_data[,label_col] == 1)
-
-model_data[pre_idxes,label_col] <- "Pre"
-model_data[post_idxes,label_col] <- "Post"
-
-#1C.Factorize the label col
-model_data[,label_col] <- factor(model_data[,label_col],levels = c("Pre", "Post")) 
-
-#1D.Change label name
-colnames(model_data)[which(colnames(model_data) == label_col)] <- "Label" #Change label col name for plot
+#2B. Orginal NEG POS ratio
+compute_sp_label_ratio(model_data_4f)
 
 ######################################################################################################## 
-#3.Find samples < threshold OR > threshold by Most contributed feature on PCA Dim1 by examing boxplot
+#2.Find samples < threshold OR > threshold by Most contributed feature by examing boxplot
+#  Compute neg:pos ratio for each feature
 ######################################################################################################## 
-sample1_idxes <- which(model_data[,"cumul_ratio_CCS_PROC_202"] < 0)
-sample1_data  <- model_data[sample1_idxes,]
-label_tb <- table(sample1_data[,"Label"]) #Pre: 346296, Post : 6364
-print(paste("Labels (Sample1 to be treated as negtives):","Pre:",label_tb["Pre"],"Post:",label_tb["Post"]))
+#2A. cumul_ratio_CCS_PROC_202
+sample1_idxes <- which(model_data_4f[,"cumul_ratio_CCS_PROC_202"] < 0)
+sample1_data  <- model_data_4f[sample1_idxes,]
+compute_sp_label_ratio(sample1_data)
+
+afterRemoval_data <- model_data_4f[-sample1_idxes,]
+compute_sp_label_ratio(afterRemoval_data)
+
+#2B. cumul_ratio_CCS_PROC_227
+threshold_list <- seq(2,7.5,0.5)
+table_list <- list()
+for (i in 1:length(threshold_list)){
+  curr_th <- threshold_list[i]
+  sample1_idxes <- which(model_data_4f[,"cumul_ratio_CCS_PROC_227"] > curr_th)
+  sample1_data  <- model_data_4f[sample1_idxes,]
+  sp_res <- compute_sp_label_ratio(sample1_data)
+  
+  afterRemoval_data <- model_data_4f[-sample1_idxes,]
+  after_res <- compute_sp_label_ratio(afterRemoval_data)
+  
+  final_res <- rbind(sp_res,after_res)
+  rownames(final_res) <-c(paste0("Sample"," > Threshold ",curr_th),"After Removal")
+  table_list[[i]] <- final_res
+}
+all_table <- do.call(rbind,table_list)
+
+#2C. months_since_dx
+threshold_list <- seq(24,60,1)
+table_list <- list()
+for (i in 1:length(threshold_list)){
+  curr_th <- threshold_list[i]
+  sample1_idxes <- which(model_data_4f[,"months_since_dx"] < curr_th)
+  sample1_data  <- model_data_4f[sample1_idxes,]
+  sp_res <- compute_sp_label_ratio(sample1_data)
+  
+  afterRemoval_data <- model_data_4f[-sample1_idxes,]
+  after_res <- compute_sp_label_ratio(afterRemoval_data)
+  
+  final_res <- rbind(sp_res,after_res)
+  rownames(final_res) <-c(paste0("Sample"," < Threshold ",curr_th),"After Removal")
+  table_list[[i]] <- final_res
+}
+all_table <- do.call(rbind,table_list)
+
+#2C. Enrolled_year
+threshold_list <- seq(2004,2020,1)
+table_list <- list()
+for (i in 1:length(threshold_list)){
+  curr_th <- threshold_list[i]
+  sample1_idxes <- which(model_data_4f[,"Enrolled_year"] > curr_th)
+  sample1_data  <- model_data_4f[sample1_idxes,]
+  sp_res <- compute_sp_label_ratio(sample1_data)
+  
+  afterRemoval_data <- model_data_4f[-sample1_idxes,]
+  after_res <- compute_sp_label_ratio(afterRemoval_data)
+  
+  final_res <- rbind(sp_res,after_res)
+  rownames(final_res) <-c(paste0("Sample"," > Threshold ",curr_th),"After Removal")
+  table_list[[i]] <- final_res
+}
+all_table <- do.call(rbind,table_list)
 
 ######################################################################################################## 
-#4.Find samples < threshold OR > threshold by Most contributed feature on PCA Dim1 by examing boxplot
+#4.Find best combination of threhosld for featrues 
+#  Best: good precision of selected negtive samples, neg:pos ratio of after exclusion is OK (Not too many neg or pos)
 ######################################################################################################## 
-# model_data_2f <- model_data[,c("sample_id","cumul_ratio_CCS_PROC_202",
-#                                "cumul_ratio_CCS_PROC_227",
-#                                "months_since_dx",
-#                                "Label")]
-#save(model_data_2f, file=paste0(outdir2, "3f_ModelReadyData.rda"))
-load(file = paste0(outdir2, "3f_ModelReadyData.rda"))
-
-thres1_list <- seq(5,7.5,0.1)
-thres2_list <- 48
-x_list <- as.data.frame(matrix(NA, nrow = length(thres1_list), ncol = length(thres2_list)))
-y_list <- as.data.frame(matrix(NA, nrow = length(thres1_list), ncol = length(thres2_list))) #Ratio after removal
-
+thres1_list <- seq(5,7.5,0.5)
+thres2_list <- seq(24,48,1) #24 to 60
+n_thres1 <- length(thres1_list)
+n_thres2 <- length(thres2_list)
+n_comb   <- n_thres1*n_thres2
+print(n_comb)
+prec_ratio_tb <- as.data.frame(matrix(NA, nrow = n_comb,ncol = 6))
+colnames(prec_ratio_tb) <- c("Threshold_PROC202","Threshold_PROC227","Threshold_months_since_dx",
+                             "NEG_Percentage_SelectedSamples", #this is also the precision of negtives
+                             "NEGtoPOS_Ratio_SelectedSamples",
+                             "NEGtoPOS_Ratio_AfterExclusion")
+ct <- 1
 for (i in 1:length(thres1_list)){
-  if(i %% 10 == 0){print(i)}
+  if(i %% 2 == 0){print(i)}
   thres1 <- thres1_list[i]
   for (j in 1:length(thres2_list)){
       thres2 <- thres2_list[j]
+      
+      prec_ratio_tb[ct,"Threshold_PROC202"] <- -1
+      prec_ratio_tb[ct,"Threshold_PROC227"] <- thres1
+      prec_ratio_tb[ct,"Threshold_months_since_dx"] <- thres2
+        
       #Data to be treated as negatives
-      sample1_idxes <- which(model_data_2f[,"cumul_ratio_CCS_PROC_202"] == -1 |
-                             model_data_2f[,"cumul_ratio_CCS_PROC_227"] > thres1 | 
-                             model_data_2f[,"months_since_dx"] < thres2 )
-      sample1_data  <- model_data_2f[sample1_idxes,]
-      label_tb <- table(sample1_data[,"Label"])
-      #print(paste("Labels (Sample1 to be treated as negatives):","Pre:",label_tb["Pre"],"Post:",label_tb["Post"]))
-      x_list[i,j] <- label_tb["Pre"]/(nrow(sample1_data)) #"PRE RATIO
+      sample1_idxes <- which(model_data_4f[,"cumul_ratio_CCS_PROC_202"] == -1 |
+                               model_data_4f[,"cumul_ratio_CCS_PROC_227"] > thres1 | 
+                               model_data_4f[,"months_since_dx"] < thres2 )
+      sample1_data  <- model_data_4f[sample1_idxes,]
+      sp_res        <- compute_sp_label_ratio(sample1_data)
+      
+      #Presicion of negatives of selected samples (i.e,For this samples, we predict them all as "pre")
+      prec_ratio_tb[ct,"NEG_Percentage_SelectedSamples"] <- sp_res["Pre"]/(sp_res["Pre"] + sp_res["Post"]) 
+      #Pre to post ratio
+      prec_ratio_tb[ct,"NEGtoPOS_Ratio_SelectedSamples"] <- sp_res["Ratio"] 
       
       #after
-      data_after <- model_data_2f[-sample1_idxes,]
-      label_tb <- table(data_after[,"Label"]) 
-      #print(paste("Labels (Sample After Removal):","Pre:",label_tb["Pre"],"Post:",label_tb["Post"]))
-      y_list[i,j] <- label_tb["Pre"]/label_tb["Post"]
-      
+      after_data <- model_data_4f[-sample1_idxes,]
+      after_res <- compute_sp_label_ratio(after_data)
+      prec_ratio_tb[ct,"NEGtoPOS_Ratio_AfterExclusion"] <- after_res["Ratio"] 
+      ct <- ct + 1
   }
 }
 
-x_list_flat <- unlist(x_list)
-y_list_flat <- unlist(y_list)
-plot(x_list_flat,y_list_flat)
+
+p <- ggplot(prec_ratio_tb, aes(x=NEG_Percentage_SelectedSamples, y=NEGtoPOS_Ratio_AfterExclusion)) + 
+  geom_point(aes(size=2),color = "darkblue") +
+  ylab("Negative to Positive Ratio After Exclusion (non-obvious cases)") +
+  xlab("Precision of Negatives (Percentage of Negatives) \n in Selected Samples") +
+  theme(legend.position = "none") +
+  ylim(19,round(max(prec_ratio_tb$NEGtoPOS_Ratio_AfterExclusion)))
+
+png(paste0(outdir,"Precision_Ratio_Plot.png"),res = 150,width = 800,height = 800)
+print(p)
+dev.off()
 
 ######################################################################################################## 
-#Clear memory
+#Find the best thresholds by the figure
 ######################################################################################################## 
-rm(list = (c("sample2_data","weighted_sum_df")))
-gc()
-######################################################################################################## 
-#4.Find samples < threshold OR > threshold by weighted sum feature examing boxplot
-########################################################################################################
-thres <- 0.01
-sample2_idxes <- which(model_data[,"Dim1Top10Fs_WeightedSumScore"] < thres)
-sample2_data  <- model_data[sample2_idxes,]
-label_tb <- table(sample2_data[,"Label"]) #Pre: 346296, Post : 6364
-print(paste("Labels (Sample2 to be treated as negtives):","Pre:",label_tb["Pre"],"Post:",label_tb["Post"]))
-
-
-#'@TODO
-######################################################################################################## 
-#4. Get sample IDs to be treated as negatives
-######################################################################################################## 
-sample_ID_df <- sample1_data[,c("study_id","sample_id","Label")]
-write.csv(sample_ID_df,paste0(outdir2,"SampleIDs1_ToBeTreatedAsNegtives.csv"))
-
-sample_ID_df2 <- sample2_data[,c("study_id","sample_id","Label")]
-write.csv(sample_ID_df2,paste0(outdir2,"SampleIDs2_ToBeTreatedAsNegtives.csv"))
+tb_idxes <- which(round(prec_ratio_tb[,"NEG_Percentage_SelectedSamples"],7) == 0.9813743 &
+                  round(prec_ratio_tb[,"NEGtoPOS_Ratio_AfterExclusion"],0) == 20)
+#Best threshold hold
+best_th1 <- prec_ratio_tb[tb_idxes,"Threshold_PROC227"]
+best_th2 <- prec_ratio_tb[tb_idxes,"Threshold_months_since_dx"]
 
 ######################################################################################################## 
-#5.remove the sample IDs treated as negatives from the model data
-########################################################################################################
-afterRemoval_data <- model_data[-sample2_idxes,]
-label_tb <- table(afterRemoval_data[,"Label"]) 
-print(paste("Labels (data exclude samples treated as negtives):","Pre:",label_tb["Pre"],"Post:",label_tb["Post"]))
+#4.Get exclusion samples IDs to be treated as negatives
+######################################################################################################## 
+#Data to be treated as negatives
+final_sample_idxes <- which(model_data_4f[,"cumul_ratio_CCS_PROC_202"] == -1 |
+                       model_data_4f[,"cumul_ratio_CCS_PROC_227"] > best_th1 | 
+                      model_data_4f[,"months_since_dx"] < best_th2 )
+final_sample_data  <- model_data_4f[final_sample_idxes,]
+sp_res        <- compute_sp_label_ratio(final_sample_data)
+sp_res
+sp_res["Pre"]/sp_res["Total"]
+
+sample_ID_df <- final_sample_data[,c("study_id","sample_id","Label")]
+write.csv(sample_ID_df,paste0(outdir,"ObviousNeg_Samples.csv"))
+
+######################################################################################################## 
+#5. Get sample IDs after exclusion
+######################################################################################################## 
+after_data <- model_data_4f[-final_sample_idxes,]
+after_res <- compute_sp_label_ratio(after_data)
+after_res
+
+non_obvious_data <- after_data[,c("study_id","sample_id","Label")]
+write.csv(non_obvious_data,paste0(outdir,"NON_ObviousNeg_Samples.csv"))
