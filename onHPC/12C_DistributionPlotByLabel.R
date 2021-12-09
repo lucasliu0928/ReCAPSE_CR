@@ -19,49 +19,33 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2 <- paste0(proj_dir, "12B_TopPCAFeatureModelData/WithPossibleMonthsHasNoCodes/")
+data_dir  <- paste0(proj_dir, "12B_TopPCAFeature_ModelReady_TrainData/WithPossibleMonthsHasNoCodes/")
 
-outdir   <- paste0(proj_dir, "12C_DistributionPlot/WithPossibleMonthsHasNoCodes/")
+outdir   <- paste0(proj_dir, "12C_Train_DistributionPlot/WithPossibleMonthsHasNoCodes/")
 
 
 ######################################################################################################## 
-#1. Load all pts model data
+#1. Load top feature train data
 ######################################################################################################## 
 #1A. Load data
-load(file = paste0(data_dir, "All_PTS_ModelReadyData.rda"))
-label_col   <- "y_PRE_OR_POST_2ndEvent"
-
-#1B. Change the label value from 0,1 to Pre,Post
-pre_idxes  <- which(model_data[,label_col] == 0)
-post_idxes <- which(model_data[,label_col] == 1)
-
-model_data[pre_idxes,label_col] <- "Pre"
-model_data[post_idxes,label_col] <- "Post"
-
-#1C.Factorize the label col
-model_data[,label_col] <- factor(model_data[,label_col],levels = c("Pre", "Post")) 
-
-#1D.Change label name
-colnames(model_data)[which(colnames(model_data) == label_col)] <- "Label" #Change label col name for plot
+load(file = paste0(data_dir, "4F_ModelReady_TrainData.rda"))
 
 
-######################################################################################################## 
-#2.Add weighted sum scores of for each sample by top 10 contribtued features(normed) in Dim 1 
-######################################################################################################## 
-load(file = paste0(data_dir2, "Dim1_Weighted_Sum_feature.rda"))
-weighted_sum_df <- weighted_sum_df[match(model_data[,"sample_id"],weighted_sum_df[,"sample_id"]),]
-model_data[,"Dim1Top10Fs_WeightedSumScore"] <- weighted_sum_df[,"Dim1Top10Fs_WeightedSumScore"]
+# ######################################################################################################## 
+# #2.Add weighted sum scores of for each sample by top 10 contribtued features(normed) in Dim 1 
+# ######################################################################################################## 
+# load(file = paste0(data_dir, "Dim1_Weighted_Sum_feature.rda"))
+# weighted_sum_df <- weighted_sum_df[match(model_data_4f[,"sample_id"],weighted_sum_df[,"sample_id"]),]
+# model_data_4f[,"Dim1Top10Fs_WeightedSumScore"] <- weighted_sum_df[,"Dim1Top10Fs_WeightedSumScore"]
 
 #######################################################################################################
 #3.Boxplot
 #######################################################################################################
-plot_df <- model_data
+plot_df <- model_data_4f
 features <- c("cumul_ratio_CCS_PROC_202",
               "cumul_ratio_CCS_PROC_227",
               "months_since_dx",
-              "Enrolled_year",
-              "Dim1Top10Fs_WeightedSumScore")
+              "Enrolled_year")
 for (i in 1:length(features)){
   if (i %% 10 == 0){print(i)}
   feature_col <- features[i]
@@ -106,12 +90,13 @@ for (i in 1:length(features)){
   if (i %% 10 == 0){print(i)}
   feature_col <- features[i]
   p<-ggplot(plot_df, aes_string(x=feature_col, color="Label")) +
-    geom_histogram(fill="white") +
-    theme(axis.text=element_text(size=12),
+    geom_histogram(fill="white",bins = 50) +
+    theme(axis.text=element_text(size=10),
           axis.title=element_text(size=10,face="bold"))+
     scale_color_manual(values=c("darkgreen", "darkred"))
+
   
-  png(paste0(outdir,"Histogram/",feature_col,".png"),res = 150,width = 500,height = 500)
+  png(paste0(outdir,"Histogram/",feature_col,".png"),res = 150,width = 800,height = 800)
   print(p)
   dev.off()
 }
