@@ -1,4 +1,16 @@
 source("Recapse_Ultility.R")
+
+compute_sp_label_ratio <- function(in_data,label_col){
+  label_tb <- table(in_data[,label_col]) 
+  ct_total <- nrow(in_data)
+  ct_pre   <- label_tb["0"]
+  ct_post  <- label_tb["1"]
+  neg_post_ratio <- round(ct_pre/ct_post,0)
+  ct_tb <- data.frame("Total" = ct_total,"NEG"=ct_pre,"POS"=ct_post,"Ratio"=neg_post_ratio)
+  rownames(ct_tb) <- NULL
+  return(ct_tb)
+}
+
 compute_mean_sd_func <- function(data_col,round_digit){
   mean_val <- round(mean(data_col),round_digit)
   sd_val <-  round(sd(data_col),round_digit)
@@ -84,26 +96,40 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "12C_TrainTestIDs/")
-data_dir2        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
-data_dir3        <- paste0(proj_dir, "15_XGB_Input/")
-outdir           <- paste0(proj_dir, "17_Discrip_Statistics_1203Updated/")
-ds_index <- 1
+data_dir1        <- paste0(proj_dir, "11F_TrainTestIDs/")
+data_dir2        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
+data_dir3        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
+data_dir4        <- paste0(proj_dir, "15_XGB_Input/")
+data_dir5        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
+
+outdir           <- paste0(proj_dir, "17_Discrip_Statistics_1208Updated/")
+ds_index <- 0
 
 ################################################################################ 
-#1. Load train and test PTs' IDs after remove obvious neagtives
+#1. Load all train and test PTs' IDs 
 ################################################################################ 
 train_ID_df <- read.xlsx(paste0(data_dir1,"train_ID_withLabel.xlsx"),sheet = 1)
 test_ID_df  <- read.xlsx(paste0(data_dir1,"test_ID_withLabel.xlsx"),sheet = 1)
 
-train_ID <- paste0("ID", train_ID_df$study_id)
+all_train_ID <- paste0("ID", train_ID_df$study_id)
 test_ID  <- paste0("ID", test_ID_df$study_id)
-all_ID   <- unique(c(train_ID,test_ID)) #11726
+all_ID   <- unique(c(all_train_ID,test_ID)) #18239
 
 ################################################################################ 
-#2. Load PTS level char for all analysis IDs 
+#2.Load obvious neg and non-obvious train sample IDs
 ################################################################################ 
-PTs_Char_df <- read.xlsx(paste0(data_dir2,"/9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+obv_neg_train_ID_df <- read.csv(paste0(data_dir2,"ObviousNeg_Samples.csv"),stringsAsFactors = F)
+NON_obv_train_ID_df <- read.csv(paste0(data_dir2,"NON_ObviousNeg_Samples.csv"),stringsAsFactors = F)
+train_sampleID_obv    <- obv_neg_train_ID_df[,"sample_id"]
+train_patientID_obv   <- obv_neg_train_ID_df[,"study_id"]
+
+train_sampleID_nonobv    <- NON_obv_train_ID_df[,"sample_id"]
+train_patientID_nonobv   <- NON_obv_train_ID_df[,"study_id"]
+
+################################################################################ 
+#3. Load PTS level char for all analysis IDs 
+################################################################################ 
+PTs_Char_df <- read.xlsx(paste0(data_dir3,"/9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
 
 #Recode ID
 PTs_Char_df[,"study_id"] <- paste0("ID",PTs_Char_df[,"study_id"])
@@ -127,42 +153,61 @@ noSBCE_PTS_IDs <- noSBCE_PTs_Char_df[,"study_id"]
 
 ################################################################################ 
 #4.(PT Level)Report number of patient and SBCE status in:
-#A. Entire Training
-#B. Entire Testing
-#C. Down sampled training
+#A. All Training
+#B. All Testing
+#C. obvious neg training
+#D. non-obvious training
+#'@TODO E. down sampled non-obvious training
 ################################################################################ 
-#A. Entire Training
-pt_char_train_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% train_ID),]
-table(pt_char_train_df$SBCE) #0:8547, 1:834
+#A. All Training
+pt_char_train_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% all_train_ID),]
+compute_sp_label_ratio(pt_char_train_df,"SBCE")# 13555 1037
 
-#B. Entire Testing
+#B. All Testing
 pt_char_test_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% test_ID),]
-table(pt_char_test_df$SBCE) #0:2133, 1:212
+compute_sp_label_ratio(pt_char_test_df,"SBCE")# 3362  285
 
-#C.Down sampled training 
-ds_IDs_df <- read.csv(paste0(data_dir3,"TrainSampleIDsAndLabels",ds_index,".csv"),stringsAsFactors = F)
-DS_PT_IDs<- unique(ds_IDs_df$study_id)
-pt_char_dsTrain_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% DS_PT_IDs),]
-table(pt_char_dsTrain_df$SBCE) #0:7580, 1:834
+#C. Obvious neg training
+pt_char_obvneg_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% train_patientID_obv),]
+compute_sp_label_ratio(pt_char_obvneg_df,"SBCE")# 12846  1006
 
+#D. non-Obvious neg training
+pt_char_nonobvneg_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% train_patientID_nonobv),]
+compute_sp_label_ratio(pt_char_nonobvneg_df,"SBCE")# 7565  650
+
+#E.down sampled non-obvious training (ds_index = 0 refers to not downsampled)
+# ds_IDs_df <- read.csv(paste0(data_dir4,"TrainSampleIDsAndLabels",ds_index,".csv"),stringsAsFactors = F)
+# DS_PT_IDs<- unique(ds_IDs_df$study_id)
+# pt_char_dsTrain_df <- Final_PTs_Char_df[which(Final_PTs_Char_df[,"study_id"] %in% DS_PT_IDs),]
+# compute_sp_label_ratio(pt_char_dsTrain_df,"SBCE")# 7565  650 
 
 ################################################################################ 
 #5.(SAMPLE Level) Report number of samples and pre/post status in:
-#A. Entire Training
-#B. Entire Testing
-#C. Down sampled training
+#A. All Training
+#B. All Testing
+#C. obvious neg training
+#D. non-obvious training
+#'@TODO E. down sampled non-obvious training
 ################################################################################ 
-#A. Entire Training (DS index = 0)
-DS0_df <- read.csv(paste0(data_dir3,"TrainSampleIDsAndLabels",0,".csv"),stringsAsFactors = F)
-table(DS0_df$y_PRE_OR_POST_2ndEvent) #0:686593, 1: 27777
+load(file = paste0(data_dir5,"All_PTS_ModelReadyData.rda"))
+model_data_labelandID <- model_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
+#'@TODO
+#A. All Training 
+All_train_df <- model_data_labelandID[which(model_data_labelandID[,"study_id"] %in% all_train_ID),]
+compute_sp_label_ratio(All_train_df,"y_PRE_OR_POST_2ndEvent")# 966866  32251 
 
-#B. Entire Testing
-load(file = paste0(data_dir3, "test_data.rda"))
-table(test_data$y_PRE_OR_POST_2ndEvent) #0:173862, 1: 6957 
+#B. All Testing
+All_test_df <- model_data_labelandID[which(model_data_labelandID[,"study_id"] %in% test_ID),]
+compute_sp_label_ratio(All_test_df,"y_PRE_OR_POST_2ndEvent")# 239885  8847 
 
-#C.Down sampled training 
-DS1_df <- read.csv(paste0(data_dir3,"TrainSampleIDsAndLabels",ds_index,".csv"),stringsAsFactors = F)
-table(DS1_df$y_PRE_OR_POST_2ndEvent) #0:27777 , 1: 27777
+#C.obvious neg training
+ob_neg_train_df <- model_data_labelandID[which(model_data_labelandID[,"sample_id"] %in% train_sampleID_obv),]
+compute_sp_label_ratio(ob_neg_train_df,"y_PRE_OR_POST_2ndEvent")# 518619 9843
+
+#C.non obvious neg training
+nonob_neg_train_df <- model_data_labelandID[which(model_data_labelandID[,"sample_id"] %in% train_sampleID_nonobv),]
+compute_sp_label_ratio(nonob_neg_train_df,"y_PRE_OR_POST_2ndEvent")# 448247 22408 
+
 
 ################################################################################ 
 #3. Report some stats
