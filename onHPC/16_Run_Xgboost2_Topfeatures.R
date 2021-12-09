@@ -18,11 +18,11 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/All_DS_Performance/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1201updated/Use_ImportantFs_Performance/")
+data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/All_DS_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
 
 #Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
-for (i in 2:10){
+for (i in 1:10){#0:10
   ################################################################################
   #Load train and test
   ################################################################################
@@ -62,13 +62,13 @@ for (i in 2:10){
                                           init_points=10,
                                           n_iter=10)
   #Get best paramters
-  pos_weight <- 0.5
+  #pos_weight <- 2
   current_best <- list(etc = as.numeric(optimal_results$Best_Par['eta']),
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                        subsample = as.numeric(optimal_results$Best_Par['subsample']),
-                       colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']),
-                       scale_pos_weight = pos_weight) #for weight more on pos samples
+                       colsample_by_tree = as.numeric(optimal_results$Best_Par['colsample_by_tree']))
+                       #scale_pos_weight = pos_weight) #for weight more on pos samples
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
                            params=current_best, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
