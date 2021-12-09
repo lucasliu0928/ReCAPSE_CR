@@ -78,42 +78,53 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "12C_TrainTestIDs/")
-data_dir2        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir3        <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
+data_dir1        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
+data_dir2        <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
+
+data_dir3        <- paste0(proj_dir, "11F_TrainTestIDs/")
+data_dir4        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
+
 outdir           <- paste0(proj_dir, "15_XGB_Input/")
 
 #User input
-sampling_flag    <- "None"
+sampling_flag    <- "Down"
 n_sampling       <- 10
-
-################################################################################ 
-#1. Load train and test IDs
-################################################################################ 
-train_ID_df <- read.xlsx(paste0(data_dir1,"train_ID_withLabel.xlsx"),sheet = 1)
-test_ID_df  <- read.xlsx(paste0(data_dir1,"test_ID_withLabel.xlsx"),sheet = 1)
-
-train_ID <- paste0("ID", train_ID_df$study_id)
-test_ID  <- paste0("ID", test_ID_df$study_id)
 
 ######################################################################################################## 
 #1. Load and combine all patient model ready data
 ######################################################################################################## 
-load(file = paste0(data_dir2, "All_PTS_ModelReadyData.rda"))
+load(file = paste0(data_dir1, "All_PTS_ModelReadyData.rda"))
 
 #remove the const feature (DM3_SPE_muscle.relaxant)
-const_fs <- read.csv(paste0(data_dir3,"ConstFeature_removed_ForPCAandtSNE.csv"),stringsAsFactors = F)
+const_fs <- read.csv(paste0(data_dir2,"ConstFeature_removed_ForPCAandtSNE.csv"),stringsAsFactors = F)
 model_data <- model_data[, -which(colnames(model_data) %in% const_fs[,2])]
 
+################################################################################ 
+#2. Get model ready test data
+################################################################################ 
+#2A Load test pt IDs
+test_ID_df  <- read.xlsx(paste0(data_dir3,"test_ID_withLabel.xlsx"),sheet = 1)
+test_ID  <- paste0("ID", test_ID_df$study_id)
 
-######################################################################################################## 
-#3.Get model data for train and test
-######################################################################################################## 
-#I. Get data
-#1. Train
+#2. Test
+test_data <- model_data[which(model_data[,"study_id"] %in% test_ID),]
+#Print num of pre and post samples 
+print_n_prepostsamples_func(test_data,"Test: ")
+
+#Output model ready binary data
+save(test_data, file=paste0(outdir, "test_data.rda"))
+
+################################################################################ 
+#2. Get non-obvious train samples 
+################################################################################ 
+#2A. Load non-obv train sample IDs
+train_ID_df <- read.csv(paste0(data_dir4,"NON_ObviousNeg_Samples.csv"),stringsAsFactors = F)
+train_ID    <- train_ID_df$sample_id
+
+#2B. Get model ready train data
 if (sampling_flag ==  "None"){
   #1. Train data without down sampling
-  train_data <- model_data[which(model_data[,"study_id"] %in% train_ID),]
+  train_data <- model_data[which(model_data[,"sample_id"] %in% train_ID),]
   #Print num of pre and post samples 
   print_n_prepostsamples_func(train_data,"Train: ")
   
@@ -130,7 +141,7 @@ if (sampling_flag ==  "None"){
   for (i in 1:n_sampling){
     seed_num <- 122 + i 
     #All train
-    train_data <- model_data[which(model_data[,"study_id"] %in% train_ID),]
+    train_data <- model_data[which(model_data[,"sample_id"] %in% train_ID),]
     #Down sampled train
     train_data <- Data_Sampling_Func(0,train_data,"y_PRE_OR_POST_2ndEvent",seed_num)
     train_data$y_PRE_OR_POST_2ndEvent <- as.numeric(train_data$y_PRE_OR_POST_2ndEvent) -1
@@ -146,22 +157,10 @@ if (sampling_flag ==  "None"){
     #Print num of pre and post samples 
     print_n_prepostsamples_func(train_data,"Train: ")
   }
-  
-  #'@TODELTE
-  # #Output model data ID and labels and down sampled train flag
-  # for (i in 1:n_sampling){
-  #   model_data_IDandLabels <- get_SampleIDs_withDSLabels(model_data,train_sample_IDs[[i]], i)
-  #   write.csv(model_data_IDandLabels,paste0(outdir,"DownSampled_TrainInfo/Model_Data_WithDSFlag.csv"),row.names = F)
-  # }
 }
 
 
 
 
-#2. Test
-test_data <- model_data[which(model_data[,"study_id"] %in% test_ID),]
-#Print num of pre and post samples 
-print_n_prepostsamples_func(test_data,"Test: ")
 
-#Output model ready binary data
-save(test_data, file=paste0(outdir, "test_data.rda"))
+
