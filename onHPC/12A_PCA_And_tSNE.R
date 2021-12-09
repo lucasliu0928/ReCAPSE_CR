@@ -15,10 +15,11 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/")
 data_dir3 <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 
 outdir   <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
@@ -27,6 +28,18 @@ outdir   <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes
 #1. Load all pts model data
 ######################################################################################################## 
 load(file = paste0(data_dir, "All_PTS_ModelReadyData.rda"))
+
+######################################################################################################## 
+#2. Load train patient IDs
+######################################################################################################## 
+train_ID_df <- read.xlsx(paste0(data_dir2,"train_ID_withLabel.xlsx"),sheet = 1)
+train_ID_df$study_id <- paste0("ID",train_ID_df$study_id)
+
+######################################################################################################## 
+#3.Updated model data for train data only
+######################################################################################################## 
+model_data <- model_data[model_data[,"study_id"] %in% train_ID_df[,"study_id"],]
+table(model_data$y_PRE_OR_POST_2ndEvent)
 
 ####################################################################################################
 #Run PCA to get most contributions of features (non catogorical features)
@@ -68,7 +81,7 @@ dev.off()
 
 #Get varaible contribution
 var <- get_pca_var(res.pca)
-var_contribution <- var$contrib
+var_contribution <- as.data.frame(var$contrib)
 
 #2B.Load CCS cateogry names and add discrption to imporatance matrix
 Diag_grp <- read.xlsx(paste0(data_dir3,"Unique_Diag_And_Groups_inALLClaims.xlsx"), sheet = 1)
@@ -79,7 +92,7 @@ Proc_grp <- read.xlsx(paste0(data_dir3,"Unique_Proc_And_Groups_inALLClaims.xlsx"
 var_contribution[,"CCS_descrption"] <- NA
 for(i in 1:nrow(var_contribution)){ 
   if (i %% 50 == 0){print(i)}
-  curr_feature <- var_contribution[i,"X"]
+  curr_feature <- rownames(var_contribution)[i]
   
   if (grepl("CCS",curr_feature) == T){
     curr_feature <- gsub("CCS_|time_since_|time_until_|cumul_ratio_","",curr_feature)
