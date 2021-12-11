@@ -51,7 +51,7 @@ outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208upd
 
 #User input
 ds_index <- 1
-update_pred_flag <- "Original" #Updated or Original
+update_pred_flag <- "Updated" #Updated or Original
 ######################################################################################################## 
 #1.Load predictions 
 ######################################################################################################## 
@@ -85,6 +85,8 @@ changepoint_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed
 for (i in 1:length(test_ID)){
   if(i %% 100 == 0){print(i)}
   curr_id <- test_ID[i]
+  
+  curr_id <- 22041
   #get prediction df
   curr_df <- test_prediction_df[which(test_prediction_df[,"study_id"] == curr_id),]
   curr_df$month_start <- ymd(curr_df$month_start)
