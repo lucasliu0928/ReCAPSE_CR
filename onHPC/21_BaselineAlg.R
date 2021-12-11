@@ -13,11 +13,16 @@ compute_perf <- function(prediction_df){
   
   cm<-confusionMatrix(final_pred, final_actual, positive = "1", dnn = c("Prediction", "TrueLabels"),mode = "everything")
   #Manually get TN, FP, TP, FN
-  cm_tb <- cm$table
-  TN <- cm_tb[1,1]
-  FP <- cm_tb[2,1]
-  TP <- cm_tb[2,2]
-  FN <- cm_tb[1,2]
+  # cm_tb <- cm$table
+  # TN <- cm_tb[1,1]
+  # FP <- cm_tb[2,1]
+  # TP <- cm_tb[2,2]
+  # FN <- cm_tb[1,2]
+  
+  TN <- length(which(final_pred==0 & final_actual==0))
+  FP <- length(which(final_pred==1 & final_actual==0))
+  TP <- length(which(final_pred==1 & final_actual==1))
+  FN <- length(which(final_pred==0 & final_actual==1))
   
   #class 1
   performance_table <- cm$byClass[c("Sensitivity","Specificity",
@@ -62,25 +67,13 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_In
 #data dir
 data_dir1       <- paste0(proj_dir, "15_XGB_Input/")
 outdir           <- paste0(proj_dir, "21_BaselineResults/")
-ds_index <- 1
 
 ################################################################################ 
-#5.(SAMPLE Level) Load data
-#A. Entire Training
-#B. Entire Testing
-#C. Down sampled training
+#5.Load data test data
 ################################################################################ 
-#A. Entire Training (DS index = 0)
-DS0_df <- read.csv(paste0(data_dir1,"TrainSampleIDsAndLabels",0,".csv"),stringsAsFactors = F)
-table(DS0_df$y_PRE_OR_POST_2ndEvent) #0:686593, 1: 27777
-
 #B. Entire Testing
 load(file = paste0(data_dir1, "test_data.rda"))
-table(test_data$y_PRE_OR_POST_2ndEvent) #0:173862, 1: 6957 
-
-#C.Down sampled training 
-DS1_df <- read.csv(paste0(data_dir1,"TrainSampleIDsAndLabels",1,".csv"),stringsAsFactors = F)
-table(DS1_df$y_PRE_OR_POST_2ndEvent) #0:27777 , 1: 27777
+table(test_data$y_PRE_OR_POST_2ndEvent) #0:239885, 1: 8847 
 
 ################################################################################ 
 #3.Baseline 1: Random Gusses
@@ -121,5 +114,6 @@ rownames(perf3_df) <- "All0s"
 #All performance
 ################################################################################ 
 all_perf_df <- rbind(perf1_df,perf2_df,perf3_df)
+write.csv(all_perf_df,paste0(outdir,"perf_baseline.csv"))
 
-#reorder columns
+
