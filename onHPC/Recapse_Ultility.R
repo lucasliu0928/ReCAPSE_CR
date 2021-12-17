@@ -716,7 +716,10 @@ add_time_until_func <-function(pt_perMonth_df){
   return(time_until_df)
 }
 
-
+#'@NOTE: the -1 and 0 both represents the patinets had never had this code up to the time.
+#'-1 is coded because of skipping columns for the codes every exsit in the entire trajectory
+#'0  is coded because of the pt might see the code later in the trajectory
+#'Can be changed in line 771
 add_cumul_ratio_func <-function(pt_perMonth_df){
   #the total number of occurrences in each patient up to the time in question of that grouping divided by total elapsed time
   #pt_perMonth_df <- curr_grp_f_df
