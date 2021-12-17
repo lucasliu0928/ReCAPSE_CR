@@ -87,7 +87,7 @@ data_dir4        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasN
 outdir           <- paste0(proj_dir, "15_XGB_Input/")
 
 #User input
-sampling_flag    <- "Down"
+sampling_flag    <- "None"
 n_sampling       <- 10
 
 ######################################################################################################## 
@@ -118,7 +118,7 @@ save(test_data, file=paste0(outdir, "test_data.rda"))
 #2. Get non-obvious train samples 
 ################################################################################ 
 #2A. Load non-obv train sample IDs
-train_ID_df <- read.csv(paste0(data_dir4,"NON_ObviousNeg_Samples.csv"),stringsAsFactors = F)
+train_ID_df <- read.csv(paste0(data_dir4,"NON_Obvious_Samples.csv"),stringsAsFactors = F)
 train_ID    <- train_ID_df$sample_id
 
 #2B. Get model ready train data
