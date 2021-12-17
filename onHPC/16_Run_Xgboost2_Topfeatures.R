@@ -18,11 +18,11 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/All_DS_Performance/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/All_DS_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 
 #Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
-for (i in 1:10){#0:10
+for (i in 0:1){#0:10
   ################################################################################
   #Load train and test
   ################################################################################
