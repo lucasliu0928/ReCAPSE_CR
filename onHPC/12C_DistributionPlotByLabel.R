@@ -77,7 +77,7 @@ for (i in 1:length(features)){
           axis.title=element_text(size=14,face="bold"))+
     scale_color_manual(values=c("darkgreen", "darkred"))
   
-  png(paste0(outdir,"Violin_plot/",feature_col,".png"),res = 150,width = 500,height = 500)
+  png(paste0(outdir,"Violin_plot/",feature_col,".png"),res = 150,width = 500,height = 300)
   print(p)
   dev.off()
 }
@@ -90,13 +90,36 @@ for (i in 1:length(features)){
   if (i %% 10 == 0){print(i)}
   feature_col <- features[i]
   p<-ggplot(plot_df, aes_string(x=feature_col, color="Label")) +
-    geom_histogram(fill="white",bins = 50) +
-    theme(axis.text=element_text(size=10),
-          axis.title=element_text(size=10,face="bold"))+
-    scale_color_manual(values=c("darkgreen", "darkred"))
+    geom_histogram(fill="white",bins = 30) +
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=12,face="bold"),
+          legend.position = "top" , 
+          legend.title = element_blank())+
+    scale_color_manual(values=c("darkgreen", "darkred")) 
 
   
-  png(paste0(outdir,"Histogram/",feature_col,".png"),res = 150,width = 800,height = 800)
+  png(paste0(outdir,"Histogram/",feature_col,".png"),res = 150,width = 700,height = 500)
+  print(p)
+  dev.off()
+}
+
+
+#######################################################################################################
+#6. seperate group histogram Plot
+#######################################################################################################
+for (i in 1:length(features)){
+  if (i %% 10 == 0){print(i)}
+  feature_col <- features[i]
+  p<-ggplot(plot_df, aes_string(x=feature_col,color="Label")) +
+    geom_histogram(fill="white",bins = 30) +
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=12,face="bold"),
+          legend.position = "none" , 
+          legend.title = element_blank()) +
+    facet_grid(Label ~ .,scales = "free_y") + 
+    #facet_grid(Label ~ .) + 
+    scale_color_manual(values=c("darkgreen", "darkred")) 
+  png(paste0(outdir,"Histogram/",feature_col,"PREPOST.png"),res = 150,width = 700,height = 500)
   print(p)
   dev.off()
 }
