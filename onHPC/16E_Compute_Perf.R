@@ -221,6 +221,92 @@ get_pt_level_pred_df <- function(analysis_df,pts_level_char_df){
   return(pt_pred_df)
 }
 
+
+#persistence for 3 months
+get_pt_level_pred_df2 <- function(analysis_df,pts_level_char_df){
+  #analysis_df <- test_prediction_df
+  
+  unique_test_ptIDs <- unique(analysis_df[,"study_id"])  
+  thres <- c("01","02","03","04","05","06","07","08")
+  
+  pt_pred_df<- as.data.frame(matrix(NA, nrow = length(unique_test_ptIDs),ncol = 19))
+  colnames(pt_pred_df) <- c("study_id","SBCE","Acutal_SBCEMonth", 
+                            "PredictedSBCEMonth_Thres_01","PredictedClass_Thres_01",
+                            "PredictedSBCEMonth_Thres_02","PredictedClass_Thres_02",
+                            "PredictedSBCEMonth_Thres_03","PredictedClass_Thres_03",
+                            "PredictedSBCEMonth_Thres_04","PredictedClass_Thres_04",
+                            "PredictedSBCEMonth_Thres_05","PredictedClass_Thres_05",
+                            "PredictedSBCEMonth_Thres_06","PredictedClass_Thres_06",
+                            "PredictedSBCEMonth_Thres_07","PredictedClass_Thres_07",
+                            "PredictedSBCEMonth_Thres_08","PredictedClass_Thres_08")
+  for (i in 1:length(unique_test_ptIDs)){
+    if (i %% 500 == 0) {print(i)}
+    curr_pt_id <- unique_test_ptIDs[i]
+    curr_pred_df <- analysis_df[analysis_df[,"study_id"] == curr_pt_id,]
+    curr_char_df <- pts_level_char_df[pts_level_char_df[,"study_id"] == curr_pt_id, ]
+    
+    pt_pred_df[i , "SBCE"]             <- curr_char_df[,"SBCE"]
+    pt_pred_df[i , "study_id"]         <- curr_pt_id
+    
+    curr_2nd_event_date <- mdy(curr_char_df[,"Date_2nd_Event"])
+    if (is.na(curr_2nd_event_date) == F){
+      curr_2nd_event_year  <- year(curr_2nd_event_date)
+      curr_2nd_event_month <- month(curr_2nd_event_date)
+      curr_acutal_SBCEMonth <- paste0(curr_2nd_event_year, "-",curr_2nd_event_month, "-", "01") #use the first day as the month
+    }else {
+      curr_acutal_SBCEMonth <- "NONE"
+    }
+    
+    pt_pred_df[i , "Acutal_SBCEMonth"] <- curr_acutal_SBCEMonth
+    
+    #sort by month
+    curr_pred_df <- curr_pred_df[order(curr_pred_df$month_start),]
+    
+    
+    for (j in 1:length(thres)){
+      curr_thres <- thres[j]
+      #Get col index of threshold in sample pred df
+      curr_col_idxes_inpreddf <- which(grepl(paste0("PredictedClass_Thres_",curr_thres),colnames(curr_pred_df)))
+      curr_all_idxes <- which(curr_pred_df[,curr_col_idxes_inpreddf] == 1) #all index predicted higher than threhold
+      if (length(curr_all_idxes) >= 3 ){ #if there is 3 consecutive predicted month ?= threhold
+        #check if persistent 1s for 3 months 
+        first_month_index <- 0
+        kt <- 1
+        while (first_month_index == 0 & (kt + 2) <= length(curr_all_idxes)){
+           curr_3indxes <- curr_all_idxes[kt:(kt+2)] #check every 3 consecitve indexes
+           curr_diff   <- diff(curr_3indxes)
+           if (sum(curr_diff) == 2){ #if the sum of diff is 2, them it is consecutives, and it persistent as 1
+             first_month_index <- curr_all_idxes[kt]
+           }else{
+             kt <- kt+1
+           }
+             
+        }
+        
+        if (first_month_index != 0){
+          curr_pred_month <- curr_pred_df[first_month_index,"month_start"] #1st index predicted higher or equal to the threhold
+          curr_pred_class <- 1
+        }else{
+          curr_pred_class <- 0
+        }
+      }else {
+        curr_pred_month <- "NONE"
+        curr_pred_class <- 0
+      }
+      #get col idex of threhold in patient pred df
+      curr_col_idxes_inptdf1 <- which(grepl(paste0("PredictedSBCEMonth_Thres_",curr_thres),colnames(pt_pred_df)))
+      curr_col_idxes_inptdf2 <- which(grepl(paste0("PredictedClass_Thres_",curr_thres),colnames(pt_pred_df)))
+      
+      pt_pred_df[i,curr_col_idxes_inptdf1] <- curr_pred_month
+      pt_pred_df[i,curr_col_idxes_inptdf2] <- curr_pred_class
+      
+    }
+  }
+  
+  return(pt_pred_df)
+}
+
+
 #There is no AUC in this function
 compute_binaryclass_perf_func2_PTLEVEL <- function(prediction_df,thresholdClass_col){
   predicted_class <- prediction_df[,thresholdClass_col]
@@ -385,14 +471,16 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+data_dir3   <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Test/")
 
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 
 #User input
 ds_index <- 1
 update_pred_flag <- "Updated" #Updated or Original
+
 ######################################################################################################## 
 #1.Load predictions 
 ######################################################################################################## 
@@ -410,6 +498,21 @@ test_prediction_df <- add_predicted_class_byThreshold(test_prediction_df,ths)
 original_IDs <- strsplit(as.character(test_prediction_df$sample_id),split = "@")
 test_prediction_df$study_id    <- gsub("ID","",sapply(original_IDs, "[[", 1))
 test_prediction_df$month_start <- sapply(original_IDs, "[[", 2)
+
+################################################################################
+#2.Load obv neg,pos and non obv sample IDs
+################################################################################
+test_data_neg <- read.csv(paste0(data_dir3,"ObviousNeg_Samples_Test.csv"),stringsAsFactors = F)
+test_data_pos <- read.csv(paste0(data_dir3,"ObviousPos_Samples_Test.csv"),stringsAsFactors = F)
+test_data_nonobv <- read.csv(paste0(data_dir3,"NON_Obvious_Samples_Test.csv"),stringsAsFactors = F)
+
+neg_ids <- test_data_neg$sample_id
+pos_ids <- test_data_pos$sample_id
+nonobv_ids <- test_data_nonobv$sample_id
+
+test_prediction_df_neg <- test_prediction_df[which(test_prediction_df$sample_id %in% neg_ids),]
+test_prediction_df_pos <- test_prediction_df[which(test_prediction_df$sample_id %in% pos_ids),]
+test_prediction_df_nonobv <- test_prediction_df[which(test_prediction_df$sample_id %in% nonobv_ids),]
 
 ################################################################################ 
 #3. Load patient level char to get SBCE or not 
@@ -443,6 +546,16 @@ write.csv(perf_tb_pos1_neg5,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/"
 perf_tb_alltest <- get_perf_table_func(test_prediction_df,pts_level_char_df)
 write.csv(perf_tb_alltest,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_perf_tb_alltest",".csv"),row.names = T)
 
+#4.3 compute performance for all obv neg, obv pos, and obs nonobv seperately
+perf_tb_alltest_neg <- get_perf_table_func(test_prediction_df_neg,pts_level_char_df)
+write.csv(perf_tb_alltest_neg,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_perf_tb_alltestNEG",".csv"),row.names = T)
+
+perf_tb_alltest_pos <- get_perf_table_func(test_prediction_df_pos,pts_level_char_df)
+write.csv(perf_tb_alltest_pos,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_perf_tb_alltestPOS",".csv"),row.names = T)
+
+perf_tb_alltest_nonobv <- get_perf_table_func(test_prediction_df_nonobv,pts_level_char_df)
+write.csv(perf_tb_alltest_nonobv,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_perf_tb_alltestNONOBV",".csv"),row.names = T)
+
 
 ######################################################################################################## 
 #5. Patient-level performance for all samples
@@ -454,10 +567,13 @@ write.csv(perf_tb_alltest,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",u
 #if there is a first month that prediction is great/equal to the threhold, the prediction for this patient = SBCE
 # and the first month is when SBCE occurs
 ptlevel_pred_df_alltest <- get_pt_level_pred_df(test_prediction_df,pts_level_char_df)
+write.csv(ptlevel_pred_df_alltest,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Patient_Level_PerdMonth_alltest",".csv"),row.names = T)
 
 #1.2.Report all test pt level perforamnce
 ptlevel_perf_tb_alltest <- get_perf_table_PTLEVEL_func(ptlevel_pred_df_alltest)
 write.csv(ptlevel_perf_tb_alltest,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Patient_Level_Perf_tb_alltest",".csv"),row.names = T)
+
+
 
 #2.For SBCE patient, 
 ptlevel_pred_df_SBCE <- ptlevel_pred_df_alltest[which(ptlevel_pred_df_alltest[,"SBCE"]==1), ]
@@ -475,3 +591,30 @@ ptlevel_monthdiff_df <- compute_month_diff(ptlevel_pred_df_SBCE)
 #2.3 month diff
 monthdiff_stats  <- get_stats_month_diff(ptlevel_monthdiff_df)
 write.csv(monthdiff_stats,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Predicted_Monthdiff_stats",".csv"),row.names = T)
+
+#########################################
+#2. persistent 3 month results
+#########################################
+ptlevel_pred_df_alltest2 <- get_pt_level_pred_df2(test_prediction_df,pts_level_char_df)
+write.csv(ptlevel_pred_df_alltest2,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Patient_Level_PerdMonth_alltest_persistent3month",".csv"),row.names = T)
+
+ptlevel_perf_tb_alltest2 <- get_perf_table_PTLEVEL_func(ptlevel_pred_df_alltest2)
+write.csv(ptlevel_perf_tb_alltest2,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Patient_Level_Perf_tb_alltest_persistent3month",".csv"),row.names = T)
+
+
+ptlevel_pred_df_SBCE <- ptlevel_pred_df_alltest2[which(ptlevel_pred_df_alltest2[,"SBCE"]==1), ]
+#2.1 add predicted month using change points
+ptlevel_pred_df_SBCE$PredictedSBCEMonth_Thres_CP <- NA
+for (i in 1:nrow(ptlevel_pred_df_SBCE)){
+  curr_id <- ptlevel_pred_df_SBCE[i,"study_id"]
+  curr_cp <- changepoint_df[which(changepoint_df[,"study_id"] == curr_id),"changepoint_month"]
+  ptlevel_pred_df_SBCE[i, "PredictedSBCEMonth_Thres_CP"] <- curr_cp
+}
+
+#2.2 compute the difference between predicted SBCE month and actual SBCE month
+ptlevel_monthdiff_df <- compute_month_diff(ptlevel_pred_df_SBCE)
+
+#2.3 month diff
+monthdiff_stats  <- get_stats_month_diff(ptlevel_monthdiff_df)
+write.csv(monthdiff_stats,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Predicted_Monthdiff_stats_persistent3month",".csv"),row.names = T)
+
