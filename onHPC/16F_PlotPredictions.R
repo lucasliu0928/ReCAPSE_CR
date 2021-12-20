@@ -27,7 +27,7 @@ plot_individual_prediction <- function(pt_prediction_df, changepoint = NA, plot_
   
   if (plot_cp == T){
     p <- p + geom_vline(xintercept = changepoint, linetype="dotted", color = "darkorange", size=1.5) +
-              geom_text(aes(x=changepoint, label="CP", y=1), colour="darkorange", angle=0) 
+              geom_text(aes(x=changepoint, label="Pred_Month", y=1), colour="darkorange", angle=0) 
       
   }
   return(p)
@@ -44,14 +44,15 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 data_dir2        <- paste0(proj_dir, "11F_TrainTestIDs/")
+data_dir3           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 
 #User input
 ds_index <- 1
-update_pred_flag <- "Updated" #Updated or Original
+update_pred_flag <- "Original" #Updated or Original
 ######################################################################################################## 
 #1.Load predictions 
 ######################################################################################################## 
@@ -79,14 +80,18 @@ SBCE_label_df <- read.xlsx(paste0(data_dir2,"/test_ID_withLabel.xlsx"),sheet = 1
 changepoint_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed/","16_",update_pred_flag,"_ChangePoint",".csv"),stringsAsFactors = F)
 
 ################################################################################ 
+#4. Load predicted months
+################################################################################ 
+pred_month_df <- read.csv(paste0(data_dir3,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Patient_Level_PerdMonth_alltest_persistent3month.csv"),stringsAsFactors = F)
+
+
+################################################################################ 
 #Plot
 #'@TODO: Maybe add event date Later
 ################################################################################ 
 for (i in 1:length(test_ID)){
   if(i %% 100 == 0){print(i)}
   curr_id <- test_ID[i]
-  
-  curr_id <- 22041
   #get prediction df
   curr_df <- test_prediction_df[which(test_prediction_df[,"study_id"] == curr_id),]
   curr_df$month_start <- ymd(curr_df$month_start)
@@ -95,13 +100,16 @@ for (i in 1:length(test_ID)){
   #get label
   curr_label_df <- SBCE_label_df[which(SBCE_label_df[,"study_id"] == curr_id),]
   curr_label <- curr_label_df[,"SBCE"]
-  if (curr_label == 1){
+  #if (curr_label == 1){
     #get change point
-    curr_cp <- ymd(changepoint_df[which(changepoint_df[,"study_id"] == curr_id),"changepoint_month"])
+    #curr_cp <- ymd(changepoint_df[which(changepoint_df[,"study_id"] == curr_id),"changepoint_month"])
+    #get pred month
+    curr_cp <- ymd(pred_month_df[which(pred_month_df[,"study_id"] == curr_id),"PredictedSBCEMonth_Thres_05"])
+    
     p <- plot_individual_prediction(curr_df,curr_cp,TRUE)
-  }else{
-    p <- plot_individual_prediction(curr_df,NA,FALSE)
-  }
+  # }else{
+  #   p <- plot_individual_prediction(curr_df,NA,FALSE)
+  # }
 
   png(paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/Individual_Plot/",update_pred_flag,"/SBCE",curr_label,"_ID",curr_id,".png"),res=150,width = 700,height = 700)
   print(p)
