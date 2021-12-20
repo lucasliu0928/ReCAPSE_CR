@@ -13,14 +13,14 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 data_dir2        <- paste0(proj_dir, "11F_TrainTestIDs/")
 
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 
 #User Input
 ds_index <- 1
-update_pred_flag <- "Original" #Updated or Original
+update_pred_flag <- "Updated" #Updated or Original
 
 ######################################################################################################## 
 #1.Load predictions 
@@ -29,7 +29,7 @@ update_pred_flag <- "Original" #Updated or Original
 if (update_pred_flag != "Updated"){ #predtion use model
   test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed", "/16_Prediction_Table_DS", ds_index, ".csv"))
 }else if (update_pred_flag == "Updated"){#prediction obv neg by assigin 0, prediction of other ones used model
-  test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed", "/16_Updated_Prediction_Table_DS", ds_index, ".csv"))
+  test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed/", "/16_Updated_Prediction_Table_DS", ds_index, ".csv"))
 }
 
 #Add study_id and month start
