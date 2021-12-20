@@ -1,5 +1,35 @@
 source("Recapse_Ultility.R")
 
+prediction_2method_func <- function(model,valid_data,obv_type){
+  # model      <- mod_optimal
+  # valid_data <- valid_data1
+  # obv_type <- "NEG"
+  # 
+  #xgb input
+  valid_label       <- as.numeric(valid_data[,"y_PRE_OR_POST_2ndEvent"])
+  valid_data_part   <- valid_data[,features] 
+  dvalid            <- xgb.DMatrix(data = as.matrix(valid_data_part), label = valid_label)
+  
+  pred_df <- as.data.frame(matrix(NA, nrow = nrow(valid_data),ncol = 5))
+  colnames(pred_df) <- c("study_id","sample_id","y_PRE_OR_POST_2ndEvent",paste0("pred_as_",obv_type),"pred_useOptimalModel")
+  pred_df$study_id                  <- valid_data$study_id
+  pred_df$sample_id                 <- valid_data$sample_id
+  pred_df$y_PRE_OR_POST_2ndEvent    <- valid_data$y_PRE_OR_POST_2ndEvent
+  
+  #method 1:
+  pred_df[,"pred_useOptimalModel"] <- predict(mod_optimal, dvalid)
+  
+  #method 2:
+  if (obv_type == "NEG"){
+    pred_df[,paste0("pred_as_",obv_type)] <- 0
+  }else if (obv_type == "POS"){
+    pred_df[,paste0("pred_as_",obv_type)] <- 1
+  }
+  
+  return(pred_df)
+}
+
+
 ################################################################################
 #Set up parallel computing envir
 ################################################################################
@@ -19,7 +49,7 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_In
 #data dir
 data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 data_dir2        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir3        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
+data_dir3        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Train/")
 
 
 outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Prediction_obvTrainData/")
@@ -31,8 +61,6 @@ ds_index <- 1
 #1A. Get optimal model features
 mod_optimal <- readRDS(paste0(data_dir1,"train_DS",ds_index, "/BeforeSmoothed/model", ds_index, ".rds"))
 features    <- mod_optimal$feature_names
-#2A. Get optiaml model paramters
-optimal_para <- read.csv(paste0(data_dir1,"train_DS",ds_index, "/BeforeSmoothed/" , "16_OptimalModelParam.csv"),stringsAsFactors = F)
 
 ################################################################################
 #2. Load all model data
@@ -43,23 +71,15 @@ load(file = paste0(data_dir2, "All_PTS_ModelReadyData.rda"))
 #3.Get obvious neg data as part of validation
 ################################################################################ 
 obv_neg_train_ID_df   <- read.csv(paste0(data_dir3,"ObviousNeg_Samples.csv"),stringsAsFactors = F)
-part_validation_ID1    <- obv_neg_train_ID_df[,"sample_id"]
-valid_data1 <- model_data[which(model_data$sample_id %in% part_validation_ID1),]
+validation_ID1    <- obv_neg_train_ID_df[,"sample_id"]
+valid_data1 <- model_data[which(model_data$sample_id %in% validation_ID1),]
 
 ################################################################################ 
-#4.From non-obvious neg data, get 90% for train, 10% for validation
+#3.Get obvious pos data as part of validation
 ################################################################################ 
-nonobv_neg_train_ID_df   <- read.csv(paste0(data_dir3,"non_ObviousNeg_Samples.csv"),stringsAsFactors = F)
-train_sampleID_nonobv    <- nonobv_neg_train_ID_df[,"sample_id"]
-
-#90% for re-train, #10% for part of validation
-total_n <- length(train_sampleID_nonobv)
-set.seed(123)
-part_validation_ID2   <- sample(train_sampleID_nonobv,0.1*total_n)
-valid_data2 <- model_data[which(model_data$sample_id %in% part_validation_ID2),]
-
-train_ID        <- train_sampleID_nonobv[-which(train_sampleID_nonobv %in% part_validation_ID2)]
-train_data      <- model_data[which(model_data$sample_id %in% train_ID),]
+obv_pos_train_ID_df   <- read.csv(paste0(data_dir3,"ObviousPos_Samples.csv"),stringsAsFactors = F)
+validation_ID2    <- obv_pos_train_ID_df[,"sample_id"]
+valid_data2 <- model_data[which(model_data$sample_id %in% validation_ID2),]
 
 ################################################################################ 
 #clear memory
@@ -67,81 +87,42 @@ train_data      <- model_data[which(model_data$sample_id %in% train_ID),]
 rm("model_data")
 gc()
 
-################################################################################ 
-#Combine non-obvious validation and obious validation data
-################################################################################ 
-all_valid_data <- rbind(valid_data1,valid_data2)
 
 
 ################################################################################ 
-#xgb input : train and valid data
+#5.Prediction for obv neg 
+#Method 1: predict use optimal model 
+#Method 2: predict as negative 
 ################################################################################ 
-train_label      <- as.numeric(train_data[,"y_PRE_OR_POST_2ndEvent"])
-train_data_part  <- train_data[,features] 
-dtrain           <- xgb.DMatrix(data = as.matrix(train_data_part), label = train_label)
-
-#All validation
-valid_label       <- as.numeric(all_valid_data[,"y_PRE_OR_POST_2ndEvent"])
-valid_data_part   <- all_valid_data[,features] 
-dvalid            <- xgb.DMatrix(data = as.matrix(valid_data_part), label = valid_label)
-
-#non-obv validatiion 
-valid_label_nonob       <- as.numeric(valid_data2[,"y_PRE_OR_POST_2ndEvent"])
-valid_data_part_nonob   <- valid_data2[,features] 
-dvalid_nonob            <- xgb.DMatrix(data = as.matrix(valid_data_part_nonob), label = valid_label_nonob)
-
-
-################################################################################ 
-#re-train
-################################################################################
-optimal_para_list <- list(etc = as.numeric(optimal_para['etc']),
-                     max_depth = as.numeric(optimal_para['max_depth']),
-                     min_child_weight = as.numeric(optimal_para['min_child_weight']),
-                     subsample = as.numeric(optimal_para['subsample']),
-                     colsample_by_tree = as.numeric(optimal_para['colsample_by_tree']))
-
-new_mod <- xgb.train(objective="binary:logistic",
-                     params=optimal_para_list, data=dtrain, nrounds=10, early_stopping_rounds=100, maximize=TRUE,
-                     watchlist= list(train = dtrain, eval = dvalid), verbose=TRUE, print_every_n=10, eval_metric="error", eval_metric="error@0.2", eval_metric="auc")
-
-
+#Prediction
+pred_df_neg <- prediction_2method_func(mod_optimal,valid_data1,"NEG")
+write.csv(pred_df_neg,paste0(outdir,"train_DS",ds_index,"/pred_tb_obvNEG.csv"))
+#Comare perforamnce
+actual    <- as.factor(pred_df_neg[,"y_PRE_OR_POST_2ndEvent"])
+pred1      <- pred_df_neg[,"pred_as_NEG"]
+pred2      <- pred_df_neg[,"pred_useOptimalModel"]
+perf1 <- compute_binaryclass_perf_func(pred1,actual)
+perf2 <- compute_binaryclass_perf_func(pred2,actual)
+all_perf <- rbind(perf1,perf2)
+rownames(all_perf) <- c("pred_as_NEG","pred_useOptimalModel")
+write.csv(all_perf,paste0(outdir,"train_DS",ds_index,"/perf_tb_obvNEG.csv"))
 
 
 ################################################################################ 
-#5.Prediction for all validation data:
-#Method 1: predict use optimal model for all samples
-#Method 2: predict as negative for all obvious neg samples + model to predict non-obvious samples
+#5.Prediction for obv pos 
+#Method 1: predict use optimal model 
+#Method 2: predict as postives 
 ################################################################################ 
-pred_df <- as.data.frame(matrix(NA, nrow = nrow(all_valid_data),ncol = 5))
-colnames(pred_df) <- c("study_id","sample_id","y_PRE_OR_POST_2ndEvent","pred_asNEG_and_model","pred_onlyuseOptimalModel")
-pred_df$study_id                  <- all_valid_data$study_id
-pred_df$sample_id                 <- all_valid_data$sample_id
-pred_df$y_PRE_OR_POST_2ndEvent    <- all_valid_data$y_PRE_OR_POST_2ndEvent
-
-#method 1:
-pred_df[,"pred_onlyuseOptimalModel"] <- predict(new_mod, dvalid)
-
-#method 2:
-#for non-obv neg, use the model
-pred_nonob <- predict(new_mod, dvalid_nonob)
-pred_nonob_tb <- data.frame("sample_id" = valid_data2[,"sample_id"] ,"pred"= pred_nonob )
-
-#for obvious neg, assign 0 
-pred_ob_tb <- data.frame("sample_id" = valid_data1[,"sample_id"] ,"pred"= 0)
-
-#final pred
-pred_all <- rbind(pred_ob_tb,pred_nonob_tb)
-
-#match id order
-pred_all <- pred_all[match(pred_df[,"sample_id"],pred_all[,"sample_id"]),]
-pred_df[,"pred_asNEG_and_model"] <- pred_all[,"pred"]
-
-write.csv(pred_df,paste0(outdir,"train_DS",ds_index,"/pred_tb.csv"))
+#Prediction
+pred_df_pos <- prediction_2method_func(mod_optimal,valid_data2,"POS")
+write.csv(pred_df_pos,paste0(outdir,"train_DS",ds_index,"/pred_tb_obvPOS.csv"))
 
 #Comare perforamnce
-perf1 <- compute_binaryclass_perf_func(pred_df[,"pred_asNEG_and_model"],pred_df$y_PRE_OR_POST_2ndEvent)
-perf2 <- compute_binaryclass_perf_func(pred_df[,"pred_onlyuseOptimalModel"],pred_df$y_PRE_OR_POST_2ndEvent)
-
+actual    <- as.factor(pred_df_pos[,"y_PRE_OR_POST_2ndEvent"])
+pred1      <- pred_df_pos[,"pred_as_POS"]
+pred2      <- pred_df_pos[,"pred_useOptimalModel"]
+perf1 <- compute_binaryclass_perf_func(pred1,actual)
+perf2 <- compute_binaryclass_perf_func(pred2,actual)
 all_perf <- rbind(perf1,perf2)
-rownames(all_perf) <- c("pred_asNEG_and_model","pred_onlyuseOptimalModel")
-write.csv(all_perf,paste0(outdir,"train_DS",ds_index,"/perf_tb.csv"))
+rownames(all_perf) <- c("pred_as_POS","pred_useOptimalModel")
+write.csv(all_perf,paste0(outdir,"train_DS",ds_index,"/perf_tb_obvPOS.csv"))
