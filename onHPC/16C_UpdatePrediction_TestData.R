@@ -18,8 +18,10 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_In
 
 #data dir
 data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1208updated/Use_ImportantFs_Performance/")
+data_dir2   <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Test/")
+data_dir3        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
+
+outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
 
 
 #User input
@@ -30,28 +32,33 @@ ds_index <- 1
 ################################################################################
 load(file = paste0(data_dir1, "test_data.rda"))
 
+################################################################################
+#3.Load obv neg,pos and non obv sample IDs
+################################################################################
+test_data_neg <- read.csv(paste0(data_dir2,"ObviousNeg_Samples_Test.csv"),stringsAsFactors = F)
+test_data_pos <- read.csv(paste0(data_dir2,"ObviousPos_Samples_Test.csv"),stringsAsFactors = F)
+test_data_nonobv <- read.csv(paste0(data_dir2,"NON_Obvious_Samples_Test.csv"),stringsAsFactors = F)
+
+neg_ids <- test_data_neg$sample_id
+pos_ids <- test_data_pos$sample_id
+nonobv_ids <- test_data_nonobv$sample_id
 
 ################################################################################
-#3. Identify obv neg Use criteria find by train data 
+#3.Prediction method 1, use optimal model
 ################################################################################
-best_th1 <- 5.5
-best_th2<-  39
-final_sample_idxes <- which(test_data[,"cumul_ratio_CCS_PROC_202"] == -1 |
-                              test_data[,"cumul_ratio_CCS_PROC_227"] > best_th1 | 
-                              test_data[,"months_since_dx"] < best_th2 )
-obv_neg_IDs <- test_data[final_sample_idxes,"sample_id"]
-
+test_prediction_df <- read.csv(paste0(data_dir3,"train_DS",ds_index,"/BeforeSmoothed", "/16_Prediction_Table_DS", ds_index, ".csv"))
+colnames(test_prediction_df)[2] <- "Pred_UseOptimalModel"
 
 ################################################################################
-#3. Load current prediction 
+#4.Add Prediction method 2 results, 
+#1. predicted as 0 or 1 for neg and pos
+#2. keep model prediction for non-obv
 ################################################################################
-test_prediction_df <- read.csv(paste0(data_dir2,"train_DS",ds_index,"/BeforeSmoothed", "/16_Prediction_Table_DS", ds_index, ".csv"))
+test_prediction_df[,"pred"] <- NA
+test_prediction_df[which(test_prediction_df$sample_id %in% neg_ids),"pred"] <- 0
+test_prediction_df[which(test_prediction_df$sample_id %in% pos_ids),"pred"] <- 1
+test_prediction_df[which(test_prediction_df$sample_id %in% nonobv_ids),"pred"] <- test_prediction_df[which(test_prediction_df$sample_id %in% nonobv_ids),"Pred_UseOptimalModel"]
 
-################################################################################
-#4.Updated obv neg prediction as 0
-################################################################################
-ob_neg_indexes <- which(test_prediction_df$sample_id %in% obv_neg_IDs)
-test_prediction_df[ob_neg_indexes,"pred"] <- 0
 
-write.csv(test_prediction_df,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed","/16_Updated_Prediction_Table_DS",ds_index,".csv"),row.names = F)
+write.csv(test_prediction_df,paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/","/16_Updated_Prediction_Table_DS",ds_index,".csv"),row.names = F)
 
