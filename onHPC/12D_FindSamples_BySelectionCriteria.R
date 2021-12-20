@@ -30,7 +30,7 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_In
 #data dir
 data_dir  <- paste0(proj_dir, "12B_TopPCAFeature_ModelReady_TrainData/WithPossibleMonthsHasNoCodes/")
 
-outdir   <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
+outdir   <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Train/")
 
 
 ######################################################################################################## 
