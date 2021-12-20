@@ -82,7 +82,7 @@ data_dir1        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMont
 data_dir2        <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
 
 data_dir3        <- paste0(proj_dir, "11F_TrainTestIDs/")
-data_dir4        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
+data_dir4        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Train/")
 
 outdir           <- paste0(proj_dir, "15_XGB_Input/")
 
