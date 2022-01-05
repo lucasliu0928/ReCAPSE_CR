@@ -126,4 +126,5 @@ all_enrollment_months_df <-  all_enrollment_months_df[-no_enrollment_idx,]
 
 #'@NOTE: this xlsx cannot be opened dirrectly in sys, but read in R has no problem, 
 #probabily because the column number does not match in the dataframe
-write.xlsx(all_enrollment_months_df,paste0(outdir,"5_enrollment_Months.xlsx"))
+#write.xlsx(all_enrollment_months_df,paste0(outdir,"/5_enrollment_Months.xlsx"))
+
