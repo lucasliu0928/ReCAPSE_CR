@@ -117,11 +117,11 @@ updated_prediction_month_df$Prediction_Duration_inDays <- difftime(ymd(updated_p
                                                                    ymd(updated_prediction_month_df[,"Prediction_Start"]), units = "days")
 #Exclude prediction duration < 0 days
 exclude_indxes <- which(updated_prediction_month_df$Prediction_Duration_inDays <= 0 )
-updated_prediction_month_df <- updated_prediction_month_df[-exclude_indxes,]
+updated_prediction_month_df <- updated_prediction_month_df[-exclude_indxes,] #2
 
 #Exclude prediction duration < 180 days (6 month) #(cuz Later will further exclude no claims within 3month before and after SBCE or 6 month for no SBCE patient)
 exclude_indxes <- which(updated_prediction_month_df[,"Prediction_Duration_inDays"] < 180)
-updated_prediction_month_df <- updated_prediction_month_df[-exclude_indxes,]
+updated_prediction_month_df <- updated_prediction_month_df[-exclude_indxes,] #884
 
 #########################################################################################################
 #Update: if prediction start before enrollment start, then prediction start = enrollment start
