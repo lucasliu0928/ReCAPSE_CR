@@ -12,7 +12,7 @@ outdir <- "/recapse/intermediate_data/"
 # 
 # #local
 # data_dir <- "/Volumes/LJL_ExtPro/Data/Testing data for UH3 - Dec 16 2020/"
-# outdir <- "/Users/lucasliu/Desktop/"
+# outdir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/1_ID_Sources_Info"
 
 #######################################################################################
 #Get all study id in kcr 
