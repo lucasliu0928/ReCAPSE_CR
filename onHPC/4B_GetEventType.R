@@ -51,7 +51,7 @@ analysis_ID <- unique(merged_cancer_site_df$study_id) #41375
 ############################################################################################
 #Get 1st,2nd, 3rd event type and date 
 #1st event:  1st primary dates
-#2nd event:  recurrence of the 1st or second primary
+#2nd event:  recurrence of the 1st or second primary or 1st primary bc death
 #3rd event:  subsqeunt after 2nd event
 ############################################################################################
 All_event_df <- as.data.frame(matrix(NA, nrow = length(analysis_ID), ncol = 14))
