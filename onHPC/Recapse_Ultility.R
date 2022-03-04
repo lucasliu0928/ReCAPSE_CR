@@ -930,6 +930,7 @@ clean_code_func <-function(list_of_codes){
 #This function also consider the type of code
 #For ICD code, 3 digit
 #For HCPCS code, 5 digit
+##if DRUG_NDC or DRUG_THERA_CLS_AHFS, remove leading 0s
 #'@NOTE: This might result in NAs for codess less than 3/5 nchar (from converting to numeric when it is char) from orignal 
 clean_code_func2 <-function(list_of_codes,list_of_types){
   #1.repalce any codes with non-alphanumeric characters with ""
@@ -944,6 +945,7 @@ clean_code_func2 <-function(list_of_codes,list_of_types){
   #4. For each code, 
   #   #if HCPCS, reformat codes less than 5 char long
   #   #if ICD, reformat codes less than 3 char long
+  #   #if DRUG_NDC or DRUG_THERA_CLS_AHFS, remove leading 0s
   for (i in 1:length(updated_list_of_codes)){
     curr_code <- updated_list_of_codes[i]
     curr_nchar <- nchar(curr_code)
@@ -959,6 +961,8 @@ clean_code_func2 <-function(list_of_codes,list_of_types){
       if (curr_nchar < 3){
         curr_code <- reformat_codes_func(curr_code,3)
       }
+    }else if ((curr_type == "DRUG_NDC") | (curr_type == "DRUG_THERA_CLS_AHFS")){ #if DRUG_NDC or DRUG_THERA_CLS_AHFS, remove leading 0s
+         curr_code <- str_remove(curr_code, "^0+")
     }
      updated_list_of_codes[i] <- curr_code
   }
@@ -1165,6 +1169,15 @@ load_and_clean_DM3_data<- function(file_dir){
   return(drug_group_df)
 }
 
+#Val groups
+load_and_clean_Val_data<- function(file_dir){
+  #Load data
+  drug_group_df <- read.xlsx(paste0(file_dir,"Code_Groups/Val_Quan_Final SecondRoot List and NDC.xlsx"),sheet = 1)
+  
+  #Might add cleanning step here
+  return(drug_group_df)
+}
+
 #this function use drug name to group
 group_drugcodes_into_DM3_func <- function(claim_code_df,DM3_df){
   claim_code_df$specific_group <- NA
@@ -1192,6 +1205,24 @@ group_drugcodes_into_DM3_funcV2 <- function(claim_code_df,DM3_df){
     if (length(curr_idxes) > 0){
       claim_code_df[i,"specific_group"] <-  unique(DM3_df[curr_idxes,"specific_group"])[1] #if there is still multiple, choose the 1st one
       claim_code_df[i,"general_group"]  <-  unique(DM3_df[curr_idxes,"general_group"])[1]
+    }
+  }
+  return(claim_code_df)
+}
+
+#this fucntion use VAL root and secondary root classification to group durg
+group_drugcodes_into_VAL_func <- function(claim_code_df,VAL_df){
+  #claim_code_df <- unique_drug_df
+    
+  claim_code_df$VAL_ROOT_group <- NA
+  claim_code_df$VAL_SECONDARY_group <- NA
+  for (i in 1:nrow(claim_code_df)){
+    if (i %% 1000 == 0){print(i)}
+    curr_code <- claim_code_df[i,"CODE"]
+    curr_idxes <- which(VAL_df[,"ndc_upc_hri2"] == curr_code)
+    if (length(curr_idxes) > 0){
+      claim_code_df[i,"VAL_ROOT_group"]       <-  unique(VAL_df[curr_idxes,"ROOT_CLASSIFICATION"])[1] #if there is still multiple, choose the 1st one
+      claim_code_df[i,"VAL_SECONDARY_group"]  <-  unique(VAL_df[curr_idxes,"SECONDARY_CLASSIFICATION"])[1]
     }
   }
   return(claim_code_df)
