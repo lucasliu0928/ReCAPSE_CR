@@ -153,7 +153,7 @@ for (i in 1:nrow(Comb_drug_cleaned)){
 
 
 #4. Create short GNN     # This functions is from Teresa   
-#'@Question:  what is exclude list
+#'@Question:  what is exclude list, '@ANS: the list of names to exclude from analysis, we have none
 get_first_word_of_name <- function(str_vec,exclude_list){
   str_vec <- as.character(str_vec)
   
@@ -186,4 +186,4 @@ for (i in 1:nrow(Comb_drug_cleaned)){
   Comb_drug_cleaned[i,"short_GNN"] <- curr_short_gnn
 }
 
-write.xlsx(Comb_drug_cleaned,paste0(outdir,"0_Cleaned_Unique_Drug_Codes.xlsx"))
+write.xlsx(Comb_drug_cleaned,paste0(outdir,"0_Cleaned_Unique_Drug_Codes.xlsx"), overwrite = TRUE)
