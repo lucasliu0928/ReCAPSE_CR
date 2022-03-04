@@ -34,8 +34,11 @@ Ritzwoller_df <- load_and_clean_Ritzwoller_data(grping_data_dir)
 Ritzwoller_Diag_df <- Ritzwoller_df[which(Ritzwoller_df$D_or_P == "Diagnostic"),] #48
 Ritzwoller_Proc_df <- Ritzwoller_df[which(Ritzwoller_df$D_or_P == "Procedure"),] #1008
 
-#5.Load drug group 
+#5.Load DM3 drug group 
 DM3_df <- load_and_clean_DM3_data(grping_data_dir)
+
+#6.Load Val drug groups
+VAL_df <- load_and_clean_Val_data(grping_data_dir)
 
 ################################################################################
 #2. Load unique codes data
@@ -52,20 +55,28 @@ unique_drug_df <- read.xlsx(paste0(code_data_dir,"0_Cleaned_Unique_Drug_Codes.xl
 grouped_unique_diag_df <- group_codes_into_CCS_func(unique_diag_df,CCS_Diag_df,NULL) #add CCS
 grouped_unique_diag_df <- group_codes_into_chubak_func(grouped_unique_diag_df,Chuback_Diag_df) #add chuback
 grouped_unique_diag_df <- group_codes_into_Ritzwoller_func(grouped_unique_diag_df,Ritzwoller_Diag_df) #add ritzwoller
-write.xlsx(grouped_unique_diag_df,paste0(outdir,"Unique_Diag_And_Groups_inALLClaims.xlsx"))
+#write.xlsx(grouped_unique_diag_df,paste0(outdir,"Unique_Diag_And_Groups_inALLClaims.xlsx"))
 
 #2. procedure codes
 grouped_unique_proc_df <- group_codes_into_CCS_func(unique_proc_df,CCS_Proc_df,CCS_SProc_df) #add CCS
 grouped_unique_proc_df <- group_codes_into_chubak_func(grouped_unique_proc_df,Chuback_Proc_df)  #add chuback
 grouped_unique_proc_df <- group_codes_into_Ritzwoller_func(grouped_unique_proc_df,Ritzwoller_Proc_df)#add ritzwoller
-write.xlsx(grouped_unique_proc_df,paste0(outdir,"Unique_Proc_And_Groups_inALLClaims.xlsx"))
+#write.xlsx(grouped_unique_proc_df,paste0(outdir,"Unique_Proc_And_Groups_inALLClaims.xlsx"))
 
 #3. DM3 drug codes
 #grouped_unique_drug_df <- group_drugcodes_into_DM3_func(unique_drug_df,DM3_df) #use drug_name to group
 grouped_unique_drug_df <- group_drugcodes_into_DM3_funcV2(unique_drug_df,DM3_df) #use short GNN to group
 
-write.xlsx(grouped_unique_drug_df,paste0(outdir,"Unique_Drug_And_Groups_inALLClaims.xlsx"))
+#4.VAL drug grouping
+grouped_unique_drug_df_VAL <- group_drugcodes_into_VAL_func(unique_drug_df,VAL_df) #use short GNN to group
 
+#5.Combine DM3 and VAL drug groups into one file
+comb_grp_drug_df <- merge(grouped_unique_drug_df, 
+                          grouped_unique_drug_df_VAL[,c("CODE","VAL_ROOT_group","VAL_SECONDARY_group")], by = 'CODE')
+write.xlsx(comb_grp_drug_df,paste0(outdir,"Unique_Drug_And_Groups_inALLClaims.xlsx"),overwrite = TRUE)
+
+
+#'@TODO
 ################################################################################
 #4. Report stats for  grouping
 ################################################################################
@@ -113,16 +124,19 @@ rownames(Proc_stats) <- c("CCS","Chubak_Type","Chubak_Category","Ritzwoller_Type
 rownames(Proc_stats) <- paste0("PROC_",rownames(Proc_stats))
 
 #Drug
-DM3_stats1 <- report_code_grps_func(grouped_unique_drug_df,"specific_group")
-DM3_stats2 <- report_code_grps_func(grouped_unique_drug_df,"general_group")
-Drug_stats <- rbind(DM3_stats1,DM3_stats2)
-rownames(Drug_stats) <- c("DM3_specific","DM3_general")
+DM3_stats1 <- report_code_grps_func(comb_grp_drug_df,"specific_group")
+DM3_stats2 <- report_code_grps_func(comb_grp_drug_df,"general_group")
+DM3_stats3 <- report_code_grps_func(comb_grp_drug_df,"VAL_ROOT_group")
+DM3_stats4 <- report_code_grps_func(comb_grp_drug_df,"VAL_SECONDARY_group")
+Drug_stats <- rbind(DM3_stats1,DM3_stats2,DM3_stats3,DM3_stats4)
+rownames(Drug_stats) <- c("DM3_specific","DM3_general","VAL_ROOT_group","VAL_SECONDARY_group")
 
 #Check the intersection between DM3 short code and short GNN in claims data
 length(intersect(DM3_df$short_code,grouped_unique_drug_df$short_GNN)) #359
 length(unique(grouped_unique_drug_df$short_GNN))  #unique short_GNN: 4180
 length(unique(DM3_df$short_code))                 #unique short_GNN: 420
 
+
 #All stats
 all_stats <- rbind(Diag_stats,Proc_stats,Drug_stats)
-write.csv(all_stats,paste0(outdir,"Codes_Stats_inALLClaims.csv"))
+write.csv(all_stats,paste0(outdir,"Codes_Stats_inALLClaims_updated.csv"))
