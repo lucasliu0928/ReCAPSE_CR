@@ -961,9 +961,10 @@ clean_code_func2 <-function(list_of_codes,list_of_types){
       if (curr_nchar < 3){
         curr_code <- reformat_codes_func(curr_code,3)
       }
-    }else if ((curr_type == "DRUG_NDC") | (curr_type == "DRUG_THERA_CLS_AHFS")){ #if DRUG_NDC or DRUG_THERA_CLS_AHFS, remove leading 0s
+    }else if ((grepl("NDC",curr_type,ignore.case = T) == T) | ( grepl("AHFS",curr_type,ignore.case = T) == T)){ #if DRUG_NDC or DRUG_THERA_CLS_AHFS, remove leading 0s
          curr_code <- str_remove(curr_code, "^0+")
     }
+   
      updated_list_of_codes[i] <- curr_code
   }
   
@@ -1236,11 +1237,14 @@ get_claims_inDateRange <- function(in_data,time_col,start_d, end_d){
   return(in_data)
 }
 
-clean_codes_inPerPtsData <- function(in_data, all_code_cols, ICD_cols,HCPCS_cols){
-  # in_data <- medicaid_health_df
-  # ICD_cols <- c(ICD_diag_cols1)
-  # HCPCS_cols <- c(HCPCS_proc_cols1)
-  # all_code_cols <- c(ICD_diag_cols1,HCPCS_proc_cols1)
+clean_codes_inPerPtsData <- function(in_data, all_code_cols, ICD_cols,HCPCS_cols,NDC_cols = "", AHFS_cols = ""){
+  # in_data <- medicaid_pharm_df
+  # ICD_cols <- ""
+  # HCPCS_cols <- ""
+  # all_code_cols <- all_medicaid_pharms_cols
+  # NDC_cols <- "CDE_THERA_CLS_AHFS"
+  # AHFS_cols <- "CDE_NDC"
+  
   if (is.null(in_data) == T){
     in_data <- NULL
   }else{
@@ -1252,11 +1256,12 @@ clean_codes_inPerPtsData <- function(in_data, all_code_cols, ICD_cols,HCPCS_cols
         curr_codes_type_list <- rep("ICD",length(curr_codes_list))
       }else if (curr_col %in% HCPCS_cols){
         curr_codes_type_list <- rep("HCPC",length(curr_codes_list))
-      }else{
-        curr_codes_type_list <- rep("Drug",length(curr_codes_list))
+      }else if (curr_col %in% NDC_cols){
+        curr_codes_type_list <- rep("NDC",length(curr_codes_list))
+      }else if (curr_col %in% AHFS_cols){
+        curr_codes_type_list <- rep("AHFS",length(curr_codes_list))
       }
       in_data[,curr_col] <- clean_code_func2(curr_codes_list,curr_codes_type_list)
-      
     }
   }
   return(in_data)
