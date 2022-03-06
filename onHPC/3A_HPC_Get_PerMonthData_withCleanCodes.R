@@ -9,7 +9,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 #######################################################################################
 data_dir <- "/recapse/intermediate_data/"
-outdir <- "/recapse/intermediate_data/3_CleanClaims_perPatient_perMonth/"
+outdir <- "/recapse/intermediate_data/3_CleanClaims_perPatient_perMonth_0305_V2/"
 
 # #local
 # data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
@@ -47,7 +47,10 @@ if (length(IDs_processed) > 0 ){
 print(length(analysis_ID))
 
 foreach (i = 1: length(analysis_ID)) %dopar% {
+  
+  options(warn=2)
   curr_id <- analysis_ID[i]
+  print(curr_id)
   #print(paste0("Curr ID:",curr_id))
   data_res <- read_allClaims(curr_id,medicaid_heath_dir,medicaid_pharm_dir,medicare_dir)
 
@@ -65,8 +68,8 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
   all_medicaid_health_cols <- c(ICD_diag_cols1,HCPCS_proc_cols1)
   all_medicaid_pharms_cols <- c(AHFS_drug_cols1,NDC_drug_cols1)
 
-  cleaned_medicaid_health_df <- clean_codes_inPerPtsData(medicaid_health_df,all_medicaid_health_cols,ICD_diag_cols1,HCPCS_proc_cols1)
-  cleaned_medicaid_pharm_df  <- clean_codes_inPerPtsData(medicaid_pharm_df,all_medicaid_pharms_cols,"","")
+  cleaned_medicaid_health_df <- clean_codes_inPerPtsData(medicaid_health_df,all_medicaid_health_cols,ICD_diag_cols1,HCPCS_proc_cols1,"","")
+  cleaned_medicaid_pharm_df  <- clean_codes_inPerPtsData(medicaid_pharm_df,all_medicaid_pharms_cols,"","",NDC_drug_cols1, AHFS_drug_cols1)
 
   #2.2 Medicare Code cols
   ICD_diag_cols2 <- paste0("DGNS_CD",seq(1,25))             #ICD9 or ICD10
