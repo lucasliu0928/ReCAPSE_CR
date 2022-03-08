@@ -9,7 +9,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 #######################################################################################
 data_dir <- "/recapse/intermediate_data/"
-outdir <- "/recapse/intermediate_data/3_CleanClaims_perPatient_perMonth_0305_V2/"
+outdir <- "/recapse/intermediate_data/3_CleanClaims_perPatient_perMonth/"
 
 # #local
 # data_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
@@ -47,11 +47,8 @@ if (length(IDs_processed) > 0 ){
 print(length(analysis_ID))
 
 foreach (i = 1: length(analysis_ID)) %dopar% {
-  
-  options(warn=2)
+#debug #for (i in 1:length(analysis_ID)){
   curr_id <- analysis_ID[i]
-  print(curr_id)
-  #print(paste0("Curr ID:",curr_id))
   data_res <- read_allClaims(curr_id,medicaid_heath_dir,medicaid_pharm_dir,medicare_dir)
 
   #1. Read all raw claims, if not aval, return NULL
@@ -81,7 +78,7 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
   cleaned_medicare_df <- clean_codes_inPerPtsData(medicare_df,
                                                   all_medicare_cols,
                                                   c(ICD_diag_cols2,ICD_procedure_cols2),
-                                                  HCPCS_proc_cols2)
+                                                  HCPCS_proc_cols2,NDC_drug_cols2,"")
   #2.Get all aval dates
   unique_dates1 <- as.character(unique(cleaned_medicaid_health_df[,"DTE_FIRST_SVC"]))
   unique_dates2 <- as.character(unique(cleaned_medicaid_pharm_df[,"DTE_FIRST_SVC"]))
@@ -147,4 +144,3 @@ foreach (i = 1: length(analysis_ID)) %dopar% {
 
   write.xlsx(perMonth_df,paste0(outdir,"ID",curr_id,"_","perMonth_Data.xlsx"))
 }
-
