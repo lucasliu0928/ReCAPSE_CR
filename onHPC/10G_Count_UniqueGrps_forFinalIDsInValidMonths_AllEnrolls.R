@@ -18,6 +18,7 @@ data_dir_CCSproc  <- paste0(proj_dir, "10C_CCSProcFeature_inValidMonth/WithPossi
 data_dir_DM3spe   <- paste0(proj_dir, "10D_DM3SPEFeature_inValidMonth/WithPossibleMonthsHasNoCodes/UniqueGrp/")
 data_dir_DM3gen   <- paste0(proj_dir, "10E_DM3GENFeature_inValidMonth/WithPossibleMonthsHasNoCodes/UniqueGrp/")
 data_dir_SGNN     <- paste0(proj_dir, "10F_ShortGNNFeature_inValidMonth/WithPossibleMonthsHasNoCodes/UniqueGrp/")
+data_dir_VAL2nd   <- paste0(proj_dir, "10F2_VAL2NDFeature_inValidMonth/WithPossibleMonthsHasNoCodes/UniqueGrp/")
 
 outdir   <- paste0(proj_dir, "10G_Counts_UniqueGrp_PtsLevel/WithPossibleMonthsHasNoCodes/")
 
@@ -58,17 +59,21 @@ drug_disp_df <- read.xlsx(paste0(data_dir2,"Unique_Drug_And_Groups_inALLClaims.x
 # DM3_GEN_count_tb$Grp_Discrip <- NA  #No discrip for DM3
 # write.xlsx(DM3_GEN_count_tb,paste0(outdir,"Count_DM3_GEN_Unique_Grps.xlsx"))
 
+VAL_2nd_count_tb   <- get_count_table_func(data_dir_VAL2nd,"VAL_2ND",SBCE_PTs,nonSBCE_PTs)
+VAL_2nd_count_tb$Grp_Discrip <- NA  #No discrip for VAL_2ND
+write.xlsx(VAL_2nd_count_tb,paste0(outdir,"Count_VAL_2ND_Unique_Grps.xlsx"))
 
-#Short GNN
-S_GNN_count_tb     <- get_count_table_func(data_dir_SGNN,"S_GNN",SBCE_PTs,nonSBCE_PTs)
-S_GNN_count_tb     <- add_grp_discrption_func(S_GNN_count_tb,drug_disp_df,"short_GNN","specific_group") ##Use DM3 SPE as the discrption for S_GNN, to see how many matched to DM3 spe
-colnames(S_GNN_count_tb)[6] <- "DM3_SPE"
-#write.xlsx(S_GNN_count_tb,paste0(outdir,"Count_S_GNN_Unique_Grps.xlsx"))
 
-#Output All unique code + Full GNN + short GNN In prediction Window + count tb for clinician review
-indexes_inCount_tb <- which(paste0("S_GNN_" , drug_disp_df[,"short_GNN"]) %in% S_GNN_count_tb[,"Code_Grp"])
-drug_disp_df_inPreditionWindow <- drug_disp_df[indexes_inCount_tb, c("CODE","TYPE","GNN","short_GNN")]
-drug_disp_df_inPreditionWindow <- drug_disp_df_inPreditionWindow[order(drug_disp_df_inPreditionWindow$TYPE),]
-
-write.xlsx(drug_disp_df_inPreditionWindow,paste0(outdir,"FullGNN_ForReview.xlsx"))
+# #Short GNN
+# S_GNN_count_tb     <- get_count_table_func(data_dir_SGNN,"S_GNN",SBCE_PTs,nonSBCE_PTs)
+# S_GNN_count_tb     <- add_grp_discrption_func(S_GNN_count_tb,drug_disp_df,"short_GNN","specific_group") ##Use DM3 SPE as the discrption for S_GNN, to see how many matched to DM3 spe
+# colnames(S_GNN_count_tb)[6] <- "DM3_SPE"
+# #write.xlsx(S_GNN_count_tb,paste0(outdir,"Count_S_GNN_Unique_Grps.xlsx"))
+# 
+# #Output All unique code + Full GNN + short GNN In prediction Window + count tb for clinician review
+# indexes_inCount_tb <- which(paste0("S_GNN_" , drug_disp_df[,"short_GNN"]) %in% S_GNN_count_tb[,"Code_Grp"])
+# drug_disp_df_inPreditionWindow <- drug_disp_df[indexes_inCount_tb, c("CODE","TYPE","GNN","short_GNN")]
+# drug_disp_df_inPreditionWindow <- drug_disp_df_inPreditionWindow[order(drug_disp_df_inPreditionWindow$TYPE),]
+# 
+# write.xlsx(drug_disp_df_inPreditionWindow,paste0(outdir,"FullGNN_ForReview.xlsx"))
 
