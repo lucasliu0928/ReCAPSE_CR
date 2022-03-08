@@ -868,7 +868,7 @@ get_uniquecodes_onetype <-function(in_data,code_type, code_col,claim_source){
 
 #This function prepend 0s or remove code (if non-numeric, remove)
 reformat_codes_func <-function(code,min_length){
-  if(is.na(as.numeric(code)==T)){ #if non-numeric (if NA when converting)
+  if(is.numeric(code) == FALSE){ #if non-numeric (if NA when converting)
     updated_code <- NA #remove
   }else{ #it is numeric , then prepending "0"s to match the code minimum length
     nchar_code   <- nchar(code)
@@ -1238,13 +1238,13 @@ get_claims_inDateRange <- function(in_data,time_col,start_d, end_d){
 }
 
 clean_codes_inPerPtsData <- function(in_data, all_code_cols, ICD_cols,HCPCS_cols,NDC_cols = "", AHFS_cols = ""){
-  # in_data <- medicaid_pharm_df
-  # ICD_cols <- ""
-  # HCPCS_cols <- ""
-  # all_code_cols <- all_medicaid_pharms_cols
-  # NDC_cols <- "CDE_THERA_CLS_AHFS"
-  # AHFS_cols <- "CDE_NDC"
-  
+  # in_data <- medicare_df
+  # ICD_cols <- c(ICD_diag_cols2,ICD_procedure_cols2)
+  # HCPCS_cols <- HCPCS_proc_cols2
+  # all_code_cols <- all_medicare_cols
+  # NDC_cols <- NDC_drug_cols2
+  # AHFS_cols <- ""
+
   if (is.null(in_data) == T){
     in_data <- NULL
   }else{
