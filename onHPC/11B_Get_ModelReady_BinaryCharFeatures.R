@@ -20,7 +20,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 data_dir1  <- paste0(proj_dir, "8_Characteristics2/Month_Level/MonthChar_WithPossibleMonthsHasNoCodes/")
 data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-outdir   <- paste0(proj_dir, "11B_ModelReady_CharFatures/WithPossibleMonthsHasNoCodes/")
+outdir   <- paste0(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHasNoCodes/")
 
 
 ################################################################################
