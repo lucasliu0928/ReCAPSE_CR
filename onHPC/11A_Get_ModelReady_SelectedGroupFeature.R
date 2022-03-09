@@ -41,7 +41,10 @@ modelready_grps_df3 <- read.xlsx(paste0(data_dir3,"Selected_VAL2ndDrug_Unique_Gr
 
 modelready_Diag_features <- sort(modelready_grps_df1[,1])
 modelready_Proc_features <- sort(modelready_grps_df2[,1])
-modelready_Drug_features <- sort(modelready_grps_df3[,1])
+#modelready_Drug_features <- sort(modelready_grps_df3[,1])
+#'@NIMPORTANT #fix the issue of colume names conversion replace space with "." when read xlsx
+modelready_Drug_features <- gsub(" ",".",sort(modelready_grps_df3[,1])) 
+
 #All features
 modelready_grps_features <- sort(c(modelready_Diag_features,modelready_Proc_features,modelready_Drug_features))
 ########################################################################################################################
@@ -125,3 +128,4 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
   write.xlsx(new_perMonth_df,paste0(outdir,"ID",curr_id,"_Selected_Grp_Features.xlsx"))
   
 }
+
