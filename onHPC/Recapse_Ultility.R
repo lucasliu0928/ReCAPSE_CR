@@ -627,7 +627,7 @@ add_time_since_func <-function(pt_perMonth_df){
   colnames(time_since_df) <- colnames(pt_perMonth_df)
   colnames(time_since_df)[4:ncol(time_since_df)] <- paste0("time_since_",colnames(time_since_df)[4:ncol(time_since_df)])
   
-  #'@Switched 1201 the position of the following code
+  #'@Switched 1201 the position of the following code, fixed the issue of NA as study_id
   time_since_df[,"study_id"]    <- pt_perMonth_df[,"study_id"]
   time_since_df[,"Month_Start"] <- pt_perMonth_df[,"Month_Start"]
   time_since_df[,"Month_Index"] <- pt_perMonth_df[,"Month_Index"]
