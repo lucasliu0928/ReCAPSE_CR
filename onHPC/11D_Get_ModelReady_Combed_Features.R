@@ -17,12 +17,12 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1  <- paste0(proj_dir, "11A_ModelReady_GrpFatures/WithPossibleMonthsHasNoCodes/")
-data_dir2  <- paste0(proj_dir, "11B_ModelReady_CharFatures/WithPossibleMonthsHasNoCodes/")
-data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFatures/WithPossibleMonthsHasNoCodes/")
+data_dir1  <- paste0(proj_dir, "11A_ModelReady_GrpFeature/WithPossibleMonthsHasNoCodes/")
+data_dir2  <- paste0(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHasNoCodes/")
+data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFeatures/WithPossibleMonthsHasNoCodes/")
 data_dir4  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1_1201updated/WithPossibleMonthsHasNoCodes/")
+outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
 #outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
 
 ################################################################################
@@ -46,7 +46,6 @@ if (length(ID_processed) != 0 ){
   analysis_IDs <- analysis_IDs[-which(analysis_IDs %in% ID_processed)]
 }
 print(length(analysis_IDs))
-
 
 if (length(analysis_IDs) > 0){
     ########################################################################################################################
