@@ -69,10 +69,16 @@ grouped_unique_drug_df <- group_drugcodes_into_DM3_funcV2(unique_drug_df,DM3_df)
 
 #4.VAL drug grouping
 grouped_unique_drug_df_VAL <- group_drugcodes_into_VAL_func(unique_drug_df,VAL_df) #use short GNN to group
+#Manually add 50242013460 as "Antineoplastic - Anti-her2 Agents" and "Antineoplastic Agents And Adjunctive Therapies"
+idx <- which(grouped_unique_drug_df_VAL$CODE == "50242013460")
+grouped_unique_drug_df_VAL[idx,"VAL_ROOT_group"] <- "Antineoplastic Agents And Adjunctive Therapies"
+grouped_unique_drug_df_VAL[idx,"VAL_SECONDARY_group"] <- "Antineoplastic - Anti-her2 Agents"
+  
 
 #5.Combine DM3 and VAL drug groups into one file
 comb_grp_drug_df <- merge(grouped_unique_drug_df, 
                           grouped_unique_drug_df_VAL[,c("CODE","VAL_ROOT_group","VAL_SECONDARY_group")], by = 'CODE')
+
 write.xlsx(comb_grp_drug_df,paste0(outdir,"Unique_Drug_And_Groups_inALLClaims.xlsx"),overwrite = TRUE)
 
 
