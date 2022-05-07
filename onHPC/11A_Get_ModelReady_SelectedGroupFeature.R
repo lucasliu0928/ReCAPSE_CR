@@ -19,12 +19,13 @@ proj_dir  <- "/recapse/intermediate_data/"
 #data dir
 data_dir_diag  <- paste0(proj_dir, "10B_CCSDiagFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
 data_dir_proc  <- paste0(proj_dir, "10C_CCSProcFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
-data_dir_drug  <- paste0(proj_dir, "10F2_VAL2NDFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
+data_dir_drug  <- paste0(proj_dir, "10F_VAL2NDFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
 
 data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 data_dir3  <- paste0(proj_dir, "10H_Selected_Grps/WithPossibleMonthsHasNoCodes/")
 
 outdir   <- paste0(proj_dir, "11A_ModelReady_GrpFeature/WithPossibleMonthsHasNoCodes/")
+dir.create(file.path(proj_dir, "11A_ModelReady_GrpFeature/WithPossibleMonthsHasNoCodes/"), recursive = TRUE)
 
 ################################################################################
 #1.Final IDs
@@ -41,9 +42,7 @@ modelready_grps_df3 <- read.xlsx(paste0(data_dir3,"Selected_VAL2ndDrug_Unique_Gr
 
 modelready_Diag_features <- sort(modelready_grps_df1[,1])
 modelready_Proc_features <- sort(modelready_grps_df2[,1])
-#modelready_Drug_features <- sort(modelready_grps_df3[,1])
-#'@NIMPORTANT #fix the issue of colume names conversion replace space with "." when read xlsx
-modelready_Drug_features <- gsub(" ",".",sort(modelready_grps_df3[,1])) 
+modelready_Drug_features <- sort(modelready_grps_df3[,1])
 
 #All features
 modelready_grps_features <- sort(c(modelready_Diag_features,modelready_Proc_features,modelready_Drug_features))
@@ -70,7 +69,7 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
   #old per month groups df
   old_perMonth_df1 <- read.xlsx(paste0(data_dir_diag,curr_file1),sheet = 1)
   old_perMonth_df2 <- read.xlsx(paste0(data_dir_proc,curr_file2),sheet = 1)
-  old_perMonth_df3 <- read.xlsx(paste0(data_dir_drug,curr_file3),sheet = 1)
+  old_perMonth_df3 <- read.xlsx(paste0(data_dir_drug,curr_file3),sheet = 1,sep.names = " ") ##'@NIMPORTANT #fix the issue of colume names conversion replace space with "." when read xlsx
   
   #Match rows
   old_perMonth_df2 <- old_perMonth_df2[match(old_perMonth_df2[,"Enrolled_Month"],old_perMonth_df1[,"Enrolled_Month"]),]
