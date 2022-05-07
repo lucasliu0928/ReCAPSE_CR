@@ -14,7 +14,7 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_In
 data_dir1  <- paste0(proj_dir, "10G_Counts_UniqueGrp_PtsLevel/WithPossibleMonthsHasNoCodes/")
 
 outdir     <- paste0(proj_dir, "10H_Selected_Grps/WithPossibleMonthsHasNoCodes/")
-
+dir.create(file.path(proj_dir, "10H_Selected_Grps/WithPossibleMonthsHasNoCodes/"), recursive = TRUE)
 
 ################################################################################
 #Select Final grps for model ready data
