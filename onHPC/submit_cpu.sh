@@ -8,13 +8,13 @@
 #SBATCH -n 1
 #SBATCH -c 30                            #Number of cores needed for the job
 #SBATCH --mem=120g                    # 32 GB ram asked
-#SBATCH --partition=debug                         #Name of the queue hpc-2
+#SBATCH --partition="hpc-4"                           #Name of the queue hpc-2
 #SBATCH --mail-type ALL                         #Send email on start/end
 #SBATCH --mail-user jli394@uky.edu               #Where to send email
 
 
 
-/usr/bin/Rscript --vanilla 10F_Get_PerMonth_VAL2NDROOT_AllEnrolls.R
+/usr/bin/Rscript --vanilla 10E_Get_PerMonth_DM3GEN_AllEnrolls.R
 #Rscript --vanilla step2_check_column.R
 
 #python transfer_input-1.py
