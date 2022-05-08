@@ -21,6 +21,7 @@ data_dir1  <- paste0(proj_dir, "8_Characteristics2/Month_Level/MonthChar_WithPos
 data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
 outdir   <- paste0(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHasNoCodes/")
+dir.create(file.path(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHasNoCodes/"), recursive = TRUE)
 
 
 ################################################################################
