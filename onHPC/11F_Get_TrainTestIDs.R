@@ -17,14 +17,14 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ################################################################################ 
 #1. Load analysis ID
 ################################################################################ 
-Analysis_df <- read.xlsx(paste0(data_dir1,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+Analysis_df <- read.xlsx(paste0(data_dir1,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,sep.names = " ")
 Final_ID    <- unique(Analysis_df$study_id) #18239
 
 
 ################################################################################ 
 #4. Pts char
 ################################################################################ 
-pts_level_char_df <- read.xlsx(paste0(data_dir1,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+pts_level_char_df <- read.xlsx(paste0(data_dir1,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,sep.names = " ")
 pts_level_char_df <- pts_level_char_df[which(pts_level_char_df$study_id %in% Final_ID),] #only keep char for final ID
 print("Original non-SBCE vs SBCE : ")
 table(pts_level_char_df$SBCE) #16917  1322
