@@ -18,7 +18,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #data dir
 data_dir  <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
 
-outdir   <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
+newout <- "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 ######################################################################################################## 
 #1. Load and combine all patient model ready data
@@ -30,34 +32,13 @@ model_data <- do.call(rbind,mclapply(pt_files, mc.cores= numCores, function(z){r
 original_IDs <- strsplit(model_data$sample_id,split = "@")
 model_data$study_id <- sapply(original_IDs, "[[", 1)
 
-save(model_data, file=paste0(outdir, "All_PTS_ModelReadyData_Check.rda"))
-
-
 #Missingness check
 missing_tb <- get_missing_rate_table(model_data,colnames(model_data))
-
-#1.The missing for transformation code is now due to: 
-#'@NOTE: drug group columan name conversion replaced " " with "."
-#Bug fixed in 11A. R converted the selected drug groups to match patient data
-#For now, we fix this issue with the following code
-#Fix the data by recode NA transforamtion data back to -1
-transf_features_indxes <- which(grepl("time_since|time_until|cumul_ratio",colnames(model_data)))
-
-for (j in 1:length(transf_features_indxes)){
-  if (j %% 100 == 0){print(j)}
-  curr_f_index <- transf_features_indxes[j]
-  na_row_index <- which(is.na(model_data[,curr_f_index])==T)
-
-  if (length(na_row_index) > 0){
-    #check:
-    print(curr_f_index)
-    model_data[na_row_index,curr_f_index] <- -1
-  }
-}
-
-
-#2.The missingness for surg prim site is due to the version does not cover these values:43,44,45,46,47,48,49, 75 and 76
-#Since the categorical features created a NA category, recode the other ones as 0 here
+write.csv(missing_tb,paste0(outdir, "missing_table_before.csv"))
+          
+#@NOTE The missing for model_data is due to:
+#For surg prim site v1: the version does not cover these values:43,44,45,46,47,48,49, 75 and 76
+#Since the categorical features created a NA category, so recode the other columns as 0 here
 surg_prim_site_features_indexes <- which(grepl("surg_prim_site_V1",colnames(model_data)))
 for (j in 1:length(surg_prim_site_features_indexes)){
   curr_f_index <- surg_prim_site_features_indexes[j]
@@ -65,10 +46,11 @@ for (j in 1:length(surg_prim_site_features_indexes)){
   if (length(na_row_index) > 0){
     model_data[na_row_index,curr_f_index] <- 0
   }
-
 }
 
 #Check Missing again
 missing_tb <- get_missing_rate_table(model_data,colnames(model_data))
+write.csv(missing_tb,paste0(outdir, "missing_table_after.csv"))
 
+#Output
 save(model_data, file=paste0(outdir, "All_PTS_ModelReadyData.rda"))
