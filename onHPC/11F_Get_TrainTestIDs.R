@@ -6,30 +6,20 @@ source("Recapse_Ultility.R")
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
-data_dir2        <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
-outdir           <- paste0(proj_dir, "11F_TrainTestIDs/")
+newout <- "11F_TrainTestIDs/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 ################################################################################ 
 #1. Load analysis ID
 ################################################################################ 
 Analysis_df <- read.xlsx(paste0(data_dir1,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
-analysis_ID    <- unique(Analysis_df$study_id) #18239
+Final_ID    <- unique(Analysis_df$study_id) #18239
 
-# ################################################################################ 
-# #2.Load non obvious neg IDs
-# ################################################################################ 
-# Analysis_df <- read.csv(paste0(data_dir2,"NON_ObviousNeg_Samples.csv"),stringsAsFactors = F)
-# analysis_ID <- unique(gsub("ID","",Analysis_df$study_id))
-# 
-# ################################################################################ 
-# #3.Update Final ID by removing obs IDs
-# ################################################################################ 
-# Final_ID <- analysis_ID[-which(analysis_ID %in% obs_Ids)]
-Final_ID <- analysis_ID
 
 ################################################################################ 
 #4. Pts char
