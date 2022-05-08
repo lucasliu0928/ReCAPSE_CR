@@ -29,14 +29,14 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ################################################################################
 #1.Load all char feature df
 ################################################################################
-All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V1.csv"),stringsAsFactors = F)
-#All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V2.csv"),stringsAsFactors = F)
+All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V1.csv"),stringsAsFactors = F, check.names = FALSE)
+#All_Char_df <- read.csv(paste0(data_dir2,"All_Binary_Chars_WithSurgPrimSite_V2.csv"),stringsAsFactors = F,check.names = FALSE)
 
 
 ################################################################################
 #2.Final IDs
 ################################################################################
-Final_ID_df <- read.xlsx(paste0(data_dir4,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+Final_ID_df <- read.xlsx(paste0(data_dir4,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,sep.names = " ")
 analysis_IDs <- Final_ID_df[,"study_id"]
 
 ########################################################################################################################
@@ -57,11 +57,11 @@ if (length(analysis_IDs) > 0){
       
       #groups feature df
       curr_grpfile <- paste0("ID",curr_id,"_Selected_Grp_Features.xlsx")
-      curr_grpf_df <- read.xlsx(paste0(data_dir1,curr_grpfile),sheet = 1)
+      curr_grpf_df <- read.xlsx(paste0(data_dir1,curr_grpfile),sheet = 1,sep.names = " ")
       
       #get transformation feature df 
       curr_transffile <- paste0("ID",curr_id,"_Transf_Features.xlsx")
-      curr_transf_df <- read.xlsx(paste0(data_dir3,curr_transffile),sheet = 1)
+      curr_transf_df <- read.xlsx(paste0(data_dir3,curr_transffile),sheet = 1,sep.names = " ")
       
       #get char feature df
       curr_idxes      <- which(All_Char_df[,"study_id"] == curr_id)
