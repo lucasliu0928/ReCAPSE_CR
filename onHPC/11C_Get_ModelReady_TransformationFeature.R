@@ -55,7 +55,7 @@ if (length(analysis_IDs) > 0 ){
       curr_file <- paste0("ID",curr_id,"_Selected_Grp_Features.xlsx")
       
       #groups feature df
-      curr_grp_f_df <- read.xlsx(paste0(data_dir1,curr_file),sheet = 1)
+      curr_grp_f_df <- read.xlsx(paste0(data_dir1,curr_file),sheet = 1,sep.names = " ") ##'@NIMPORTANT #fix the issue of colume names conversion replace space with "." when read xlsx
       
       #get transformation data
       system.time(curr_transf_df <- apply_code_transforamtion_func(curr_grp_f_df))
