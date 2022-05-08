@@ -26,7 +26,7 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 #1. Load and combine all patient model ready data
 ######################################################################################################## 
 pt_files <-list.files(data_dir,full.names = T)
-model_data <- do.call(rbind,mclapply(pt_files, mc.cores= numCores, function(z){read.xlsx(z, sheet = 1)}))
+model_data <- do.call(rbind,mclapply(pt_files, mc.cores= numCores, function(z){read.xlsx(z, sheet = 1,sep.names = " ")}))
 
 #Add a column for original study ID 
 original_IDs <- strsplit(model_data$sample_id,split = "@")
