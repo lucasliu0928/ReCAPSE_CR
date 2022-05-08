@@ -21,7 +21,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 data_dir1  <- paste0(proj_dir, "11A_ModelReady_GrpFeature/WithPossibleMonthsHasNoCodes/")
 data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-outdir   <- paste0(proj_dir, "11C_ModelReady_TransformFeatures/WithPossibleMonthsHasNoCodes/")
+newout <- "11C_ModelReady_TransformFeatures/WithPossibleMonthsHasNoCodes/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 
 ################################################################################
