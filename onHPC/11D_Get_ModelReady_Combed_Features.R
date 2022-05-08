@@ -22,9 +22,10 @@ data_dir2  <- paste0(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHas
 data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFeatures/WithPossibleMonthsHasNoCodes/")
 data_dir4  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
-#outdir   <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/")
-
+newout <- "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/"
+#newout <- "11D_ModelReady_CombFatures_WithSurgPrimSite_V2/WithPossibleMonthsHasNoCodes/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ################################################################################
 #1.Load all char feature df
 ################################################################################
