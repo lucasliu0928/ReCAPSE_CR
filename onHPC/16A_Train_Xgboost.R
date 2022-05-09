@@ -24,12 +24,12 @@ outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
-for (i in 0:10){
+for (i in 1:10){
   ################################################################################
   #Load train data
   ################################################################################
   load(file = paste0(data_dir1, "Train/train_nonobv_DS", i, ".rda"))
-  train_data <- train_nonobv_df
+  train_data <- train_nonobv_ds_df
   
   ################################################################################
   #Create xgb input
