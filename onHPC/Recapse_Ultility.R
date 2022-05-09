@@ -70,16 +70,18 @@ compute_auc_func <- function(predicted_prob,actual_label){
 }
 
 
-xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_by_tree){
+xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_bytree, scale_pos_weight){
   print(paste("eta:", eta))
   print(paste("max_depth:", max_depth))
   print(paste("min_child_weight:", min_child_weight)) 
   print(paste("subsample:", subsample))
-  print(paste("colsample_by_tree:", colsample_by_tree))
+  print(paste("colsample_bytree:", colsample_bytree))
+  print(paste("scale_pos_weight:", scale_pos_weight))
   cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
                            min_child_weight=min_child_weight,
                            subsample=subsample,
-                           olsample_by_tree=colsample_by_tree,
+                           colsample_bytree=colsample_bytree,
+                           scale_pos_weight = scale_pos_weight,
                            lambda=1, alpha=0,
                            #nthread=ncores, n_jobs=ncores,
                            objective="binary:logistic", eval_metric="auc"),
@@ -87,7 +89,7 @@ xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_
                prediction=TRUE, showsd=TRUE, early_stopping_rounds=100,
                stratified=FALSE, maximize=TRUE)
   print(paste("cv:", cv))
-  list(Score=cv$evaluation_log[, max(test_auc_mean)], Pred=cv$pred)
+  list(Score=cv$evaluation_log[, max(test_auc_mean)], Pred=cv$pred) #Best of CV
 }
 
 match_label_levels_func <- function(predicted_classes,actual_classes){
