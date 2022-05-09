@@ -27,9 +27,9 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 for (i in 0:10){
   i <- 1
   ################################################################################
-  #Load train and test
+  #Load train data
   ################################################################################
-  load(file = paste0(data_dir1, "Train/train_nonobv_", i, ".rda"))
+  load(file = paste0(data_dir1, "Train/train_nonobv_DS", i, ".rda"))
   train_data <- train_nonobv_ds_df
   
   ################################################################################
@@ -38,6 +38,11 @@ for (i in 0:10){
   train_label      <- as.numeric(train_data[,"y_PRE_OR_POST_2ndEvent"])
   train_data_part  <- train_data[,!(names(train_data) %in% c("study_id","sample_id","y_PRE_OR_POST_2ndEvent"))]
   dtrain           <- xgb.DMatrix(data = as.matrix(train_data_part), label = train_label)
+  
+  test_label       <- as.numeric(test_data[,"y_PRE_OR_POST_2ndEvent"])
+  test_data_part   <- test_data[,!(names(test_data) %in% c("study_id","sample_id","y_PRE_OR_POST_2ndEvent"))]
+  dtest            <- xgb.DMatrix(data = as.matrix(test_data_part), label = test_label)
+  
   
   ######################################################################################################## 
   # Run XGboost          Teresa's code
