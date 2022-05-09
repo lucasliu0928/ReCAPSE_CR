@@ -1,4 +1,16 @@
 source("Recapse_Ultility.R")
+#This scrip generate input for training and test samples
+# A.	Test: all testing sample
+#   a)	Non-obvious samples
+#   b)	Obvious negative samples
+#   c)	Obvious positive samples
+# B.	Train: 
+#   a)non-obvious samples
+#     Option1: all non-obvious samples without sampling
+#     Option2: Down sample 10 times
+#   b)Obvious negative samples
+#   c)Obvious positive samples
+
 Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,random_perc = 0.8){
   # upsample_flag <- 0
   # train_data <- train_data
@@ -46,7 +58,7 @@ print_n_prepostsamples_func <- function(in_data, data_name){
   n_pre   <- as.numeric(tb[which(names(tb)==0)])
   n_post  <- as.numeric(tb[which(names(tb)==1)])
   
-  print(paste0(data_name, "Pre:" , n_pre, " Post:",n_post))
+  print(paste0(data_name, "Pre:" , n_pre, " Post:",n_post, " Total:", nrow(in_data)))
 }
 
 get_SampleIDs_withDSLabels <-function(in_data,downsampled_sampleIDs,ds_index){
@@ -60,19 +72,17 @@ get_SampleIDs_withDSLabels <-function(in_data,downsampled_sampleIDs,ds_index){
   return(model_data_IDandLabels)
 }
 
-#This scrip generate input for training and test samples
-# A.	Test: all testing sample
-#   a)	Non-obvious samples
-#   b)	Obvious negative samples
-#   c)	Obvious positive samples
-# B.	Train: 
-#   a)non-obvious samples
-#     Option1: all non-obvious samples without sampling
-#     Option2: Down sample 10 times
-#   b)Obvious negative samples
-#   c)Obvious positive samples
 
 
+get_data_inCategory_func <- function(in_data, id_dir, id_file){
+  id_df  <- read.csv(paste0(id_dir,id_file),stringsAsFactors = F)
+  sample_IDs  <- id_df[,"sample_id"]
+  sample_df <- in_data[which(in_data[,"sample_id"] %in% sample_IDs),]
+  #Print num of pre and post samples 
+  cohort_name <- gsub(".csv|_Samples","",id_file)
+  print_n_prepostsamples_func(sample_df,cohort_name)
+  return(sample_df)
+}
 ################################################################################
 #Set up parallel computing envir
 ################################################################################
@@ -91,85 +101,75 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2        <- paste0(proj_dir, "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/")
+data_dir2        <- paste0(proj_dir, "12A_PCA_VarContri_Train/WithPossibleMonthsHasNoCodes/")
+data_dir3        <- paste0(proj_dir, "12E_OBVandNONOBV_SamplesIDs/WithPossibleMonthsHasNoCodes/")
 
-data_dir3        <- paste0(proj_dir, "11F_TrainTestIDs/")
-data_dir4        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Train/")
+newout1 <- "15_XGB_Input/Test/"
+outdir   <- paste0(proj_dir, newout1)
+dir.create(file.path(proj_dir, newout1), recursive = TRUE)
 
-outdir           <- paste0(proj_dir, "15_XGB_Input/")
-
-#User input
-sampling_flag    <- "None"
-n_sampling       <- 10
+newout2 <- "15_XGB_Input/Train/"
+outdir   <- paste0(proj_dir, newout2)
+dir.create(file.path(proj_dir, newout2), recursive = TRUE)
 
 ######################################################################################################## 
 #1. Load and combine all patient model ready data
 ######################################################################################################## 
 load(file = paste0(data_dir1, "All_PTS_ModelReadyData.rda"))
 
-#remove the const feature (DM3_SPE_muscle.relaxant)
-const_fs <- read.csv(paste0(data_dir2,"ConstFeature_removed_ForPCAandtSNE.csv"),stringsAsFactors = F)
-model_data <- model_data[, -which(colnames(model_data) %in% const_fs[,2])]
+#remove the const feature (e.g: DM3_SPE_muscle.relaxant)
+const_feature_file <- paste0(data_dir2,"ConstFeature_removed_ForPCAandtSNE.csv")
+if (file.exists(const_feature_file)==TRUE){
+  const_fs <- read.csv(const_feature_file,stringsAsFactors = F)
+  model_data <- model_data[, -which(colnames(model_data) %in% const_fs[,2])]
+}
 
 ################################################################################ 
 #2. Get model ready test data
 ################################################################################ 
-#2A Load test pt IDs
-test_ID_df  <- read.xlsx(paste0(data_dir3,"test_ID_withLabel.xlsx"),sheet = 1)
-test_ID  <- paste0("ID", test_ID_df$study_id)
+#A. samples data
+test_neg_df <- get_data_inCategory_func(model_data, data_dir3,"ObviousNeg_Samples_Test.csv")
+test_pos_df <- get_data_inCategory_func(model_data, data_dir3,"ObviousPos_Samples_Test.csv")
+test_nonobv_df <- get_data_inCategory_func(model_data, data_dir3,"NON_Obvious_Samples_Test.csv")
 
-#2. Test
-test_data <- model_data[which(model_data[,"study_id"] %in% test_ID),]
-#Print num of pre and post samples 
-print_n_prepostsamples_func(test_data,"Test: ")
-
-#Output model ready binary data
-save(test_data, file=paste0(outdir, "test_data.rda"))
+#B. Output model ready binary data
+save(test_neg_df, file=paste0(proj_dir, newout1, "test_neg_data.rda"))
+save(test_pos_df, file=paste0(proj_dir, newout1, "test_pos_data.rda"))
+save(test_nonobv_df, file=paste0(proj_dir, newout1, "test_nonobv_data.rda"))
 
 ################################################################################ 
-#2. Get non-obvious train samples 
+#2.  Get model ready train data 
 ################################################################################ 
-#2A. Load non-obv train sample IDs
-train_ID_df <- read.csv(paste0(data_dir4,"NON_Obvious_Samples.csv"),stringsAsFactors = F)
-train_ID    <- train_ID_df$sample_id
+#A. samples data
+train_neg_df <- get_data_inCategory_func(model_data, data_dir3,"ObviousNeg_Samples_Train.csv")
+train_pos_df <- get_data_inCategory_func(model_data, data_dir3,"ObviousPos_Samples_Train.csv")
+train_nonobv_df <- get_data_inCategory_func(model_data, data_dir3,"NON_Obvious_Samples_Train.csv")
 
-#2B. Get model ready train data
-if (sampling_flag ==  "None"){
-  #1. Train data without down sampling
-  train_data <- model_data[which(model_data[,"sample_id"] %in% train_ID),]
+save(train_neg_df, file=paste0(proj_dir, newout2, "train_neg_data.rda"))
+save(train_pos_df, file=paste0(proj_dir, newout2, "train_pos_data.rda"))
+
+
+#B. Output model ready binary data (non-obvs)
+#a) without down sampling
+save(train_nonobv_df, file=paste0(proj_dir, newout2, "train_nonobv","_DS" ,"0",".rda"))
+
+#b) down sampled non-obvs train  10 times
+n_sampling <- 10
+for (i in 1:n_sampling){
+  seed_num <- 122 + i 
+  
+  #Down sampled 
+  train_nonobv_ds_df <- Data_Sampling_Func(0,train_nonobv_df,"y_PRE_OR_POST_2ndEvent",seed_num)
+  train_nonobv_ds_df$y_PRE_OR_POST_2ndEvent <- as.numeric(train_nonobv_ds_df$y_PRE_OR_POST_2ndEvent) -1
+
   #Print num of pre and post samples 
-  print_n_prepostsamples_func(train_data,"Train: ")
+  print_n_prepostsamples_func(train_nonobv_ds_df,"Train: ")
   
   #Output model ready binary data
-  save(train_data, file=paste0(outdir, "", "train_data","_DS" ,"0",".rda"))
-  
-  #Output Sample IDs and Label for later stats
-  train_IDsandLabels <- train_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
-  write.csv(train_IDsandLabels,paste0(outdir,"TrainSampleIDsAndLabels" , "0" , ".csv"),row.names = F)
-  
-}else if (sampling_flag ==  "Down"){
-  
-  #2. Train data with down sampling 10 times
-  for (i in 1:n_sampling){
-    seed_num <- 122 + i 
-    #All train
-    train_data <- model_data[which(model_data[,"sample_id"] %in% train_ID),]
-    #Down sampled train
-    train_data <- Data_Sampling_Func(0,train_data,"y_PRE_OR_POST_2ndEvent",seed_num)
-    train_data$y_PRE_OR_POST_2ndEvent <- as.numeric(train_data$y_PRE_OR_POST_2ndEvent) -1
-    
-    #Output model ready binary data
-    save(train_data, file=paste0(outdir, "", "train_data","_DS" ,i,".rda"))
-    
-    #Output Sample IDs and Label for later stats
-    train_IDsandLabels <- train_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
-    write.csv(train_IDsandLabels,paste0(outdir,"TrainSampleIDsAndLabels" , i , ".csv"),row.names = F)
-    
+  save(train_nonobv_ds_df, file=paste0(proj_dir, newout2, "train_nonobv","_DS" ,i,".rda"))
 
-    #Print num of pre and post samples 
-    print_n_prepostsamples_func(train_data,"Train: ")
-  }
 }
+
 
 
 
