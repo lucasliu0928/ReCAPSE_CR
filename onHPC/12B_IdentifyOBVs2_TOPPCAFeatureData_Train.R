@@ -67,14 +67,14 @@ table(model_data$Label)
 ######################################################################################################## 
 #3.Output model ready data for top 2 features on dim1 and dim 2
 ######################################################################################################## 
-#'@TODO: Get top 2 features from contribution dataframe
+#Get top 2 features from contribution dataframe
+top2fs_dim1 <- feature_contribution_PCA[order(feature_contribution_PCA[,"Dim.1"],decreasing = T),"X"][1:2]
+top2fs_dim2 <- feature_contribution_PCA[order(feature_contribution_PCA[,"Dim.2"],decreasing = T),"X"][1:2]
 model_data_4f <- model_data[,c("study_id","sample_id",
-                               "cumul_ratio_CCS_PROC_202",
-                               "cumul_ratio_CCS_PROC_227",
-                               "months_since_dx",
-                               "Enrolled_year",
+                               top2fs_dim1,
+                               top2fs_dim2,
                                "Label")]
-save(model_data_4f, file=paste0(outdir, "TopPCAFeature_ModelReadyData_Train.rda"))
+save(model_data_4f, file=paste0(outdir, "Top4PCAFeature_ModelReadyData_Train.rda"))
 
 
 ######################################################################################################## 
@@ -100,4 +100,4 @@ for (i in 1:nrow(model_data)){
 }
 
 weighted_sum_df <- model_data[,c("study_id","sample_id","Dim1Top10Fs_WeightedSumScore",paste0("Normed_",top10Fs_dim1))]
-save(weighted_sum_df, file=paste0(outdir, "PCADim1WSF_ModelReadyData_Train.rda"))
+save(weighted_sum_df, file=paste0(outdir, "PCADim1Top10WSF_ModelReadyData_Train.rda"))
