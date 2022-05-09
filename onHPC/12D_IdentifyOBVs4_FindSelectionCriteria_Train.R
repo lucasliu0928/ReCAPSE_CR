@@ -28,16 +28,17 @@ proj_dir  <- "/recapse/intermediate_data/"
 proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir  <- paste0(proj_dir, "12B_TopPCAFeature_ModelReady_TrainData/WithPossibleMonthsHasNoCodes/")
+data_dir  <- paste0(proj_dir, "12B_TopPCAFeatureData_Train/WithPossibleMonthsHasNoCodes/")
 
-outdir   <- paste0(proj_dir, "12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/Train/")
-
+newout <- "12D_OBVsSample_Thresholds/WithPossibleMonthsHasNoCodes/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 ######################################################################################################## 
 #1. Load all pts model data with four top features
 ######################################################################################################## 
 #1A. Load data
-load(file = paste0(data_dir, "4F_ModelReady_TrainData.rda"))
+load(file = paste0(data_dir, "Top4PCAFeature_ModelReadyData_Train.rda"))
 
 #2B. Orginal NEG POS ratio
 compute_sp_label_ratio(model_data_4f)
