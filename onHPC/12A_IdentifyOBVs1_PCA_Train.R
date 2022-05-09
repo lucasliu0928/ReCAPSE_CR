@@ -68,7 +68,7 @@ data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNo
 data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/")
 data_dir3 <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 
-newout <- "12A_PCA_TSNE_Analysis/WithPossibleMonthsHasNoCodes/"
+newout <- "12A_PCA_VarContri_Train/WithPossibleMonthsHasNoCodes/"
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
