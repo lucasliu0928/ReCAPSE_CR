@@ -8,25 +8,32 @@ print(numCores)
 registerDoParallel(numCores)  # use multicore, set to the number of our cores
 
 ################################################################################
-#Data dir
+#Data dira
 ################################################################################
 #onHPC
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/All_DS_Performance/")
+
+newout <- "16A_Trained_FullModel/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
 for (i in 0:10){
+  i <- 1
   ################################################################################
-  #Load train and test
+  #Load train data
   ################################################################################
-  load(file = paste0(data_dir1, "train_data_DS", i, ".rda"))
-  load(file = paste0(data_dir1, "test_data.rda"))
+  load(file = paste0(data_dir1, "Train/train_nonobv_DS", i, ".rda"))
+  load(file = paste0(data_dir1, "Train/train_nonobv_DS", 2, ".rda"))
+  
+  check1 <- train_nonobv_ds_df
+  check2 <- train_nonobv_ds_df
   
   ################################################################################
   #Create xgb input
