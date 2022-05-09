@@ -151,7 +151,8 @@ save(train_pos_df, file=paste0(proj_dir, newout2, "train_pos_data.rda"))
 
 #B. Output model ready binary data (non-obvs)
 #a) without down sampling
-save(train_nonobv_df, file=paste0(proj_dir, newout2, "train_nonobv","_DS" ,"0",".rda"))
+train_nonobv_ds_df <- train_nonobv_df
+save(train_nonobv_ds_df, file=paste0(proj_dir, newout2, "train_nonobv","_DS" ,"0",".rda"))
 
 #b) down sampled non-obvs train  10 times
 n_sampling <- 10
