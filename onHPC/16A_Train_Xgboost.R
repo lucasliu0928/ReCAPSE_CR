@@ -45,16 +45,16 @@ for (i in 1:10){
                                           bounds=list(eta=c(0.001, 0.3),
                                                       max_depth=c(3L, 10L),
                                                       min_child_weight=c(0L, 20L),
-                                                      subsample=c(0.3, 0.9), 
-                                                      colsample_bytree=c(0.2, 0.8)),
+                                                      subsample=c(0.3, 0.9)), 
+                                                      #colsample_bytree=c(0.2, 0.8)),
                                           init_points=10,
                                           n_iter=10)
   #Get best paramters from CV
   current_best <- list(eta = as.numeric(optimal_results$Best_Par['eta']),
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
-                       subsample = as.numeric(optimal_results$Best_Par['subsample']),
-                       colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']))
+                       subsample = as.numeric(optimal_results$Best_Par['subsample']))
+                       #colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']))
                        
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
