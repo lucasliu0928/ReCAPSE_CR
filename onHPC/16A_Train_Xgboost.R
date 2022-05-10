@@ -53,9 +53,9 @@ for (i in 1:10){
   current_best <- list(eta = as.numeric(optimal_results$Best_Par['eta']),
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
-                       subsample = as.numeric(optimal_results$Best_Par['subsample']))
+                       subsample = as.numeric(optimal_results$Best_Par['subsample']),
                        #colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']))
-                       #scale_pos_weight = 0.5)
+                       scale_pos_weight = 0.5)
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
                            params=current_best,
