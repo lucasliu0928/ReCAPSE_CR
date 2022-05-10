@@ -24,7 +24,7 @@ outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
-for (i in 1:10){
+for (i in 0:10){
   ################################################################################
   #Load train data
   ################################################################################
