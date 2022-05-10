@@ -77,7 +77,9 @@ xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample){
   print(paste("subsample:", subsample))
   #print(paste("colsample_bytree:", colsample_bytree))
 
-  cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
+  cv <- xgb.cv(params=list(booster="gbtree", 
+                           eta=eta, 
+                           max_depth=max_depth,
                            min_child_weight=min_child_weight,
                            subsample=subsample,
                            lambda=1, alpha=0,
