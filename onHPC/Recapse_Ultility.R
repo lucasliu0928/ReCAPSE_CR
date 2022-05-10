@@ -70,17 +70,16 @@ compute_auc_func <- function(predicted_prob,actual_label){
 }
 
 
-xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_bytree){
+xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample){
   print(paste("eta:", eta))
   print(paste("max_depth:", max_depth))
   print(paste("min_child_weight:", min_child_weight)) 
   print(paste("subsample:", subsample))
-  print(paste("colsample_bytree:", colsample_bytree))
+  #print(paste("colsample_bytree:", colsample_bytree))
 
   cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
                            min_child_weight=min_child_weight,
                            subsample=subsample,
-                           colsample_bytree=colsample_bytree,
                            lambda=1, alpha=0,
                            #nthread=ncores, n_jobs=ncores,
                            objective="binary:logistic", eval_metric="auc"),
