@@ -26,7 +26,7 @@ outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #Run XGBoost 10 times for 10 Downsampled Training data and the none DS training data
-for (i in 0:10){#0:10
+for (i in 1:10){#0:10
   ################################################################################
   #Load train and test
   ################################################################################
@@ -55,8 +55,7 @@ for (i in 0:10){#0:10
                                                       max_depth=c(3L, 10L),
                                                       min_child_weight=c(0L, 20L),
                                                       subsample=c(0.3, 0.9), 
-                                                      colsample_bytree=c(0.2, 0.8),
-                                                      scale_pos_weight=c(1,9)),
+                                                      colsample_bytree=c(0.2, 0.8)),
                                           init_points=10,
                                           n_iter=10)
   #Get best paramters from CV
@@ -64,8 +63,7 @@ for (i in 0:10){#0:10
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                        subsample = as.numeric(optimal_results$Best_Par['subsample']),
-                       colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']),
-                       scale_pos_weight = as.numeric(optimal_results$Best_Par['scale_pos_weight'])) #for weight more on pos samples
+                       colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree'])) 
   
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
