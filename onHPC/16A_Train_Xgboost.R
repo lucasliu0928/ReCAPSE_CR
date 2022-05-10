@@ -55,7 +55,7 @@ for (i in 1:10){
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
                        subsample = as.numeric(optimal_results$Best_Par['subsample']))
                        #colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']))
-                       
+                       #scale_pos_weight = 0.5)
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
                            params=current_best,
