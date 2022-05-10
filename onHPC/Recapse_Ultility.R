@@ -70,18 +70,17 @@ compute_auc_func <- function(predicted_prob,actual_label){
 }
 
 
-xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_bytree, scale_pos_weight){
+xgb_cv_bayes <- function(eta, max_depth, min_child_weight, subsample, colsample_bytree){
   print(paste("eta:", eta))
   print(paste("max_depth:", max_depth))
   print(paste("min_child_weight:", min_child_weight)) 
   print(paste("subsample:", subsample))
   print(paste("colsample_bytree:", colsample_bytree))
-  print(paste("scale_pos_weight:", scale_pos_weight))
+
   cv <- xgb.cv(params=list(booster="gbtree", eta=eta, max_depth=max_depth,
                            min_child_weight=min_child_weight,
                            subsample=subsample,
                            colsample_bytree=colsample_bytree,
-                           scale_pos_weight = scale_pos_weight,
                            lambda=1, alpha=0,
                            #nthread=ncores, n_jobs=ncores,
                            objective="binary:logistic", eval_metric="auc"),
@@ -1523,3 +1522,96 @@ extract_ccs_typeAndcode <- function(feature_list){
   return(list(ccs_type,ccs_code))
 }
 
+
+prediction_2method_func <- function(in_data,features,model, obv_type){
+  #Create xgb input
+  vlabel      <- as.numeric(in_data[,"y_PRE_OR_POST_2ndEvent"])
+  vdata_part  <- in_data[,features] 
+  dvalid     <- xgb.DMatrix(data = as.matrix(vdata_part), label = vlabel)
+  
+  #Prediction
+  pred_df <- as.data.frame(matrix(NA, nrow = nrow(in_data),ncol = 6))
+  colnames(pred_df) <- c("study_id","sample_id","y_PRE_OR_POST_2ndEvent","OBV_CLASS",
+                         "pred_Method1_OBVCLASS","pred_Method2_AIMODEL")
+  pred_df$study_id                  <- in_data$study_id
+  pred_df$sample_id                 <- in_data$sample_id
+  pred_df$y_PRE_OR_POST_2ndEvent    <- in_data$y_PRE_OR_POST_2ndEvent
+  pred_df$OBV_CLASS                 <- in_data$OBV_CLASS
+  
+  
+  #method 1:
+  if (obv_type == "NEG"){
+    pred_df[,"pred_Method1_OBVCLASS"] <- 0
+  }else if (obv_type == "POS"){
+    pred_df[,"pred_Method1_OBVCLASS"] <- 1
+  }else if (obv_type == "nonOBV"){
+    pred_df[,"pred_Method1_OBVCLASS"] <-  predict(model, dvalid)
+  }
+  #method 2:
+  pred_df[,"pred_Method2_AIMODEL"] <- predict(model, dvalid)
+  
+  return(pred_df)
+}
+
+compare_obvs_samples_2methods_perf <-function(predtion_df,obv_type){
+  actual     <- as.factor(predtion_df[,"y_PRE_OR_POST_2ndEvent"])
+  pred1      <- predtion_df[,"pred_Method1_OBVCLASS"]
+  pred2      <- predtion_df[,"pred_Method2_AIMODEL"]
+  perf1 <- compute_binaryclass_perf_func(pred1,actual)
+  perf2 <- compute_binaryclass_perf_func(pred2,actual)
+  all_perf <- rbind.data.frame(perf1,perf2)
+  rownames(all_perf) <- c("Method1_OBVCLASS","Method2_AIMODEL")
+  rownames(all_perf) <- paste0(rownames(all_perf),"_",obv_type)
+  return(all_perf)
+}
+
+logstic_fitting_func <- function(pt_data, pred_method){
+  fit_formula <- as.formula(paste0(paste0("pred_",pred_method),"~month_index")) 
+  lm <- glm(fit_formula,pt_data,family = "binomial")
+  smoothed_prob <- lm$fitted.values
+  return(smoothed_prob)
+}
+
+curve_fitting_func <- function(pred_data){
+  curve_fit_predction_list <- list()
+  analysis_ids <- unique(pred_data[,"study_id"])
+  for (i in 1:length(analysis_ids)){
+    if (i %% 500 == 0){print(i)}
+    cur_id <- analysis_ids[i]
+    #get current id data
+    curr_df <- pred_data[which(pred_data[,"study_id"] == cur_id),]
+    #get date then sort by date
+    curr_df[,"Date"] <- ymd(sapply(strsplit(curr_df[,"sample_id"],split = "@"), "[[", 2))
+    curr_df <- curr_df[order(curr_df[,"Date"], decreasing = F),]
+    #Add month index
+    curr_df[,"month_index"] <- 1:nrow(curr_df) 
+    
+    #Curve fitting predicted prob using Method1_OBVCLASS
+    pred_method <- "Method1_OBVCLASS"
+    smoothed_prob1 <- logstic_fitting_func(curr_df,pred_method)
+    curr_df[,paste0("pred_",pred_method,"_CurveFitting")] <- smoothed_prob1
+    
+    #Curve fitting predicted prob using Method1_OBVCLASS
+    pred_method <- "Method2_AIMODEL"
+    smoothed_prob2 <- logstic_fitting_func(curr_df,pred_method)
+    curr_df[,paste0("pred_",pred_method,"_CurveFitting")] <- smoothed_prob2
+    
+    
+    curve_fit_predction_list[[i]] <- curr_df
+  }
+  
+  updated_pred_df <- do.call(rbind, curve_fit_predction_list)
+  updated_pred_df <- updated_pred_df[,-which(colnames(updated_pred_df) %in% c("Date","month_index"))]
+  
+  #'@TOTRY
+  # #Exponential
+  # library(aTSA)
+  # x <- time_df$pred
+  # es <- expsmooth(time_df$pred,trend = 1, alpha = 0.3, lead = 0) # trend = 1: a constant model
+  # plot(x,type = "l")
+  # lines(es$estimate,col = 2)
+  # expsmooth(x,trend = 2) # trend = 2: a linear model
+  # expsmooth(x,trend = 3) # trend = 3: a quadratic model
+  
+  return(updated_pred_df)
+}
