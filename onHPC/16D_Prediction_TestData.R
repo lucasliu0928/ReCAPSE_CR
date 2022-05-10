@@ -26,7 +26,7 @@ outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #For each training set model
-for (ds_index in 0:10){
+for (ds_index in 1:1){
   #Create out dir for each ds index
   ds_out <- paste0(proj_dir, newout,"train_DS",ds_index,"/")
   dir.create(file.path(ds_out))
@@ -62,11 +62,12 @@ for (ds_index in 0:10){
   pred_df_pos <- prediction_2method_func(test_pos_df,features,mod_optimal,"POS")
   pred_df_nonobv <- prediction_2method_func(test_nonobv_df,features,mod_optimal,"nonOBV")
   pred_df_all <- rbind(pred_df_neg,pred_df_pos,pred_df_nonobv)
-  #check <- compare_obvs_samples_2methods_perf(pred_df_all,"OBVNEG")
+  check <- compare_obvs_samples_2methods_perf(pred_df_all,"nonOBV")
+  print(check)
   #Curve-fitting methods
-  pred_df_all <- curve_fitting_func(pred_df_all)
+  #pred_df_all <- curve_fitting_func(pred_df_all)
   
-  write.csv(pred_df_all,paste0(ds_out, "pred_tb_all.csv"))
+  #write.csv(pred_df_all,paste0(ds_out, "pred_tb_all.csv"))
   
 }
 
