@@ -62,7 +62,7 @@ for (ds_index in 0:10){
   pred_df_pos <- prediction_2method_func(test_pos_df,features,mod_optimal,"POS")
   pred_df_nonobv <- prediction_2method_func(test_nonobv_df,features,mod_optimal,"nonOBV")
   pred_df_all <- rbind(pred_df_neg,pred_df_pos,pred_df_nonobv)
-  
+  #check <- compare_obvs_samples_2methods_perf(pred_df_all,"OBVNEG")
   #Curve-fitting methods
   pred_df_all <- curve_fitting_func(pred_df_all)
   
