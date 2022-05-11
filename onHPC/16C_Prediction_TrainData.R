@@ -25,7 +25,7 @@ outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #For each training set model
-for (ds_index in 1:10){
+for (ds_index in 0:10){
   #Create out dir for each ds index
   ds_out <- paste0(proj_dir, newout,"train_DS",ds_index,"/")
   dir.create(file.path(ds_out))
