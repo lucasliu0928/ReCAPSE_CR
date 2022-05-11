@@ -29,9 +29,9 @@ outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 #For each training set model
-for (ds_index in 1:10){
+for (ds_index in 0:10){
   #Create out dir for each ds index
-  ds_out <- paste0("DS",ds_index,"/Prediction_Table/")
+  ds_out <- paste0("DS",ds_index,"/Sample_Prediction_Table/")
   dir.create(file.path(outdir, ds_out), recursive = TRUE)
 
   ################################################################################
@@ -60,6 +60,7 @@ for (ds_index in 1:10){
   #3.Prediction
   #Method 1: predict use AI model 
   #Method 2: predict as negative/pos/non_obv(use AI) 
+  #Curve fitting for method1 and method2 results
   ################################################################################ 
   #Prediction
   pred_df_neg <- prediction_2method_func(test_neg_df,features,mod_optimal,"NEG")
