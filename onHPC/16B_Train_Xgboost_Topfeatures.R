@@ -59,12 +59,12 @@ for (i in 0:10){#0:10
                                           init_points=10,
                                           n_iter=10)
   #Get best paramters from CV
-  current_best <- list(eta = as.numeric(optimal_results$Best_Par['eta']),
+  current_best <- list(#eta = as.numeric(optimal_results$Best_Par['eta']),
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
-                       subsample = as.numeric(optimal_results$Best_Par['subsample']),
+                       subsample = as.numeric(optimal_results$Best_Par['subsample']))
                        #colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']))
-                       scale_pos_weight = 0.5)
+                       #scale_pos_weight = 0.5)
   
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
