@@ -13,8 +13,8 @@
 #SBATCH --mail-type ALL                         #Send email on start/end
 #SBATCH --mail-user jli394@uky.edu               #Where to send email
 
-/usr/bin/Rscript --vanilla 16B_Train_Xgboost_Topfeatures.R
+
 #/usr/bin/Rscript --vanilla 16C_Prediction_TrainData.R
-#/usr/bin/Rscript --vanilla 16D_Prediction_TestData.R
+/usr/bin/Rscript --vanilla 16D_Prediction_TestData.R
 
 #python transfer_input-1.py
