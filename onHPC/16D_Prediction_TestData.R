@@ -58,8 +58,8 @@ for (ds_index in 0:10){
   
   ################################################################################ 
   #3.Prediction
-  #Method 1: predict use AI model 
-  #Method 2: predict as negative/pos/non_obv(use AI) 
+  #Method 1: predict use AI model for all samples
+  #Method 2: hybrid methods : predict as negative/pos/, for non_obv(use AI) 
   #Curve fitting for method1 and method2 results
   ################################################################################ 
   #Prediction
@@ -67,13 +67,41 @@ for (ds_index in 0:10){
   pred_df_pos <- prediction_2method_func(test_pos_df,features,mod_optimal,"POS")
   pred_df_nonobv <- prediction_2method_func(test_nonobv_df,features,mod_optimal,"nonOBV")
   pred_df_all <- rbind(pred_df_neg,pred_df_pos,pred_df_nonobv)
-  #'@Check
-  check <- compare_obvs_samples_2methods_perf(pred_df_all,"nonOBV")
-  print(check)
+
   #Curve-fitting on the two methods' results
   pred_df_all <- curve_fitting_func(pred_df_all)
+  #Add momth
+  res <- strsplit(as.character(pred_df_all[,"sample_id"]),split = "@")
+  pred_df_all[,"month_start"] <- sapply(res, "[[", 2)
+  pred_df_all[,"month_start"] <- ymd(pred_df_all[,"month_start"])
   
-  write.csv(pred_df_all,paste0(outdir, ds_out, "pred_tb_all.csv"))
+  #Seperate prediction for each model and compute predicted class for threshold 0.1.0.2...0.8
+  common_cols <- c("study_id", "sample_id", "y_PRE_OR_POST_2ndEvent","OBV_CLASS","month_start")
+  ths <- seq(0.1,0.9,0.1)
+  
+  #Hybrid model 
+  pred_col <- "pred_Method_Hybrid"
+  pred_df_m1 <- pred_df_all[,c(common_cols,pred_col)]
+  pred_df_m1 <- add_predicted_class_byThreshold(pred_df_m1,ths,pred_col)
+  write.csv(pred_df_m1,paste0(outdir, ds_out, "pred_tb_Hybrid.csv"))
+  
+  #AI model 
+  pred_col <- "pred_Method_AI"
+  pred_df_m2 <- pred_df_all[,c(common_cols,pred_col)]
+  pred_df_m2 <- add_predicted_class_byThreshold(pred_df_m2,ths,pred_col)
+  write.csv(pred_df_m2,paste0(outdir, ds_out, "pred_tb_AI.csv"))
+  
+  #Hybrid + Curve fitting model 
+  pred_col <- "pred_Method_HybridCurveFit"
+  pred_df_m3 <- pred_df_all[,c(common_cols,pred_col)]
+  pred_df_m3 <- add_predicted_class_byThreshold(pred_df_m3,ths,pred_col)
+  write.csv(pred_df_m3,paste0(outdir, ds_out, "pred_tb_HybridCurveFit.csv"))
+  
+  #AI + Curve fitting model 
+  pred_col <- "pred_Method_AICurveFit"
+  pred_df_m4 <- pred_df_all[,c(common_cols,pred_col)]
+  pred_df_m4 <- add_predicted_class_byThreshold(pred_df_m4,ths,pred_col)
+  write.csv(pred_df_m4,paste0(outdir, ds_out, "pred_tb_AICurveFit.csv"))
   
 }
 
