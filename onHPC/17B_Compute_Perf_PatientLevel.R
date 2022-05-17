@@ -161,7 +161,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir1 <- paste0(proj_dir, "16C_Predictions/Test/")
@@ -179,8 +179,8 @@ pts_level_char_df$study_id <- paste0("ID",pts_level_char_df$study_id)
 ################################################################################ 
 #2. Compute performance
 ################################################################################ 
-#model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
-model_list <- c("Hybrid")
+model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
+#model_list <- c("AI")
 method_list <- c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
 ths <- seq(1,9,1)
 samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
