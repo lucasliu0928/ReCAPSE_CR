@@ -19,6 +19,7 @@ library(xgboost)
 library(Rtsne)
 library("FactoMineR")
 library("factoextra")
+library(changepoint)
 
 compute_binaryclass_perf_func <- function(predicted_prob,actual_label){
   #compute ROC-AUC
@@ -1533,7 +1534,7 @@ prediction_2method_func <- function(in_data,features,model, obv_type){
   #Prediction
   pred_df <- as.data.frame(matrix(NA, nrow = nrow(in_data),ncol = 6))
   colnames(pred_df) <- c("study_id","sample_id","y_PRE_OR_POST_2ndEvent","OBV_CLASS",
-                         "pred_Method1_OBVCLASS","pred_Method2_AIMODEL")
+                         "pred_Method_Hybrid","pred_Method_AI")
   pred_df$study_id                  <- in_data$study_id
   pred_df$sample_id                 <- in_data$sample_id
   pred_df$y_PRE_OR_POST_2ndEvent    <- in_data$y_PRE_OR_POST_2ndEvent
@@ -1542,26 +1543,26 @@ prediction_2method_func <- function(in_data,features,model, obv_type){
   
   #method 1:
   if (obv_type == "NEG"){
-    pred_df[,"pred_Method1_OBVCLASS"] <- 0
+    pred_df[,"pred_Method_Hybrid"] <- 0
   }else if (obv_type == "POS"){
-    pred_df[,"pred_Method1_OBVCLASS"] <- 1
+    pred_df[,"pred_Method_Hybrid"] <- 1
   }else if (obv_type == "nonOBV"){
-    pred_df[,"pred_Method1_OBVCLASS"] <-  predict(model, dvalid)
+    pred_df[,"pred_Method_Hybrid"] <-  predict(model, dvalid)
   }
   #method 2:
-  pred_df[,"pred_Method2_AIMODEL"] <- predict(model, dvalid)
+  pred_df[,"pred_Method_AI"] <- predict(model, dvalid)
   
   return(pred_df)
 }
 
 compare_obvs_samples_2methods_perf <-function(predtion_df,obv_type){
   actual     <- as.factor(predtion_df[,"y_PRE_OR_POST_2ndEvent"])
-  pred1      <- predtion_df[,"pred_Method1_OBVCLASS"]
-  pred2      <- predtion_df[,"pred_Method2_AIMODEL"]
+  pred1      <- predtion_df[,"pred_Method_Hybrid"]
+  pred2      <- predtion_df[,"pred_Method_AI"]
   perf1 <- compute_binaryclass_perf_func(pred1,actual)
   perf2 <- compute_binaryclass_perf_func(pred2,actual)
   all_perf <- rbind.data.frame(perf1,perf2)
-  rownames(all_perf) <- c("Method1_OBVCLASS","Method2_AIMODEL")
+  rownames(all_perf) <- c("Method_Hybrid","Method_AI")
   rownames(all_perf) <- paste0(rownames(all_perf),"_",obv_type)
   return(all_perf)
 }
@@ -1587,15 +1588,15 @@ curve_fitting_func <- function(pred_data){
     #Add month index
     curr_df[,"month_index"] <- 1:nrow(curr_df) 
     
-    #Curve fitting predicted prob using Method1_OBVCLASS
-    pred_method <- "Method1_OBVCLASS"
+    #Curve fitting predicted prob using Method_Hybrid
+    pred_method <- "Method_Hybrid"
     smoothed_prob1 <- logstic_fitting_func(curr_df,pred_method)
-    curr_df[,paste0("pred_",pred_method,"_CurveFitting")] <- smoothed_prob1
+    curr_df[,paste0("pred_",pred_method,"CurveFit")] <- smoothed_prob1
     
-    #Curve fitting predicted prob using Method1_OBVCLASS
-    pred_method <- "Method2_AIMODEL"
+    #Curve fitting predicted prob using Method_AI
+    pred_method <- "Method_AI"
     smoothed_prob2 <- logstic_fitting_func(curr_df,pred_method)
-    curr_df[,paste0("pred_",pred_method,"_CurveFitting")] <- smoothed_prob2
+    curr_df[,paste0("pred_",pred_method,"CurveFit")] <- smoothed_prob2
     
     
     curve_fit_predction_list[[i]] <- curr_df
@@ -1616,3 +1617,228 @@ curve_fitting_func <- function(pred_data){
   
   return(updated_pred_df)
 }
+
+
+
+add_predicted_class_byThreshold <- function(pred_df,thres_list,pred_col){
+  
+  pred_class_df <- as.data.frame(matrix(NA, nrow = nrow(pred_df),ncol = length(thres_list)))
+  colnames(pred_class_df) <- gsub("\\.","", paste0("Pred_Class_Thres_",thres_list))
+  for (j in 1:length(thres_list)){
+    th <- thres_list[j]
+    col_name <- gsub("\\.","",paste0("Pred_Class_Thres_",th))
+    pred_class_df[,col_name] <- convert_prediction_function(pred_df[,pred_col],th)
+  }
+  
+  #Combine predicted classes to prediction df
+  comb_df <- cbind(pred_df,pred_class_df)
+  
+  return(comb_df)
+}
+
+
+#Patient-level prediction functions
+#Get SBCE label and month
+get_pt_actual_sbcelabel_month <- function(analysis_df,pts_level_char_df){
+  unique_ids <- unique(analysis_df[,"study_id"])  
+  
+  sbce_df <- as.data.frame(matrix(NA, nrow = length(unique_ids),ncol = 3))
+  colnames(sbce_df) <- c("study_id","SBCE","Acutal_SBCEMonth")
+  
+  for (i in 1:length(unique_ids)){
+    if (i %% 500 == 0) {print(i)}
+    curr_pt_id <- unique_ids[i]
+    curr_index <- which(pts_level_char_df[,"study_id"] == curr_pt_id)
+    curr_char_df <- pts_level_char_df[curr_index,]
+    
+    sbce_df[i , "SBCE"]             <- curr_char_df[,"SBCE"]
+    sbce_df[i , "study_id"]         <- curr_pt_id
+    
+    curr_2nd_event_date <- mdy(curr_char_df[,"Date_2nd_Event"])
+    if (is.na(curr_2nd_event_date) == F){
+      curr_2nd_event_year  <- year(curr_2nd_event_date)
+      curr_2nd_event_month <- month(curr_2nd_event_date)
+      curr_acutal_SBCEMonth <- paste0(curr_2nd_event_year, "-",curr_2nd_event_month, "-", "01") #use the first day as the month
+    }else {
+      curr_acutal_SBCEMonth <- "NONE"
+    }
+    sbce_df[i , "Acutal_SBCEMonth"] <- curr_acutal_SBCEMonth
+    
+    
+  }
+  
+  return(sbce_df)
+}
+
+
+#Get one patient predicted month and predicted label by 
+#The first month that the prediction probability is greater or equal to 
+#the prediction probability threshold 
+get_onept_pred_func1<- function(onept_sample_pred_df,thres_list,onept_sbce_df){
+  
+  onept_pred_df<- as.data.frame(matrix(NA, nrow = 1, ncol = 21))
+  colnames(onept_pred_df) <- c("study_id", 
+                               "SBCE","Acutal_SBCEMonth",
+                               paste0("Pred_SBCEMon_Thres_0",thres_list),
+                               paste0("Pred_SBCEClass_Thres_0",thres_list))
+  #patient ID
+  pt_id <- unique(onept_sample_pred_df[,"study_id"])
+  
+  #Get acutal sbce label and month
+  onept_pred_df[1, "SBCE"]   <- onept_sbce_df$SBCE
+  onept_pred_df[1, "Acutal_SBCEMonth"]   <- onept_sbce_df$Acutal_SBCEMonth
+  
+  #sort by month
+  onept_sample_pred_df <- onept_sample_pred_df[order(onept_sample_pred_df$month_start),]
+  
+  #for each thres, compute the predicted month and predicetd SBCE label
+  for (th in thres_list){
+    #All index predicted higher than threhold
+    predicted_1_idxes <- which(onept_sample_pred_df[,paste0("Pred_Class_Thres_0",th)] == 1) 
+    
+    if (length(predicted_1_idxes) > 0 ){ #if there is any predicted month >= threhold
+      pred_month <- onept_sample_pred_df[predicted_1_idxes[1],"month_start"] #1st index predicted higher or equal to the threhold
+      pred_class <- 1
+    }else {
+      pred_month <- "NONE"
+      pred_class <- 0
+    }
+    
+    onept_pred_df[1,"study_id"]   <- pt_id
+    onept_pred_df[1,paste0("Pred_SBCEMon_Thres_0",th)]   <- as.character(pred_month)
+    onept_pred_df[1,paste0("Pred_SBCEClass_Thres_0",th)] <- pred_class
+    
+  }
+  return(onept_pred_df)
+}
+
+
+#Get one patient predicted month and predicted label by 
+#The first month of 3 consecutive months that predicts probability greater or equal
+# to the prediction probability threshold
+get_onept_pred_func2 <- function(onept_sample_pred_df,thres_list,onept_sbce_df){
+  # onept_sample_pred_df <- curr_sp_pred_df
+  # onept_sbce_df <- curr_sbce_df
+  
+  onept_pred_df<- as.data.frame(matrix(NA, nrow = 1, ncol = 21))
+  colnames(onept_pred_df) <- c("study_id", 
+                               "SBCE","Acutal_SBCEMonth",
+                               paste0("Pred_SBCEMon_Thres_0",thres_list),
+                               paste0("Pred_SBCEClass_Thres_0",thres_list))
+  #patient ID
+  pt_id <- unique(onept_sample_pred_df[,"study_id"])
+  
+  #Get acutal sbce label and month
+  onept_pred_df[1, "SBCE"]   <- onept_sbce_df$SBCE
+  onept_pred_df[1, "Acutal_SBCEMonth"]   <- onept_sbce_df$Acutal_SBCEMonth
+  
+  #sort by month
+  onept_sample_pred_df <- onept_sample_pred_df[order(onept_sample_pred_df$month_start),]
+  
+  #for each thres, compute the predicted month and predicetd SBCE label
+  for (th in thres_list){
+    #All index predicted higher than threhold
+    predicted_1_idxes <- which(onept_sample_pred_df[,paste0("Pred_Class_Thres_0",th)] == 1) 
+    
+    if (length(predicted_1_idxes) > 3 ){ #if there is 3 predicted month >= threhold
+      #check if persistent 1s for 3 months
+      first_month_index <- 0
+      kt <- 1
+      while (first_month_index == 0 & (kt + 2) <= length(predicted_1_idxes)){
+        curr_3indxes <- predicted_1_idxes[kt:(kt+2)] #check every 3 consecitve indexes
+        curr_diff   <- diff(curr_3indxes)
+        if (sum(curr_diff) == 2){ #if the sum of diff is 2, them it is consecutives, and it persistent as 1
+          first_month_index <- predicted_1_idxes[kt]
+        }else{
+          kt <- kt+1
+        }
+      }
+      if (first_month_index != 0){
+        pred_month <- onept_sample_pred_df[first_month_index,"month_start"] #1st index predicted higher or equal to the threhold
+        pred_class <- 1
+      }else{
+        pred_month <- "NONE"
+        pred_class <- 0
+      }
+    }else {
+      pred_month <- "NONE"
+      pred_class <- 0
+    }
+    
+    onept_pred_df[1,"study_id"]   <- pt_id
+    onept_pred_df[1,paste0("Pred_SBCEMon_Thres_0",th)]   <- as.character(pred_month)
+    onept_pred_df[1,paste0("Pred_SBCEClass_Thres_0",th)] <- pred_class
+    
+  }
+  return(onept_pred_df)
+}
+
+#Get one patient predicted month and predicted label by 
+#change point anlysis binseg method
+#'@NOTE: funciton adopted from plot_changepoint_info() from src/Tomas/run_xgboost.s3.r
+get_onept_pred_func3<- function(onept_sample_pred_df, onept_sbce_df){
+  onept_pred_df<- as.data.frame(matrix(NA, nrow = 1, ncol = 5))
+  colnames(onept_pred_df) <- c("study_id", 
+                               "SBCE","Acutal_SBCEMonth","Pred_SBCEMon_Thres_0BinSeg",
+                               "Pred_SBCEClass_Thres_0BinSeg")
+  #patient ID
+  pt_id <- unique(onept_sample_pred_df[,"study_id"])
+  
+  #Get acutal sbce label and month
+  onept_pred_df[1, "SBCE"]   <- onept_sbce_df$SBCE
+  onept_pred_df[1, "Acutal_SBCEMonth"]   <- onept_sbce_df$Acutal_SBCEMonth
+  
+  #sort by month
+  onept_sample_pred_df <- onept_sample_pred_df[order(onept_sample_pred_df$month_start),]
+  
+  #Change point method 1 BinSeg
+  changepoints <- cpt.meanvar(onept_sample_pred_df[,pred_col], Q=1, method="BinSeg", test.stat="Normal")
+  changepoint_index <- changepoints@cpts[1]
+  
+  #plot(changepoints, cpt.width=3)
+  onept_pred_df[1,"study_id"]   <- pt_id
+  onept_pred_df[1, "Pred_SBCEMon_Thres_0BinSeg"] <- as.character(onept_sample_pred_df[changepoint_index,"month_start"])
+  
+  #If non-NA in , then predicted as SBCE
+  if (is.na(onept_pred_df[1, "Pred_SBCEMon_Thres_0BinSeg"]) == F){
+      onept_pred_df[1, "Pred_SBCEClass_Thres_0BinSeg"] <- 1
+  }else{
+    onept_pred_df[1, "Pred_SBCEClass_Thres_0BinSeg"] <- 0 
+  }
+  
+  return(onept_pred_df)
+}
+
+
+#Get all patient prediction by choosin two methods
+get_allpt_level_pred <- function(analysis_df,sbce_df,thres_list, method_name){
+  # analysis_df <- ds_pred_df
+  # sbce_df <- sbce_df
+  # thres_list <- seq(1,9,1)
+  
+  unique_IDs <- unique(analysis_df[,"study_id"])  
+  all_pts_pred_list <- list()
+  for (i in 1:length(unique_IDs)){
+    if (i %% 500 == 0) {print(i)}
+    curr_pt_id <- unique_IDs[i]
+    
+    #Get acutal label
+    curr_sbce_df <- sbce_df[sbce_df[,"study_id"] == curr_pt_id,]
+    #Get sample prediction df
+    curr_sp_pred_df <- analysis_df[analysis_df[,"study_id"] == curr_pt_id,]
+    #compute pateint level prediction
+    if (method_name == "OneMonth_GT_Threshold"){
+      curr_pt_pred_df <- get_onept_pred_func1(curr_sp_pred_df,thres_list,curr_sbce_df)
+    }else if (method_name == "Persis3Month_GT_Threshold"){
+      curr_pt_pred_df <- get_onept_pred_func2(curr_sp_pred_df,thres_list,curr_sbce_df)
+    }else if (method_name == "BinSeg"){
+      curr_pt_pred_df <- get_onept_pred_func3(curr_sp_pred_df,curr_sbce_df)
+    }
+    all_pts_pred_list[[i]] <- curr_pt_pred_df
+    
+  }
+  all_pts_pred_df <- do.call(rbind,all_pts_pred_list)
+  
+  return(all_pts_pred_df)
+}
+
