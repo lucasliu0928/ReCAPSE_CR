@@ -53,8 +53,8 @@ for (ds_index in 0:10){
   
   ################################################################################ 
   #3.Prediction
-  #Method 1: predict use AI model 
-  #Method 2: predict as negative/pos/non_obv(use AI) 
+  #Method 1: predict use AI model for all
+  #Method 2: hybrid methods: predict as negative/pos/, for non_obv, use AI
   ################################################################################ 
   #Prediction
   pred_df_neg <- prediction_2method_func(train_neg_df,features,mod_optimal,"NEG")
