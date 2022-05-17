@@ -1,10 +1,13 @@
 source("Recapse_Ultility.R")
 library(reshape2)
 
-plot_individual_prediction <- function(pt_prediction_df, changepoint = NA, plot_cp = FALSE){
-  #pt_prediction_df <- curr_df
+plot_individual_prediction <- function(pt_prediction_df, acutal_pre_post_label_col, pred_prob_col,pred_month, plot_pm = FALSE){
+  # pt_prediction_df <- curr_df
+  # acutal_pre_post_label_col <- "y_PRE_OR_POST_2ndEvent"
+  # pred_prob_col <- sp_predprob_col
+  # pred_month <- curr_pred_month
   
-  plot_data           <- curr_df[,c("month_start","actual","pred")]
+  plot_data           <- curr_df[,c("month_start",acutal_pre_post_label_col,pred_prob_col)]
   colnames(plot_data) <- c("month_start","Acutal","Predicted")
   
   reshaped_plot_data <- melt(plot_data,id.vars="month_start") #reshape
@@ -25,10 +28,11 @@ plot_individual_prediction <- function(pt_prediction_df, changepoint = NA, plot_
           axis.title=element_text(size=14,face="bold"),
           legend.text=element_text(size=14))
   
-  if (plot_cp == T){
-    p <- p + geom_vline(xintercept = changepoint, linetype="dotted", color = "darkorange", size=1.5) +
-              geom_text(aes(x=changepoint, label="Pred_Month", y=1), colour="darkorange", angle=0) 
-      
+  if (plot_pm == T){
+    p <- p + geom_vline(xintercept = pred_month, linetype="dotted", 
+                        color = "darkorange", size=1.5) +
+              geom_text(aes(x=pred_month, label="Predicted Month", y=1), 
+                        colour="darkorange", angle=0) 
   }
   return(p)
 }
@@ -41,77 +45,69 @@ plot_individual_prediction <- function(pt_prediction_df, changepoint = NA, plot_
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1        <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
-data_dir2        <- paste0(proj_dir, "11F_TrainTestIDs/")
-data_dir3           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/Test/")
 
-outdir           <- paste0(proj_dir, "16_Performance_WithSurgPrimSite_V1_1217updated/Use_ImportantFs_Performance/")
+outdir <- paste0(proj_dir, "17_Performance/")
 
+################################################################################ 
 #User input
-ds_index <- 1
-update_pred_flag <- "Original" #Updated or Original
-######################################################################################################## 
-#1.Load predictions 
-######################################################################################################## 
-#Load prediction data
-if (update_pred_flag != "Updated"){ #predtion use model
-  test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed", "/16_Prediction_Table_DS", ds_index, ".csv"))
-}else if (update_pred_flag == "Updated"){#prediction obv neg by assigin 0, prediction of other ones used model
-  test_prediction_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed", "/16_Updated_Prediction_Table_DS", ds_index, ".csv"))
-}
-
-#Add study_id and month start
-original_IDs <- strsplit(as.character(test_prediction_df$sample_id),split = "@")
-test_prediction_df$study_id    <- gsub("ID","",sapply(original_IDs, "[[", 1))
-test_prediction_df$month_start <- sapply(original_IDs, "[[", 2)
-test_ID <- unique(test_prediction_df$study_id)
+################################################################################ 
+model <- "AI"                            #c("Hybrid","AI","HybridCurveFit","AICurveFit")
+method <- "Persis3Month_GT_Threshold"    #c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
+ths <- seq(1,9,1)
+samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
+ds_index <- 3
 
 ################################################################################ 
-#2. Load label df to get SBCE or not 
+#2.Get data for plot
 ################################################################################ 
-SBCE_label_df <- read.xlsx(paste0(data_dir2,"/test_ID_withLabel.xlsx"),sheet = 1)
+#Create out dir for each ds 
+ds_out <- paste0("DS",ds_index,"/Z_Predicted_Trajectory/",model,"_",method,"/")
+dir.create(file.path(outdir, ds_out), recursive = TRUE)
 
-################################################################################ 
-#3. Load change point analysis results
-################################################################################ 
-changepoint_df <- read.csv(paste0(data_dir1,"train_DS",ds_index,"/BeforeSmoothed/","16_",update_pred_flag,"_ChangePoint",".csv"),stringsAsFactors = F)
 
-################################################################################ 
-#4. Load predicted months
-################################################################################ 
-pred_month_df <- read.csv(paste0(data_dir3,"train_DS",ds_index,"/BeforeSmoothed/",update_pred_flag,"_Patient_Level_PerdMonth_alltest_persistent3month.csv"),stringsAsFactors = F)
+#1. Load all sample prediction table
+sample_pred_dir  <- paste0(data_dir1,"DS",ds_index,"/Sample_Prediction_Table/")
+sample_pred_file <- paste0("pred_tb_",model,".csv")
+sp_pred_df <- read.csv(paste0(sample_pred_dir,sample_pred_file),stringsAsFactors = F)
+sp_pred_df[,"month_start"] <- ymd(sp_pred_df[,"month_start"])
+sp_predprob_col <- paste0("pred_Method_", model)
 
+#2. Load all patient prediction table
+pt_pred_dir  <- paste0(data_dir1,"DS",ds_index,"/Patient_Prediction_Table/")
+pt_pred_file <- paste0(model, "_", method,"_patientlevel_pred_tb.csv")
+pt_pred_df <- read.csv(paste0(pt_pred_dir,pt_pred_file),stringsAsFactors = F)
+pt_predmonth_col <- "Pred_SBCEMon_Thres_05"
+pt_pred_df[,"Acutal_SBCEMonth"] <- ymd(pt_pred_df[,"Acutal_SBCEMonth"])
+pt_pred_df[,pt_predmonth_col] <- ymd(pt_pred_df[,pt_predmonth_col])
 
 ################################################################################ 
 #Plot
 #'@TODO: Maybe add event date Later
 ################################################################################ 
+test_ID <- unique(pt_pred_df$study_id)
+
 for (i in 1:length(test_ID)){
   if(i %% 100 == 0){print(i)}
   curr_id <- test_ID[i]
   #get prediction df
-  curr_df <- test_prediction_df[which(test_prediction_df[,"study_id"] == curr_id),]
-  curr_df$month_start <- ymd(curr_df$month_start)
+  curr_df <- sp_pred_df[which(sp_pred_df[,"study_id"] == curr_id),]
   
 
-  #get label
-  curr_label_df <- SBCE_label_df[which(SBCE_label_df[,"study_id"] == curr_id),]
-  curr_label <- curr_label_df[,"SBCE"]
-  #if (curr_label == 1){
-    #get change point
-    #curr_cp <- ymd(changepoint_df[which(changepoint_df[,"study_id"] == curr_id),"changepoint_month"])
-    #get pred month
-    curr_cp <- ymd(pred_month_df[which(pred_month_df[,"study_id"] == curr_id),"PredictedSBCEMonth_Thres_05"])
-    
-    p <- plot_individual_prediction(curr_df,curr_cp,TRUE)
-  # }else{
-  #   p <- plot_individual_prediction(curr_df,NA,FALSE)
-  # }
-
-  png(paste0(outdir,"train_DS",ds_index,"/BeforeSmoothed/Individual_Plot/",update_pred_flag,"/SBCE",curr_label,"_ID",curr_id,".png"),res=150,width = 700,height = 700)
-  print(p)
-  dev.off()
+  #get label and predicted month
+  curr_indxes <- which(pt_pred_df[,"study_id"] == curr_id)
+  curr_label <- pt_pred_df[curr_indxes,"SBCE"]
+  curr_pred_month <- pt_pred_df[curr_indxes,pt_predmonth_col]
+  
+  if (curr_label == 1){
+    p <- plot_individual_prediction(curr_df, "y_PRE_OR_POST_2ndEvent", 
+                                    sp_predprob_col,curr_pred_month, plot_pm = TRUE)
+      
+    png(paste0(outdir, ds_out,"SBCE",curr_label,"_",curr_id,".png"),res=150,width = 700,height = 700)
+    print(p)
+    dev.off()
+  }
 }
