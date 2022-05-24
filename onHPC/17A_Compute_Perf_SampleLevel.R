@@ -180,8 +180,8 @@ pts_level_char_df$study_id <- paste0("ID",pts_level_char_df$study_id)
 ################################################################################ 
 #2. Compute performance
 ################################################################################ 
-#model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
-model_list <- c("AI")
+model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
+#model_list <- c("AI")
 ths <- seq(1,9,1)
 samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
 
