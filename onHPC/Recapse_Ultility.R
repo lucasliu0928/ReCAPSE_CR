@@ -1842,3 +1842,192 @@ get_allpt_level_pred <- function(analysis_df,sbce_df,thres_list, method_name){
   return(all_pts_pred_df)
 }
 
+
+####Discriptive Stats output:
+add_sbce_label_to_sample_func <- function(indata,sbce_df){
+  matched_indxes <- match(indata[,"study_id"],sbce_df[,"study_id"])
+  indata[,"SBCE"] <- sbce_df[matched_indxes,"SBCE"]
+  return(indata)
+}
+
+load_obsSample_IDs <- function(indir, train_or_test_set,sbce_df){
+  obv_neg <- read.csv(paste0(indir,"ObviousNeg_Samples_",train_or_test_set,".csv"),stringsAsFactors = F)
+  obv_neg[,"OBV_TYPE"] <- "OBV_NEG"
+  obv_pos <- read.csv(paste0(indir,"ObviousPos_Samples_",train_or_test_set,".csv"),stringsAsFactors = F)
+  obv_pos[,"OBV_TYPE"] <- "OBV_POS"
+  NON_obv<- read.csv(paste0(indir,"NON_Obvious_Samples_",train_or_test_set,".csv"),stringsAsFactors = F)
+  NON_obv[,"OBV_TYPE"] <- "OBV_NON"
+  
+  all_df <- rbind(obv_neg,obv_pos,NON_obv)
+  all_df[,"TRAIN_OR_TEST"] <- train_or_test_set
+  #rename col
+  colnames(all_df)[which(colnames(all_df) == "Label")] <- "Label_PreOrPost"
+  
+  #Remove redundant col
+  all_df <- all_df[,-which(colnames(all_df)=="X")]
+  
+  #Get unique patient ID
+  unique_pt_ids <- unique(all_df[,"study_id"])
+  
+  #get unique sample ID
+  unique_sample_ids <- unique(all_df[,"sample_id"])
+  
+  #Add SBCE label to the sample df
+  sbce_df <- sbce_df[which(sbce_df[,"study_id"] %in% unique_pt_ids),]
+  all_df <- add_sbce_label_to_sample_func(all_df,sbce_df)
+  
+  
+  return(list(all_df,unique_pt_ids,unique_sample_ids))
+}
+
+
+load_pt_char_func <-function(indir){
+  PTs_Char_df <- read.xlsx(paste0(indir,"/8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
+  PTs_Char_df[,"study_id"] <- paste0("ID",PTs_Char_df[,"study_id"])
+  #Recode Type 2 event:
+  #1. As long as the string has "1Recur", 
+  #it counted as "first primary recurrence", no matter if it has same date with others
+  recode_idxes1 <- which(grepl("1Recur",PTs_Char_df[,"Type_2nd_Event"]) == T)
+  PTs_Char_df[recode_idxes1,"Type_2nd_Event"] <- "1Recur"
+  
+  return(PTs_Char_df)
+}
+
+
+compute_prepost_and_sbcepts_func <- function(indata){
+  #Compute pre/post number of samples and ratio
+  n_post <- as.numeric(table(indata[,"Label_PreOrPost"])["Post"])
+  n_pre  <- as.numeric(table(indata[,"Label_PreOrPost"])["Pre"])
+  pre_to_post_ratio <- paste0("Ratio ",round(n_pre/n_post),":",1)
+  total_sp <- n_post + n_pre
+  
+  #Compute number of sbce/non-sbce patients
+  indata_unique_pt_ids <- indata[!duplicated(indata[,"study_id"]),] #For each pateint ID, only keep one SBCE label, ignore the samples
+  n_SBCE0  <- as.numeric(table(indata_unique_pt_ids[,"SBCE"])["0"])
+  n_SBCE1  <- as.numeric(table(indata_unique_pt_ids[,"SBCE"])["1"])
+  SBCE0_to_SBCE1_ratio <- paste0("Ratio ",round(n_SBCE0/n_SBCE1),":",1)
+  total_pt <- n_SBCE0 + n_SBCE1
+  
+  
+  counts_df <- as.data.frame(cbind(total_sp, n_pre,n_post,pre_to_post_ratio,
+                                   total_pt,n_SBCE0,n_SBCE1,SBCE0_to_SBCE1_ratio))
+  
+  return(counts_df)
+}
+
+compute_mean_sd_func <- function(data_col,round_digit){
+  mean_val <- round(mean(data_col),round_digit)
+  sd_val <-  round(sd(data_col),round_digit)
+  comb_val <- paste0(mean_val," \u00b1 ",sd_val)
+  
+  return(comb_val)
+}
+compute_n_perc_func <- function(data_col,round_digit){
+  # data_col <- curr_values
+  
+  total_n <- length(data_col)
+  count_tb <- table(data_col)
+  count_tb_perc <- round(count_tb/total_n*100,round_digit)
+  count_cato_names <- names(count_tb)
+  count_final <-""
+  count_final <- paste0(count_cato_names,": ", count_tb, " (",count_tb_perc,")", collapse = "\n")
+  count_final <- paste0(count_final,"\n Total(NA excluded):",total_n)
+  return(count_final)
+}
+
+
+compute_median_p25andp75_func <- function(data_col,round_digit){
+  med_val <- round(median(data_col),round_digit)
+  quant_res <- quantile(data_col,c(0.25,0.75))
+  p25 <- round(quant_res[1],round_digit)
+  p75 <- round(quant_res[2],round_digit)
+  comb_val <- paste0(med_val," [",p25,"-",p75,"]")
+  
+  return(comb_val)
+}
+
+
+compute_stats_func <- function(input_df,cohort_name,ordered_parameters,n_perc_variables_list){
+  Final_table <- as.data.frame(matrix(NA, nrow = length(ordered_parameters), ncol = 3))
+  colnames(Final_table) <- c("Var","Stats","Missingness")
+  Final_table$Var <- ordered_parameters
+  
+  for (i in 1:length(ordered_parameters)){
+    curr_f <- ordered_parameters[i]
+    
+    #get index column of current feature
+    curr_colindex <- which(colnames(input_df) == curr_f)
+    
+    
+    if (length(curr_colindex) == 0){ #if feature is not in curret data input
+      Final_table[i,2] <- NA
+    }else{
+      #Get current values
+      curr_values <- input_df[,curr_f]
+      
+      #report and remove NAs
+      na_indexes <- which(is.na(curr_values) == T)
+      n_NA <-  length(na_indexes)
+      prec_NA <- round((n_NA/length(curr_values)*100),2)
+      Final_table[i,3] <- paste0(n_NA," (",prec_NA,"%)")
+      
+      if(n_NA > 0){
+        curr_values <- curr_values[-na_indexes]
+      }
+      
+      
+      if (curr_f %in% n_perc_variables_list){ #compte n perc
+        Final_table[i,2] <- compute_n_perc_func(curr_values,2)
+      }else{
+        Final_table[i,2] <- compute_median_p25andp75_func(curr_values,2)
+      }
+      
+    }
+  }
+  colnames(Final_table) <- paste0(cohort_name,"_",colnames(Final_table))
+  
+  return(Final_table)
+}
+
+
+plot_hist_twocohort <- function(in_data, x_name, grp_name, xbreaks,x_label){
+  p <- ggplot(in_data, aes_string(x=x_name, color=grp_name)) +
+    geom_histogram(fill="white", alpha=0.8, position="identity",binwidth = 0.5) +
+    scale_x_continuous(breaks= xbreaks) +
+    scale_color_discrete(name = "",labels = c("non-recurrent", "recurrent")) +
+    theme(legend.position="top") +
+    labs(x = x_label, y = "Count") +
+    theme(text = element_text(size=20))
+  return(p)
+}
+
+plot_hist_onecohort <- function(in_data, x_name, xbreaks,x_label,cohort_name, barcolor){
+  p <- ggplot(in_data, aes_string(x=x_name)) +
+    geom_histogram(fill = barcolor ,alpha = 0.8, position="identity",binwidth = 0.5) +
+    scale_x_continuous(breaks= xbreaks) +
+    theme(legend.position="top") +
+    labs(x = x_label, y = "Count",title = cohort_name) +
+    theme(text = element_text(size=20))
+  return(p)
+}
+
+output_hist_forSBCEand_nonSBCE <- function(in_data,plot_colname,x_lab,cohort_name1,cohort_name0, xbreaks, plotwidth){
+  # in_data <- Final_PTs_Char_df
+  # plot_colname <- "Diagnosis_Year"
+  # x_lab <- "Diagnosis Year"
+  # cohort_name1 <- "Recurrent Patient"
+  # cohort_name0 <- "non-Recurrent Patient"
+  
+  SBCE_PTs_Char_df <- in_data[which(in_data$SBCE==1),]
+  p <- plot_hist_onecohort(SBCE_PTs_Char_df,plot_colname,xbreaks, x_lab,cohort_name1,"brown4")
+  png(paste0(outdir,plot_colname, "_", cohort_name1, ".png"), width = plotwidth, height = 800, res = 120)
+  print(p)
+  dev.off()
+  
+  nonSBCE_PTs_Char_df <- in_data[which(in_data$SBCE==0),]
+  p <- plot_hist_onecohort(nonSBCE_PTs_Char_df,plot_colname,xbreaks,x_lab, cohort_name0,"dodgerblue4")
+  png(paste0(outdir,plot_colname, "_", cohort_name0, ".png"), width = plotwidth, height = 800, res = 120)
+  print(p)
+  dev.off()
+}
+
