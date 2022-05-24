@@ -65,7 +65,7 @@ for (ds_index in 0:10){
     pt_pred_df2 <-  get_allpt_level_pred(ds_pred_df,sbce_df,thres_list,method_name)
     write.csv(pt_pred_df2,paste0(outdir, ds_out,model,"_",method_name,"_patientlevel_pred_tb.csv"))
     
-    #5. Get predictied month and predicted label by persisit 3 months
+    #5. Get predictied month and predicted label by change point anlaysis
     method_name <- "BinSeg"
     pt_pred_df3 <-  get_allpt_level_pred(ds_pred_df,sbce_df,thres_list,method_name)
     write.csv(pt_pred_df3,paste0(outdir, ds_out,model,"_",method_name,"_patientlevel_pred_tb.csv"))
