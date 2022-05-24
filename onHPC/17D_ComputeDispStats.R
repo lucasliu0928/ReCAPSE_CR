@@ -97,12 +97,15 @@ proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_In
 
 #data dir
 data_dir1        <- paste0(proj_dir, "11F_TrainTestIDs/")
-data_dir2        <- paste0(proj_dir,"12D_ExclusionSamples/WithPossibleMonthsHasNoCodes/")
+data_dir2        <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/WithPossibleMonthsHasNoCodes/")
 data_dir3        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 data_dir4        <- paste0(proj_dir, "15_XGB_Input/")
 data_dir5        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
 
-outdir           <- paste0(proj_dir, "17_Discrip_Statistics_1217Updated/")
+newout <- "18_Discrip_Statistics/"
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
+
 ds_index <- 0
 
 ################################################################################ 
