@@ -28,7 +28,7 @@ if (SBCE_col == "SBCE"){
 data_dir1        <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
 data_dir2        <- paste0(proj_dir, "16A_Trained_FullModel/",feature_set_name,"/",SBCE_col,"/")
 
-newout <- "16B_Trained_ImportantFeatureModel/"
+newout <- paste0("16B_Trained_ImportantFeatureModel/",feature_set_name,"/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
