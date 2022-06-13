@@ -56,10 +56,14 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir  <- paste0(proj_dir, "12B_TopPCAFeatureData_Train/WithPossibleMonthsHasNoCodes/")
 
-newout <- "12D_OBVsSample_Thresholds/WithPossibleMonthsHasNoCodes/"
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+
+#data dir
+data_dir  <- paste0(proj_dir,"12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("12D_OBVsSample_Thresholds/",feature_set_name,"/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -69,7 +73,7 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 #1A. Load data
 load(file = paste0(data_dir, "Top4PCAFeature_ModelReadyData_Train.rda"))
 
-#2B. Orginal NEG POS ratio
+#2B. Original NEG POS ratio
 compute_sp_label_ratio(model_data_4f)
 
 ######################################################################################################## 
@@ -140,8 +144,14 @@ dev.off()
 
 
 #2D. Find the best thresholds by checking the figure 
-turning_pt_x <- 0.9814992
-turning_pt_y <- 19.80003
+if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <-  0.9812913
+  turning_pt_y <-  19.94299
+}else if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.9814992 
+  turning_pt_y <- 19.80003
+}
+
 var_name1 <- "Threshold_PROC202"
 var_name2 <- "Threshold_PROC227"
 var_name3 <- "Threshold_months_since_dx" 
@@ -222,8 +232,14 @@ dev.off()
 
 
 #3D. Find the best thresholds by checking the figure 
-turning_pt_x <- 0.0417920
-turning_pt_y <- 34.18392
+if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.0417078
+  turning_pt_y <- 35.81769
+}else if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.0417920
+  turning_pt_y <- 34.18392
+}
+
 var_name1 <- "Threshold_PROC202"
 var_name2 <- "Threshold_PROC227"
 var_name3 <- "Threshold_months_since_dx" 
