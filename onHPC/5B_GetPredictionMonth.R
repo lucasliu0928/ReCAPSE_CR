@@ -37,7 +37,7 @@ analysis_Ids <- sort(analysis_Ids)
 #                   the 1st subsequent event is a non-breast primary cancer: 3 months before the registry-based diagnosis date or, 
 #                   the 1st subsequent event is a breast cancer event:
 #                   (Recurrence or diagnose of breast cancer or 1st primary BC death):  1 month before the subsequent event.
-
+#'@NOTE: This window does not chance for SBCE definition2 where death label is excluded
 #########################################################################################################
 prediction_month_df <- as.data.frame(matrix(NA, nrow = length(analysis_Ids), ncol = 7))
 colnames(prediction_month_df) <- c("study_id" , "Prediction_Start","Prediction_End","First_Primary_Start","Date_3rd_Event","Enrollment_Start","Enrollment_End")
