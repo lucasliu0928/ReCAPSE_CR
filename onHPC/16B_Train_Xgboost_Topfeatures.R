@@ -16,10 +16,17 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2        <- paste0(proj_dir, "16A_Trained_FullModel/")
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
 
+#data dir
+data_dir1        <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
+data_dir2        <- paste0(proj_dir, "16A_Trained_FullModel/",feature_set_name,"/",SBCE_col,"/")
 
 newout <- "16B_Trained_ImportantFeatureModel/"
 outdir   <- paste0(proj_dir, newout)
@@ -43,7 +50,7 @@ for (i in 0:10){#0:10
   ################################################################################
   #Create xgb input
   ################################################################################
-  train_label      <- as.numeric(train_data[,"y_PRE_OR_POST_2ndEvent"])
+  train_label      <- as.numeric(train_data[,label_col])
   train_data_part  <- train_data[,top_fs] #top features
   dtrain           <- xgb.DMatrix(data = as.matrix(train_data_part), label = train_label)
 
@@ -61,9 +68,9 @@ for (i in 0:10){#0:10
   current_best <- list(#eta = as.numeric(optimal_results$Best_Par['eta']),
                        max_depth = as.numeric(optimal_results$Best_Par['max_depth']),
                        min_child_weight = as.numeric(optimal_results$Best_Par['min_child_weight']),
-                       subsample = as.numeric(optimal_results$Best_Par['subsample']),
+                       subsample = as.numeric(optimal_results$Best_Par['subsample']))
                        #colsample_bytree = as.numeric(optimal_results$Best_Par['colsample_bytree']))
-                       scale_pos_weight = 5)
+                       #scale_pos_weight = 5)
   
   #Optimal model
   mod_optimal <- xgb.train(objective="binary:logistic",
