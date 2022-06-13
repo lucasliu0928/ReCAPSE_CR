@@ -41,14 +41,14 @@ outdir   <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 #1. Load pts level char
 ################################################################################ 
 patient_level_char_df1 <- read.xlsx(paste0(data_dir1,"8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
-patient_level_char_df2 <- read.xlsx(paste0(data_dir1,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"),sheet = 1)
+#patient_level_char_df2 <- read.xlsx(paste0(data_dir1,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"),sheet = 1)
 
 
 ################################################################################ 
 #3.Analysis ID
 ################################################################################ 
 analysis_ID1 <- unique(patient_level_char_df1$study_id)
-analysis_ID2 <- unique(patient_level_char_df2$study_id)
+#analysis_ID2 <- unique(patient_level_char_df2$study_id)
 
 ################################################################################ 
 #Exclusion 1: Has_ValidClaims_inRange == 0 
@@ -58,18 +58,18 @@ analysis_ID2 <- unique(patient_level_char_df2$study_id)
 ################################################################################ 
 #1.For enrollment moths record that allow no codes in the months
 patient_level_char_df1 <- exclusion_func(patient_level_char_df1)
-patient_level_char_df2 <- exclusion_func(patient_level_char_df2)
+#patient_level_char_df2 <- exclusion_func(patient_level_char_df2)
 
 #Check
 write.xlsx(patient_level_char_df1,paste0(outdir,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx")) #18239
-write.xlsx(patient_level_char_df2,paste0(outdir,"9_PtsCharForFinalID_WithEveryMonthsHasCodes.xlsx")) #17468
+#write.xlsx(patient_level_char_df2,paste0(outdir,"9_PtsCharForFinalID_WithEveryMonthsHasCodes.xlsx")) #17468
 
 
 final_IDs1 <- as.data.frame(patient_level_char_df1[,"study_id"])
 colnames(final_IDs1) <- "study_id"
-final_IDs2 <- as.data.frame(patient_level_char_df2[,"study_id"])
-colnames(final_IDs2) <- "study_id"
+#final_IDs2 <- as.data.frame(patient_level_char_df2[,"study_id"])
+#colnames(final_IDs2) <- "study_id"
 
 write.xlsx(final_IDs1,paste0(outdir,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx")) #18239
-write.xlsx(final_IDs2,paste0(outdir,"9_Final_ID2_WithEveryMonthsHasCodes.xlsx")) #17468
+#write.xlsx(final_IDs2,paste0(outdir,"9_Final_ID2_WithEveryMonthsHasCodes.xlsx")) #17468
 
