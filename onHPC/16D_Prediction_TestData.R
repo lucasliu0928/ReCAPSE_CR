@@ -20,11 +20,19 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2       <- paste0(proj_dir, "16B_Trained_ImportantFeatureModel/")
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
 
-newout <- "16C_Predictions/Test_0610/"
+#data dir
+data_dir1 <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
+data_dir2 <- paste0(proj_dir,"16B_Trained_ImportantFeatureModel/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("16C_Predictions/",feature_set_name,"/",SBCE_col,"/Test/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -63,9 +71,9 @@ for (ds_index in 0:10){
   #Curve fitting for method1 and method2 results
   ################################################################################ 
   #Prediction
-  pred_df_neg <- prediction_2method_func(test_neg_df,features,mod_optimal,"NEG")
-  pred_df_pos <- prediction_2method_func(test_pos_df,features,mod_optimal,"POS")
-  pred_df_nonobv <- prediction_2method_func(test_nonobv_df,features,mod_optimal,"nonOBV")
+  pred_df_neg <- prediction_2method_func(test_neg_df,features,mod_optimal,"NEG",label_col)
+  pred_df_pos <- prediction_2method_func(test_pos_df,features,mod_optimal,"POS",label_col)
+  pred_df_nonobv <- prediction_2method_func(test_nonobv_df,features,mod_optimal,"nonOBV",label_col)
   pred_df_all <- rbind(pred_df_neg,pred_df_pos,pred_df_nonobv)
 
   #Curve-fitting on the two methods' results
@@ -75,8 +83,8 @@ for (ds_index in 0:10){
   pred_df_all[,"month_start"] <- sapply(res, "[[", 2)
   pred_df_all[,"month_start"] <- ymd(pred_df_all[,"month_start"])
   
-  #Seperate prediction for each model and compute predicted class for threshold 0.1.0.2...0.8
-  common_cols <- c("study_id", "sample_id", "y_PRE_OR_POST_2ndEvent","OBV_CLASS","month_start")
+  #Separate prediction for each model and compute predicted class for threshold 0.1.0.2...0.8
+  common_cols <- c("study_id", "sample_id", label_col,"OBV_CLASS","month_start")
   ths <- seq(0.1,0.9,0.1)
   
   #Hybrid model 
