@@ -19,12 +19,23 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2 <- paste0(proj_dir, "11F_TrainTestIDs/")
-data_dir3 <- paste0(proj_dir, "12A_PCA_VarContri_Train/WithPossibleMonthsHasNoCodes/")
 
-newout <- "12B_TopPCAFeatureData_Train/WithPossibleMonthsHasNoCodes/"
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+  
+}
+  
+#data dir
+
+data_dir  <- paste0(proj_dir,"11E_AllPTs_ModelReadyData/",feature_set_name,"/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_col,"/") 
+data_dir3 <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/")
+
+newout <- paste0("12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -39,7 +50,7 @@ feature_contribution_PCA <- read.csv(paste0(data_dir3,"PCA_Variable_Contribution
 ######################################################################################################## 
 #1A. Load all pts data
 load(file = paste0(data_dir, "All_PTS_ModelReadyData.rda"))
-label_col   <- "y_PRE_OR_POST_2ndEvent"
+
 
 #1B. Change the label value from 0,1 to Pre,Post
 pre_idxes  <- which(model_data[,label_col] == 0)
@@ -86,7 +97,7 @@ colnames(normalise_model_data) <- paste0("Normed_",colnames(normalise_model_data
 model_data[,colnames(normalise_model_data)] <- normalise_model_data
 
 ######################################################################################################## 
-#5.Compute weighted sum scores of for each sample by top 10 contribtued features(normed) in Dim 1 
+#5.Compute weighted sum scores of for each sample by top 10 contributed features(normed) in Dim 1 
 ######################################################################################################## 
 top10Fs_dim1_contribution_df <- feature_contribution_PCA[which(feature_contribution_PCA$X %in% top10Fs_dim1),c("X","Dim.1")]
 top10Fs_dim1_contribution_df <- top10Fs_dim1_contribution_df[match(top10Fs_dim1,top10Fs_dim1_contribution_df$X),]
