@@ -57,7 +57,7 @@ selected_charfeatures <- c("Enrolled_year","Age","months_since_dx","Race" , "Sit
                            "reg_age_at_dx",	"reg_nodes_exam", 
                            "reg_nodes_pos",	"cs_tum_size", "cs_tum_ext", 
                            "cs_tum_nodes", "regional")
-outcome_label <- "y_PRE_OR_POST_2ndEvent"
+outcome_label <- c("y_PRE_OR_POST_2ndEvent","y_PRE_OR_POST_2ndEvent_ExcludedDeath")
 other_cols <- c("study_id","Month_Start")
 
 col_toconvert <- c("Race","Site","Stage","Grade","Laterality","er_stat","pr_stat","her2_stat",
@@ -99,7 +99,7 @@ selected_charfeatures <- c("Enrolled_year","Age","months_since_dx","Race" , "Sit
                            "reg_age_at_dx",	"reg_nodes_exam", 
                            "reg_nodes_pos",	"cs_tum_size", "cs_tum_ext", 
                            "cs_tum_nodes", "regional")
-outcome_label <- "y_PRE_OR_POST_2ndEvent"
+outcome_label <- c("y_PRE_OR_POST_2ndEvent","y_PRE_OR_POST_2ndEvent_ExcludedDeath")
 other_cols <- c("study_id","Month_Start")
 
 col_toconvert <- c("Race","Site","Stage","Grade","Laterality","er_stat","pr_stat","her2_stat",
