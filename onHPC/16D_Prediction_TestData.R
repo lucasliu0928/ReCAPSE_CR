@@ -24,7 +24,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
 data_dir2       <- paste0(proj_dir, "16B_Trained_ImportantFeatureModel/")
 
-newout <- "16C_Predictions/Test/"
+newout <- "16C_Predictions/Test_0610/"
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
