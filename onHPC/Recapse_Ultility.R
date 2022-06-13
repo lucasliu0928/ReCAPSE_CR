@@ -1525,19 +1525,19 @@ extract_ccs_typeAndcode <- function(feature_list){
 }
 
 
-prediction_2method_func <- function(in_data,features,model, obv_type){
+prediction_2method_func <- function(in_data,features,model, obv_type,label_col){
   #Create xgb input
-  vlabel      <- as.numeric(in_data[,"y_PRE_OR_POST_2ndEvent"])
+  vlabel      <- as.numeric(in_data[,label_col])
   vdata_part  <- in_data[,features] 
   dvalid     <- xgb.DMatrix(data = as.matrix(vdata_part), label = vlabel)
   
   #Prediction
   pred_df <- as.data.frame(matrix(NA, nrow = nrow(in_data),ncol = 6))
-  colnames(pred_df) <- c("study_id","sample_id","y_PRE_OR_POST_2ndEvent","OBV_CLASS",
+  colnames(pred_df) <- c("study_id","sample_id",label_col,"OBV_CLASS",
                          "pred_Method_Hybrid","pred_Method_AI")
   pred_df$study_id                  <- in_data$study_id
   pred_df$sample_id                 <- in_data$sample_id
-  pred_df$y_PRE_OR_POST_2ndEvent    <- in_data$y_PRE_OR_POST_2ndEvent
+  pred_df[,label_col]               <- in_data[,label_col]
   pred_df$OBV_CLASS                 <- in_data$OBV_CLASS
   
   
@@ -1555,8 +1555,8 @@ prediction_2method_func <- function(in_data,features,model, obv_type){
   return(pred_df)
 }
 
-compare_obvs_samples_2methods_perf <-function(predtion_df,obv_type){
-  actual     <- as.factor(predtion_df[,"y_PRE_OR_POST_2ndEvent"])
+compare_obvs_samples_2methods_perf <-function(predtion_df,obv_type,label_col){
+  actual     <- as.factor(predtion_df[,label_col])
   pred1      <- predtion_df[,"pred_Method_Hybrid"]
   pred2      <- predtion_df[,"pred_Method_AI"]
   perf1 <- compute_binaryclass_perf_func(pred1,actual)
@@ -1639,11 +1639,11 @@ add_predicted_class_byThreshold <- function(pred_df,thres_list,pred_col){
 
 #Patient-level prediction functions
 #Get SBCE label and month
-get_pt_actual_sbcelabel_month <- function(analysis_df,pts_level_char_df){
+get_pt_actual_sbcelabel_month <- function(analysis_df,pts_level_char_df,SBCE_col){
   unique_ids <- unique(analysis_df[,"study_id"])  
   
   sbce_df <- as.data.frame(matrix(NA, nrow = length(unique_ids),ncol = 3))
-  colnames(sbce_df) <- c("study_id","SBCE","Acutal_SBCEMonth")
+  colnames(sbce_df) <- c("study_id",SBCE_col,"Acutal_SBCEMonth")
   
   for (i in 1:length(unique_ids)){
     if (i %% 500 == 0) {print(i)}
@@ -1651,11 +1651,11 @@ get_pt_actual_sbcelabel_month <- function(analysis_df,pts_level_char_df){
     curr_index <- which(pts_level_char_df[,"study_id"] == curr_pt_id)
     curr_char_df <- pts_level_char_df[curr_index,]
     
-    sbce_df[i , "SBCE"]             <- curr_char_df[,"SBCE"]
+    sbce_df[i , SBCE_col]           <- curr_char_df[,SBCE_col]
     sbce_df[i , "study_id"]         <- curr_pt_id
     
     curr_2nd_event_date <- mdy(curr_char_df[,"Date_2nd_Event"])
-    if (is.na(curr_2nd_event_date) == F){
+    if (curr_char_df[,SBCE_col] == 1){
       curr_2nd_event_year  <- year(curr_2nd_event_date)
       curr_2nd_event_month <- month(curr_2nd_event_date)
       curr_acutal_SBCEMonth <- paste0(curr_2nd_event_year, "-",curr_2nd_event_month, "-", "01") #use the first day as the month
@@ -1674,18 +1674,18 @@ get_pt_actual_sbcelabel_month <- function(analysis_df,pts_level_char_df){
 #Get one patient predicted month and predicted label by 
 #The first month that the prediction probability is greater or equal to 
 #the prediction probability threshold 
-get_onept_pred_func1<- function(onept_sample_pred_df,thres_list,onept_sbce_df){
+get_onept_pred_func1<- function(onept_sample_pred_df,thres_list,onept_sbce_df,SBCE_col){
   
   onept_pred_df<- as.data.frame(matrix(NA, nrow = 1, ncol = 21))
   colnames(onept_pred_df) <- c("study_id", 
-                               "SBCE","Acutal_SBCEMonth",
+                               SBCE_col,"Acutal_SBCEMonth",
                                paste0("Pred_SBCEMon_Thres_0",thres_list),
                                paste0("Pred_SBCEClass_Thres_0",thres_list))
   #patient ID
   pt_id <- unique(onept_sample_pred_df[,"study_id"])
   
   #Get acutal sbce label and month
-  onept_pred_df[1, "SBCE"]   <- onept_sbce_df$SBCE
+  onept_pred_df[1, SBCE_col]   <- onept_sbce_df[,SBCE_col]
   onept_pred_df[1, "Acutal_SBCEMonth"]   <- onept_sbce_df$Acutal_SBCEMonth
   
   #sort by month
@@ -1716,20 +1716,20 @@ get_onept_pred_func1<- function(onept_sample_pred_df,thres_list,onept_sbce_df){
 #Get one patient predicted month and predicted label by 
 #The first month of 3 consecutive months that predicts probability greater or equal
 # to the prediction probability threshold
-get_onept_pred_func2 <- function(onept_sample_pred_df,thres_list,onept_sbce_df){
+get_onept_pred_func2 <- function(onept_sample_pred_df,thres_list,onept_sbce_df,SBCE_col){
   # onept_sample_pred_df <- curr_sp_pred_df
   # onept_sbce_df <- curr_sbce_df
   
   onept_pred_df<- as.data.frame(matrix(NA, nrow = 1, ncol = 21))
   colnames(onept_pred_df) <- c("study_id", 
-                               "SBCE","Acutal_SBCEMonth",
+                               SBCE_col,"Acutal_SBCEMonth",
                                paste0("Pred_SBCEMon_Thres_0",thres_list),
                                paste0("Pred_SBCEClass_Thres_0",thres_list))
   #patient ID
   pt_id <- unique(onept_sample_pred_df[,"study_id"])
   
   #Get acutal sbce label and month
-  onept_pred_df[1, "SBCE"]   <- onept_sbce_df$SBCE
+  onept_pred_df[1, SBCE_col]   <- onept_sbce_df[,SBCE_col]
   onept_pred_df[1, "Acutal_SBCEMonth"]   <- onept_sbce_df$Acutal_SBCEMonth
   
   #sort by month
@@ -1776,16 +1776,16 @@ get_onept_pred_func2 <- function(onept_sample_pred_df,thres_list,onept_sbce_df){
 #Get one patient predicted month and predicted label by 
 #change point anlysis binseg method
 #'@NOTE: funciton adopted from plot_changepoint_info() from src/Tomas/run_xgboost.s3.r
-get_onept_pred_func3<- function(onept_sample_pred_df, onept_sbce_df){
+get_onept_pred_func3<- function(onept_sample_pred_df, onept_sbce_df,SBCE_col){
   onept_pred_df<- as.data.frame(matrix(NA, nrow = 1, ncol = 5))
   colnames(onept_pred_df) <- c("study_id", 
-                               "SBCE","Acutal_SBCEMonth","Pred_SBCEMon_Thres_0BinSeg",
+                               SBCE_col,"Acutal_SBCEMonth","Pred_SBCEMon_Thres_0BinSeg",
                                "Pred_SBCEClass_Thres_0BinSeg")
   #patient ID
   pt_id <- unique(onept_sample_pred_df[,"study_id"])
   
   #Get acutal sbce label and month
-  onept_pred_df[1, "SBCE"]   <- onept_sbce_df$SBCE
+  onept_pred_df[1, SBCE_col]   <- onept_sbce_df[,SBCE_col]
   onept_pred_df[1, "Acutal_SBCEMonth"]   <- onept_sbce_df$Acutal_SBCEMonth
   
   #sort by month
@@ -1811,7 +1811,7 @@ get_onept_pred_func3<- function(onept_sample_pred_df, onept_sbce_df){
 
 
 #Get all patient prediction by choosin two methods
-get_allpt_level_pred <- function(analysis_df,sbce_df,thres_list, method_name){
+get_allpt_level_pred <- function(analysis_df,sbce_df,thres_list, method_name,SBCE_col){
   # analysis_df <- ds_pred_df
   # sbce_df <- sbce_df
   # thres_list <- seq(1,9,1)
@@ -1828,11 +1828,11 @@ get_allpt_level_pred <- function(analysis_df,sbce_df,thres_list, method_name){
     curr_sp_pred_df <- analysis_df[analysis_df[,"study_id"] == curr_pt_id,]
     #compute pateint level prediction
     if (method_name == "OneMonth_GT_Threshold"){
-      curr_pt_pred_df <- get_onept_pred_func1(curr_sp_pred_df,thres_list,curr_sbce_df)
+      curr_pt_pred_df <- get_onept_pred_func1(curr_sp_pred_df,thres_list,curr_sbce_df,SBCE_col)
     }else if (method_name == "Persis3Month_GT_Threshold"){
-      curr_pt_pred_df <- get_onept_pred_func2(curr_sp_pred_df,thres_list,curr_sbce_df)
+      curr_pt_pred_df <- get_onept_pred_func2(curr_sp_pred_df,thres_list,curr_sbce_df,SBCE_col)
     }else if (method_name == "BinSeg"){
-      curr_pt_pred_df <- get_onept_pred_func3(curr_sp_pred_df,curr_sbce_df)
+      curr_pt_pred_df <- get_onept_pred_func3(curr_sp_pred_df,curr_sbce_df,SBCE_col)
     }
     all_pts_pred_list[[i]] <- curr_pt_pred_df
     
@@ -1843,10 +1843,10 @@ get_allpt_level_pred <- function(analysis_df,sbce_df,thres_list, method_name){
 }
 
 
-####Discriptive Stats output:
-add_sbce_label_to_sample_func <- function(indata,sbce_df){
+####Descriptive Stats output:
+add_sbce_label_to_sample_func <- function(indata,sbce_df,SBCE_col){
   matched_indxes <- match(indata[,"study_id"],sbce_df[,"study_id"])
-  indata[,"SBCE"] <- sbce_df[matched_indxes,"SBCE"]
+  indata[,SBCE_col] <- sbce_df[matched_indxes,SBCE_col]
   return(indata)
 }
 
@@ -1894,7 +1894,7 @@ load_pt_char_func <-function(indir){
 }
 
 
-compute_prepost_and_sbcepts_func <- function(indata){
+compute_prepost_and_sbcepts_func <- function(indata,SBCE_col){
   #Compute pre/post number of samples and ratio
   n_post <- as.numeric(table(indata[,"Label_PreOrPost"])["Post"])
   n_pre  <- as.numeric(table(indata[,"Label_PreOrPost"])["Pre"])
@@ -1903,8 +1903,8 @@ compute_prepost_and_sbcepts_func <- function(indata){
   
   #Compute number of sbce/non-sbce patients
   indata_unique_pt_ids <- indata[!duplicated(indata[,"study_id"]),] #For each pateint ID, only keep one SBCE label, ignore the samples
-  n_SBCE0  <- as.numeric(table(indata_unique_pt_ids[,"SBCE"])["0"])
-  n_SBCE1  <- as.numeric(table(indata_unique_pt_ids[,"SBCE"])["1"])
+  n_SBCE0  <- as.numeric(table(indata_unique_pt_ids[,SBCE_col])["0"])
+  n_SBCE1  <- as.numeric(table(indata_unique_pt_ids[,SBCE_col])["1"])
   SBCE0_to_SBCE1_ratio <- paste0("Ratio ",round(n_SBCE0/n_SBCE1),":",1)
   total_pt <- n_SBCE0 + n_SBCE1
   
@@ -2011,20 +2011,20 @@ plot_hist_onecohort <- function(in_data, x_name, xbreaks,x_label,cohort_name, ba
   return(p)
 }
 
-output_hist_forSBCEand_nonSBCE <- function(in_data,plot_colname,x_lab,cohort_name1,cohort_name0, xbreaks, plotwidth){
+output_hist_forSBCEand_nonSBCE <- function(in_data,plot_colname,x_lab,cohort_name1,cohort_name0, xbreaks, plotwidth,SBCE_col){
   # in_data <- Final_PTs_Char_df
   # plot_colname <- "Diagnosis_Year"
   # x_lab <- "Diagnosis Year"
   # cohort_name1 <- "Recurrent Patient"
   # cohort_name0 <- "non-Recurrent Patient"
   
-  SBCE_PTs_Char_df <- in_data[which(in_data$SBCE==1),]
+  SBCE_PTs_Char_df <- in_data[which(in_data[,SBCE_col]==1),]
   p <- plot_hist_onecohort(SBCE_PTs_Char_df,plot_colname,xbreaks, x_lab,cohort_name1,"brown4")
   png(paste0(outdir,plot_colname, "_", cohort_name1, ".png"), width = plotwidth, height = 800, res = 120)
   print(p)
   dev.off()
   
-  nonSBCE_PTs_Char_df <- in_data[which(in_data$SBCE==0),]
+  nonSBCE_PTs_Char_df <- in_data[which(in_data[,SBCE_col]==0),]
   p <- plot_hist_onecohort(nonSBCE_PTs_Char_df,plot_colname,xbreaks,x_lab, cohort_name0,"dodgerblue4")
   png(paste0(outdir,plot_colname, "_", cohort_name0, ".png"), width = plotwidth, height = 800, res = 120)
   print(p)
