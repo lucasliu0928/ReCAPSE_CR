@@ -22,20 +22,31 @@ analysis_IDs <- unique(All_event_df$study_id)
 
 ####################################################################################################
 #8. Add SBCE outcome flag
-#'@1.Definition: 
+#'@1.Definition1: 
 #' Has 2nd event (Either 1. Recurrence of the first primary breast cancer  
 #'                Or     2. the diagnosis of a second primary breast cancer
 #'                Or     3. first primary BC related death
-#'#'@NOTE: there is a bug in previous code, Primary_C509$$$C502	death site C509, was not count for First priamry bc death
+#'@NOTE: there is a bug in previous code, Primary_C509$$$C502	death site C509, was not count for First priamry bc death
+
+#'#'@1.Definition2: 
+#' Has 2nd event (Either 1. Recurrence of the first primary breast cancer  
+#'                Or     2. the diagnosis of a second primary breast cancer
+#'@NOTE: if 1st primary BC related death date == 1Recur, it will still be kept, cuz 1Recur is the primary outcome, 
+#'#and it was coutned in the discrip stats file previously
 ####################################################################################################
-#1.definition flag
+#1.definition1 flag
 All_event_df$SBCE <- 0
 sbce_idexes <- which(is.na(All_event_df[,"Date_2nd_Event"])==F)
 All_event_df[sbce_idexes,"SBCE"] <- 1
 table(All_event_df$SBCE) #    0:35485  1:4839  
 outcome_df <- All_event_df[,c("study_id","SBCE")]
-write.xlsx(outcome_df,paste0(outdir,"4_SBCE_Label.xlsx"))
 
+
+#2.Definition 2:
+outcome_df["SBCE_Excluded_DeathLabel"] <- outcome_df[,"SBCE"]
+idxes <- which(All_event_df[,"Type_2nd_Event"] == "Primary1stBC_related_Death")
+outcome_df[idxes, "SBCE_Excluded_DeathLabel"] <- 0
+write.xlsx(outcome_df,paste0(outdir,"4_SBCE_Label.xlsx"))
 
 ####################################################################################################
 #Report numbers
