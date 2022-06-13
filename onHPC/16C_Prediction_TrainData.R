@@ -16,11 +16,19 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir1        <- paste0(proj_dir, "15_XGB_Input/")
-data_dir2       <- paste0(proj_dir, "16B_Trained_ImportantFeatureModel/")
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
 
-newout <- "16C_Predictions/Train/"
+#data dir
+data_dir1 <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
+data_dir2 <- paste0(proj_dir,"16B_Trained_ImportantFeatureModel/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("16C_Predictions/",feature_set_name,"/",SBCE_col,"/Train/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -57,17 +65,17 @@ for (ds_index in 0:10){
   #Method 2: hybrid methods: predict as negative/pos/, for non_obv, use AI
   ################################################################################ 
   #Prediction
-  pred_df_neg <- prediction_2method_func(train_neg_df,features,mod_optimal,"NEG")
-  pred_df_pos <- prediction_2method_func(train_pos_df,features,mod_optimal,"POS")
-  pred_df_nonobv <- prediction_2method_func(train_nonobv_ds_df,features,mod_optimal,"nonOBV")
+  pred_df_neg <- prediction_2method_func(train_neg_df,features,mod_optimal,"NEG",label_col)
+  pred_df_pos <- prediction_2method_func(train_pos_df,features,mod_optimal,"POS",label_col)
+  pred_df_nonobv <- prediction_2method_func(train_nonobv_ds_df,features,mod_optimal,"nonOBV",label_col)
   pred_df_all <- rbind(pred_df_neg,pred_df_pos,pred_df_nonobv)
   write.csv(pred_df_all,paste0(ds_out, "pred_tb_all.csv"))
   
   ################################################################################ 
   #4.Compute Performance for obv neg and obv pos for two methods
   ################################################################################ 
-  perf_df_neg <- compare_obvs_samples_2methods_perf(pred_df_neg,"OBVNEG")
-  perf_df_pos <- compare_obvs_samples_2methods_perf(pred_df_pos,"OBVPOS")
+  perf_df_neg <- compare_obvs_samples_2methods_perf(pred_df_neg,"OBVNEG",label_col)
+  perf_df_pos <- compare_obvs_samples_2methods_perf(pred_df_pos,"OBVPOS",label_col)
   perf_df_all <- rbind(perf_df_neg,perf_df_pos)
   write.csv(perf_df_all,paste0(ds_out,"perf_comparison_obvs.csv"))
   
