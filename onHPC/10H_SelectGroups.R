@@ -22,10 +22,12 @@ dir.create(file.path(proj_dir, "10H_Selected_Grps/WithPossibleMonthsHasNoCodes/"
 #1. Count_CCS_Diag_Unique_Grps.xlsx
 #2. Count_CCS_proc_Unique_Grps.xlsx
 #3. Count_VAL_2ND_Unique_Grps.xlsx
+#4. Count_DM3_SPE_Unique_Grps.xlsx
 ################################################################################
 count_df1 <- read.xlsx(paste0(data_dir1,"Count_CCS_Diag_Unique_Grps.xlsx"),sheet = 1)
 count_df2 <- read.xlsx(paste0(data_dir1,"Count_CCS_proc_Unique_Grps.xlsx"),sheet = 1)
 count_df3 <- read.xlsx(paste0(data_dir1,"Count_VAL_2ND_Unique_Grps.xlsx"),sheet = 1)
+count_df4 <- read.xlsx(paste0(data_dir1,"Count_DM3_SPE_Unique_Grps.xlsx"),sheet = 1)
 
 #Diag
 selected_index1 <- which(count_df1[,"Frac_PtsHasTheGrp_SBCE"] > 0.1 | count_df1[,"Frac_PtsHasTheGrp_nonSBCE"] > 0.15)
@@ -45,5 +47,10 @@ Final_selected_grps_df3 <- data.frame(count_df3[selected_index3,"Code_Grp"]) #62
 colnames(Final_selected_grps_df3) <- "Selected_Grps"
 write.xlsx(Final_selected_grps_df3,paste0(outdir,"Selected_VAL2ndDrug_Unique_Grps.xlsx"))
 
+#Drug2 DM3
+selected_index4 <- which(count_df4[,"Frac_PtsHasTheGrp_SBCE"] > 0.1 | count_df4[,"Frac_PtsHasTheGrp_nonSBCE"] > 0.15)
+Final_selected_grps_df4 <- data.frame(count_df4[selected_index4,"Code_Grp"]) #62
+colnames(Final_selected_grps_df4) <- "Selected_Grps"
+write.xlsx(Final_selected_grps_df4,paste0(outdir,"Selected_DM3SPEDrug_Unique_Grps.xlsx"))
 
 
