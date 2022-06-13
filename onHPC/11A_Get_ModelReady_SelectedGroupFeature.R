@@ -19,13 +19,13 @@ proj_dir  <- "/recapse/intermediate_data/"
 #data dir
 data_dir_diag  <- paste0(proj_dir, "10B_CCSDiagFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
 data_dir_proc  <- paste0(proj_dir, "10C_CCSProcFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
-data_dir_drug  <- paste0(proj_dir, "10F_VAL2NDFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
+data_dir_drug  <- paste0(proj_dir, "10D_DM3SPEFeature_inValidMonth/WithPossibleMonthsHasNoCodes/Feature/")
 
 data_dir2  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 data_dir3  <- paste0(proj_dir, "10H_Selected_Grps/WithPossibleMonthsHasNoCodes/")
 
-outdir   <- paste0(proj_dir, "11A_ModelReady_GrpFeature/WithPossibleMonthsHasNoCodes/")
-dir.create(file.path(proj_dir, "11A_ModelReady_GrpFeature/WithPossibleMonthsHasNoCodes/"), recursive = TRUE)
+outdir   <- paste0(proj_dir,   "11A_ModelReady_GrpFeature_CCSandDM3SPE/WithPossibleMonthsHasNoCodes/")
+dir.create(file.path(proj_dir, "11A_ModelReady_GrpFeature_CCSandDM3SPE/WithPossibleMonthsHasNoCodes/"), recursive = TRUE)
 
 ################################################################################
 #1.Final IDs
@@ -38,7 +38,7 @@ analysis_IDs <- Final_ID_df[,"study_id"]
 ################################################################################
 modelready_grps_df1 <- read.xlsx(paste0(data_dir3,"Selected_CCSDiag_Unique_Grps.xlsx"),sheet = 1)
 modelready_grps_df2 <- read.xlsx(paste0(data_dir3,"Selected_CCSProc_Unique_Grps.xlsx"),sheet = 1)
-modelready_grps_df3 <- read.xlsx(paste0(data_dir3,"Selected_VAL2ndDrug_Unique_Grps.xlsx"),sheet = 1)
+modelready_grps_df3 <- read.xlsx(paste0(data_dir3,"Selected_DM3SPEDrug_Unique_Grps.xlsx"),sheet = 1)
 
 modelready_Diag_features <- sort(modelready_grps_df1[,1])
 modelready_Proc_features <- sort(modelready_grps_df2[,1])
@@ -64,7 +64,7 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
   
   curr_file1 <- paste0("ID",curr_id,"_Month_CCS_DIAG_Feature.xlsx")
   curr_file2 <- paste0("ID",curr_id,"_Month_CCS_PROC_Feature.xlsx")
-  curr_file3 <- paste0("ID",curr_id,"_Month_VAL_2ND_Feature.xlsx")
+  curr_file3 <- paste0("ID",curr_id,"_Month_DM3_SPE_Feature.xlsx")
 
   #old per month groups df
   old_perMonth_df1 <- read.xlsx(paste0(data_dir_diag,curr_file1),sheet = 1)
