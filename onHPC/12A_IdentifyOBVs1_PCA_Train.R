@@ -63,12 +63,17 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
+
+feature_set_name <- "CCSandVAL2nd"  
+code_feature_names <- "CCS|VAL_2ND"
+
 #data dir
-data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/")
+data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/SBCE/") #It is the same no matter which SBCE_col we use, since we do not use label for PCA
 data_dir3 <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 
-newout <- "12A_PCA_VarContri_Train/WithPossibleMonthsHasNoCodes/"
+
+newout <- paste0("12A_PCA_VarContri_Train/",feature_set_name,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -89,12 +94,11 @@ table(model_data$y_PRE_OR_POST_2ndEvent) #966866  32251
 
 ####################################################################################################
 #Prepare Data for PCA 
-#1. Selecte non catogorical features
-#2. Exclude feature that are dentical for all sample
+#1. Select non catogorical features
+#2. Exclude feature that are identical for all sample
 ####################################################################################################
 #Get PCA data 
 char_features_toinclude <- c("Enrolled_year","Age","months_since_dx","reg_age_at_dx")
-code_feature_names <- "CCS|VAL_2ND"
 code_features_toinclude <- colnames(model_data)[which(grepl(code_feature_names,colnames(model_data)))] #Code count feature and 3 transforamtion feature
 PCA_df <- model_data[,c(char_features_toinclude,code_features_toinclude)]
 rownames(PCA_df) <- model_data$sample_id
