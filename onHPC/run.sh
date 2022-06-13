@@ -14,6 +14,6 @@
 #SBATCH --mail-user jli394@uky.edu               #Where to send email
 
 
-/usr/bin/Rscript --vanilla 17A_Compute_Perf_SampleLevel.R
+/usr/bin/Rscript --vanilla 11C_Get_ModelReady_TransformationFeature.R
 
 #python transfer_input-1.py
