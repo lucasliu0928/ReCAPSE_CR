@@ -1,10 +1,10 @@
 source("Recapse_Ultility.R")
-#Patinet level
-compute_binaryclass_perf_func2_PTLEVEL <- function(prediction_df,thresholdClass_col){
+#Patient level
+compute_binaryclass_perf_func2_PTLEVEL <- function(prediction_df,thresholdClass_col,SBCE_col){
   #'@NOTE: #There is no AUC in this function, since there is no prediction prob, 
   #'#we predict patient level by estimate the month of SBCE from sample predictions
   predicted_class <- prediction_df[,thresholdClass_col]
-  actual_label    <- prediction_df[,"SBCE"]
+  actual_label    <- prediction_df[,SBCE_col]
   
   #Match label factor levels
   matched_res   <- match_label_levels_func(predicted_class,actual_label)
@@ -33,12 +33,12 @@ compute_binaryclass_perf_func2_PTLEVEL <- function(prediction_df,thresholdClass_
   return(performance_table)
 }
 
-get_perf_table_PTLEVEL_func<- function(analysis_df,thres){
+get_perf_table_PTLEVEL_func<- function(analysis_df,thres,SBCE_col){
   #analysis_df = ds_pred_df
   
   #Get SBCE or nonSBCE numbers
-  n_nonSBCE           <- length(which(analysis_df[,"SBCE"]==0))
-  n_SBCE              <- length(which(analysis_df[,"SBCE"]==1))
+  n_nonSBCE           <- length(which(analysis_df[,SBCE_col]==0))
+  n_SBCE              <- length(which(analysis_df[,SBCE_col]==1))
   
   #Get performance for each thresho
   thres_class_cols <- paste0("Pred_SBCEClass_Thres_0",thres)
@@ -54,7 +54,7 @@ get_perf_table_PTLEVEL_func<- function(analysis_df,thres){
     final_perf_df[i,"N_NonRecurrent"]     <- n_nonSBCE
     final_perf_df[i,"N_Recurrent"]        <- n_SBCE
     
-    curr_perf <- compute_binaryclass_perf_func2_PTLEVEL(analysis_df,thres_class_cols[i])
+    curr_perf <- compute_binaryclass_perf_func2_PTLEVEL(analysis_df,thres_class_cols[i],SBCE_col)
     
     final_perf_df[i,"Accuracy"]               <- curr_perf["Accuracy"]
     
@@ -163,11 +163,14 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/Test/")
-data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
 
-outdir <- paste0(proj_dir, "17_Performance/")
+#data dir
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_col,"/Test/")
+data_dir2 <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+
+outdir <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_col, "/")
 
 
 ################################################################################ 
@@ -183,7 +186,6 @@ model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
 #model_list <- c("AI")
 method_list <- c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
 ths <- seq(1,9,1)
-samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
 
 for (ds_index in 0:10){
   #Create out dir for each ds 
@@ -204,15 +206,15 @@ for (ds_index in 0:10){
         }else {
           thres <- seq(1,9,1)
         }
-        #2. Get classiifition performance 
-        perf_tb_alltest <- get_perf_table_PTLEVEL_func(ds_pred_df,thres)
+        #2. Get classification performance 
+        perf_tb_alltest <- get_perf_table_PTLEVEL_func(ds_pred_df,thres,SBCE_col)
         write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,method,"_perf_tb_alltest",".csv"),row.names = T)
         
         #3.Get prediction df for SBCE patients only
-        ds_pred_df_SBCE<- ds_pred_df[which(ds_pred_df[,"SBCE"]==1), ]
+        ds_pred_df_SBCE<- ds_pred_df[which(ds_pred_df[,SBCE_col]==1), ]
         #3.1 compute the difference between predicted SBCE month and actual SBCE month
         monthdiff_df_SBCE <- compute_month_diff(ds_pred_df_SBCE,thres)
-        #3.2 Compute the perforamnce of month differnece
+        #3.2 Compute the performance of month difference
         perf_tb_monthdiff_SBCE  <- get_stats_month_diff(monthdiff_df_SBCE,thres)
         write.csv(perf_tb_monthdiff_SBCE,paste0(outdir, ds_out, model,method,"_MonthDiff_Perf_SBCE",".csv"),row.names = T)
         
