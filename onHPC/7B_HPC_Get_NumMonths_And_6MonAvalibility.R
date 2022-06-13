@@ -1,7 +1,7 @@
 source("Recapse_Ultility.R")
 compute_num_months_func <-function(in_Labeldata,event_data,SBCE_data){
   #HasEnoughMonths_InWindow:
-  #1).  If SBCE, 
+  #1).  If SBCE ((Still conosider the death here), 
   #     A. If death, at least have 3 month data before death
   #     B, If recur or diag of 2nd primary, at least 3 month data before and after 2nd event
   #2):  if not SBCE,
@@ -13,12 +13,15 @@ compute_num_months_func <-function(in_Labeldata,event_data,SBCE_data){
   
   unique_IDs <- unique(in_Labeldata[,"study_id"])
   
-  num_month_df <- as.data.frame(matrix(NA, nrow = length(unique_IDs), ncol = 9))
+  num_month_df <- as.data.frame(matrix(NA, nrow = length(unique_IDs), ncol = 12))
   colnames(num_month_df) <- c("study_id","SBCE","Second_Event_Type","Second_Event_Date",
                               "Last_Enrolled_Prediction_Month_End",
                               "Num_Enrolled_Prediction_Months",
                               "Num_Month_before_2ndEvent",
                               "Num_Month_AfterOrEqual_2ndEvent",
+                              "SBCE_Excluded_DeathLabel",
+                              "Num_Month_before_2ndEvent_ExcludedDeath",
+                              "Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath",
                               "HasEnoughMonths_InWindow")
   
   for (i in 1:length(unique_IDs)){
@@ -39,9 +42,14 @@ compute_num_months_func <-function(in_Labeldata,event_data,SBCE_data){
     curr_SBCE_label <- SBCE_data[which(SBCE_data[,"study_id"] == curr_id),"SBCE"]
     num_month_df[i,"SBCE"]  <- curr_SBCE_label 
     
-    
     num_month_df[i,"Num_Month_before_2ndEvent"]      <-  length(which(curr_enroll_df$y_PRE_OR_POST_2ndEvent==0))
     num_month_df[i,"Num_Month_AfterOrEqual_2ndEvent"] <- length(which(curr_enroll_df$y_PRE_OR_POST_2ndEvent==1))
+    
+    #SBCE label2
+    curr_SBCE_label2 <- SBCE_data[which(SBCE_data[,"study_id"] == curr_id),"SBCE_Excluded_DeathLabel"]
+    num_month_df[i,"SBCE_Excluded_DeathLabel"]  <- curr_SBCE_label2 
+    num_month_df[i,"Num_Month_before_2ndEvent_ExcludedDeath"]      <-  length(which(curr_enroll_df$y_PRE_OR_POST_2ndEvent_ExcludedDeath==0))
+    num_month_df[i,"Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath"] <- length(which(curr_enroll_df$y_PRE_OR_POST_2ndEvent_ExcludedDeath==1))
     
     #Has enough months flag
     if (curr_SBCE_label == 0){ #if no SBCE, at least as 6 month enrollment months
@@ -84,7 +92,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 #2. Get Num of months before/after 2nd event
 
 #3. get exclusion flag for patients does not qualify the following: 
-#1).  If SBCE, 
+#1).  If SBCE (Still conosider the death here), 
 #     A. If death, at least have 3 month data before death
 #     B, If recur or diag of 2nd primary, at least 3 month data before and after 2nd event
 #2):  if not SBCE,
@@ -98,7 +106,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 #data dir
 data_dir1  <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/A_PrePost_Labels/EnrolledMonths_WithPossibleMonthsHasNoCodes/")
-data_dir2  <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/A_PrePost_Labels/EnrolledMonths_WithEveryMonthsHasCodes/")
+#data_dir2  <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/A_PrePost_Labels/EnrolledMonths_WithEveryMonthsHasCodes/")
 data_dir3 <- paste0(proj_dir, "4_RecurrDates_Outcome_Info/")
 outdir   <- paste0(proj_dir, "7_PrePostLabels_AndAvailibility6mon/")
 
@@ -122,15 +130,15 @@ num_months_df1 <- compute_num_months_func(label_df1,All_event_df,SBCE_df)
 
 write.xlsx(num_months_df1,paste0(outdir,"NUM_Months_AvalFlags_WithPossibleMonthsHasNoCodes.xlsx"))
 
-############################################################
-#3. For enrollment data with month has at least one code
-############################################################
-label_files2 <- list.files(data_dir2)
-label_df2 <- do.call(rbind, lapply(paste0(data_dir2,label_files2), read.xlsx))
-
-#Compute num of months
-num_months_df2 <- compute_num_months_func(label_df2,All_event_df,SBCE_df)
-write.xlsx(num_months_df2,paste0(outdir,"NUM_Months_AvalFlags_WithEveryMonthsHasCodes.xlsx"))
-
+# ############################################################
+# #3. For enrollment data with month has at least one code
+# ############################################################
+# label_files2 <- list.files(data_dir2)
+# label_df2 <- do.call(rbind, lapply(paste0(data_dir2,label_files2), read.xlsx))
+# 
+# #Compute num of months
+# num_months_df2 <- compute_num_months_func(label_df2,All_event_df,SBCE_df)
+# write.xlsx(num_months_df2,paste0(outdir,"NUM_Months_AvalFlags_WithEveryMonthsHasCodes.xlsx"))
+# 
 
 
