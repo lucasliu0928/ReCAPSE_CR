@@ -96,13 +96,21 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/")
-data_dir3  <- paste0(proj_dir, "12A_PCA_VarContri_Train/WithPossibleMonthsHasNoCodes/")
-data_dir4  <- paste0(proj_dir, "12D_OBVsSample_Thresholds/WithPossibleMonthsHasNoCodes/")
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
 
-newout <- "12E_OBVandNONOBV_SamplesIDs/WithPossibleMonthsHasNoCodes/"
+#data dir
+data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_col,"/")
+data_dir3  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/")
+data_dir4  <- paste0(proj_dir, "12D_OBVsSample_Thresholds/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -114,7 +122,6 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ######################################################################################################## 
 #A. Load data
 load(file = paste0(data_dir1, "All_PTS_ModelReadyData.rda"))
-label_col<- "y_PRE_OR_POST_2ndEvent"
 model_data[which(model_data[,label_col] == 0),label_col] <- "Pre"
 model_data[which(model_data[,label_col] == 1),label_col] <- "Post"
 model_data[,label_col] <- factor(model_data[,label_col],levels = c("Pre", "Post")) #Factorize the label col
