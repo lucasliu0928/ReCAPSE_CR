@@ -18,10 +18,17 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir  <- paste0(proj_dir, "12B_TopPCAFeatureData_Train/WithPossibleMonthsHasNoCodes/")
 
-newout <- "12C_TopPCAFeatureDistributionPlot_Train/WithPossibleMonthsHasNoCodes/"
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+features <- c("cumul_ratio_CCS_PROC_202",
+              "cumul_ratio_CCS_PROC_227",
+              "months_since_dx",
+              "Enrolled_year")
+#data dir
+data_dir  <- paste0(proj_dir,"12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("12C_TopPCAFeatureDistributionPlot_Train/",feature_set_name,"/",SBCE_col,"/")
 newout1 <- paste0(newout, "Box_plot/")
 newout2 <- paste0(newout, "Violin_plot/")
 newout3 <- paste0(newout, "Histogram/")
@@ -48,10 +55,7 @@ load(file = paste0(data_dir, "Top4PCAFeature_ModelReadyData_Train.rda"))
 #3.Boxplot
 #######################################################################################################
 plot_df <- model_data_4f
-features <- c("cumul_ratio_CCS_PROC_202",
-              "cumul_ratio_CCS_PROC_227",
-              "months_since_dx",
-              "Enrolled_year")
+
 for (i in 1:length(features)){
   if (i %% 10 == 0){print(i)}
   feature_col <- features[i]
