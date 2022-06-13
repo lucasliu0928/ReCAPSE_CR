@@ -124,7 +124,7 @@ all_enrollment_months_df <- do.call(rbind, enrollment_months_list)
 no_enrollment_idx <- which(is.na(all_enrollment_months_df[,"Enrolled_Month"]) == T)
 all_enrollment_months_df <-  all_enrollment_months_df[-no_enrollment_idx,]
 
-#'@NOTE: this xlsx cannot be opened dirrectly in sys, but read in R has no problem, 
-#probabily because the column number does not match in the dataframe
+#'@NOTE: this xlsx cannot be opened directly in sys, but read in R has no problem, 
+#probably because the column number does not match in the dataframe
 #write.xlsx(all_enrollment_months_df,paste0(outdir,"/5_enrollment_Months.xlsx"))
 
