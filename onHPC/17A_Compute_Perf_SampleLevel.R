@@ -165,10 +165,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/Test/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/Test_0610/")
 data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
 
-outdir <- paste0(proj_dir, "17_Performance/")
+outdir <- paste0(proj_dir, "17_Performance_0610/")
 
 
 ################################################################################ 
