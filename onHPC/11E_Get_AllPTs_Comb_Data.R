@@ -16,9 +16,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir  <- paste0(proj_dir, "11D_ModelReady_CombFatures_WithSurgPrimSite_V1/WithPossibleMonthsHasNoCodes/")
+feature_set_name <- "CCSandVAL2nd"
+data_dir  <- paste0(proj_dir, "11D_ModelReady_CombFatures_",feature_set_name, "/WithPossibleMonthsHasNoCodes/")
 
-newout <- "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/"
+newout <- paste0("11E_AllPTs_ModelReadyData/",feature_set_name,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
