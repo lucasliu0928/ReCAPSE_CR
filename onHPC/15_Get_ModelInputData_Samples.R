@@ -99,16 +99,24 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-#data dir
-data_dir1        <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/WithPossibleMonthsHasNoCodes/")
-data_dir2        <- paste0(proj_dir, "12A_PCA_VarContri_Train/WithPossibleMonthsHasNoCodes/")
-data_dir3        <- paste0(proj_dir, "12E_OBVandNONOBV_SamplesIDs/WithPossibleMonthsHasNoCodes/")
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
 
-newout1 <- "15_XGB_Input/Test/"
+#data dir
+data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
+data_dir2  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/")
+data_dir3  <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
+
+newout1 <- paste0("15_XGB_Input/",feature_set_name,"/",SBCE_col,"/Test/")
 outdir   <- paste0(proj_dir, newout1)
 dir.create(file.path(proj_dir, newout1), recursive = TRUE)
 
-newout2 <- "15_XGB_Input/Train/"
+newout2 <- paste0("15_XGB_Input/",feature_set_name,"/",SBCE_col,"/Train/")
 outdir   <- paste0(proj_dir, newout2)
 dir.create(file.path(proj_dir, newout2), recursive = TRUE)
 
