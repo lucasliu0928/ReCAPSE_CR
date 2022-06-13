@@ -329,8 +329,8 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
   # kcr_df   <- kcr_data
   # All_cancer_site_date_df <- All_cancer_site_date_data
 
-  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 45))
-  colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE",
+  char_df <- as.data.frame(matrix(NA, nrow =length(analysis_ID) ,ncol = 48))
+  colnames(char_df) <- c("study_id","Medicaid_OR_Medicare","SBCE","SBCE_Excluded_DeathLabel",
                          "Diagnosis_Year","Race","Site",
                          "BestStageGrp","Stage",
                          "Comb_SEERSummStg","regional","Laterality",
@@ -344,7 +344,9 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
                          "Event_2nd_Is1stPrimaryBCDeath","Year_1stPrimaryBCDeath",
                          "Days_1stEventTODeath","Days_1stTO2nd",
                          "Num_Enrolled_Prediction_Months","most_recent_enrollment_year",
-                         "Num_Month_before_2ndEvent","Num_Month_AfterOrEqual_2ndEvent","HasEnoughMonths_InWindow")
+                         "Num_Month_before_2ndEvent","Num_Month_AfterOrEqual_2ndEvent",
+                         "Num_Month_before_2ndEvent_ExcludedDeath",
+                         "Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath","HasEnoughMonths_InWindow")
 
 
   for (i in 1:length(analysis_ID)){
@@ -372,8 +374,13 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
     char_df[i,"Num_Enrolled_Prediction_Months"]  <- curr_num_month_df[,"Num_Enrolled_Prediction_Months"]
     char_df[i,"most_recent_enrollment_year"]     <- as.numeric(unlist(strsplit(curr_num_month_df[,"Last_Enrolled_Prediction_Month_End"],split= "-"))[1])
     char_df[i,"SBCE"]          <-  curr_num_month_df[,"SBCE"]
-    char_df[i,"Num_Month_before_2ndEvent"]  <- curr_num_month_df[,"Num_Month_before_2ndEvent"]
+    char_df[i,"Num_Month_before_2ndEvent"]        <- curr_num_month_df[,"Num_Month_before_2ndEvent"]
     char_df[i,"Num_Month_AfterOrEqual_2ndEvent"]  <- curr_num_month_df[,"Num_Month_AfterOrEqual_2ndEvent"]
+    char_df[i,"SBCE_Excluded_DeathLabel"]          <-  curr_num_month_df[,"SBCE_Excluded_DeathLabel"]
+    char_df[i,"Num_Month_before_2ndEvent_ExcludedDeath"]          <-  curr_num_month_df[,"Num_Month_before_2ndEvent_ExcludedDeath"]
+    char_df[i,"Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath"]          <-  curr_num_month_df[,"Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath"]
+    
+    
     char_df[i,"HasEnoughMonths_InWindow"]  <- curr_num_month_df[,"HasEnoughMonths_InWindow"]
 
     #Event data
@@ -516,9 +523,9 @@ get_pts_level_char_func <- function(analysis_ID,ID_Sources_Df,num_month_df,event
 raw_data_dir  <- "/recapse/data/Testing data for UH3 - Dec 16 2020/"
 Proj_dir <- "/recapse/intermediate_data/"
 
-#Local
-raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
-Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+# #Local
+# raw_data_dir  <- "/Volumes/LJL_ExtPro/Data/ReCAPSE_Data/Testing data for UH3 - Dec 16 2020/"
+# Proj_dir <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 data_dir1  <- paste0(Proj_dir, "4_RecurrDates_Outcome_Info/")
 data_dir2  <- paste0(Proj_dir, "7_PrePostLabels_AndAvailibility6mon/")
@@ -591,7 +598,7 @@ get_missing_rate_table(kcr_data,c("DAJCC_T","DAJCC_M","DAJCC_N"))
 ###3.  Load Num enrolled prediction month
 ################################################################################ 
 NUM_Month_df1_Allenrolled <- read.xlsx(paste0(data_dir2,"NUM_Months_AvalFlags_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
-NUM_Month_df2_EnrolledHasCodes <- read.xlsx(paste0(data_dir2,"NUM_Months_AvalFlags_WithEveryMonthsHasCodes.xlsx"),sheet = 1)
+#NUM_Month_df2_EnrolledHasCodes <- read.xlsx(paste0(data_dir2,"NUM_Months_AvalFlags_WithEveryMonthsHasCodes.xlsx"),sheet = 1)
 
 
 ################################################################################ 
@@ -600,10 +607,10 @@ NUM_Month_df2_EnrolledHasCodes <- read.xlsx(paste0(data_dir2,"NUM_Months_AvalFla
 ID_Sources_data <- read.xlsx(paste0(data_dir3,"1_All_ID_Source.xlsx"),sheet = 1)
 
 ################################################################################ 
-##5.anlaysis ID 
+##5.analysis ID 
 ################################################################################ 
 analysis_ID1_Allenrolled <- unique(Reduce(intersect, list(All_event_df[,"study_id"],kcr_data[,"study_id"], NUM_Month_df1_Allenrolled[,"study_id"])))          #27989
-analysis_ID2_EnrolledHasCode <- unique(Reduce(intersect, list(All_event_df[,"study_id"],kcr_data[,"study_id"], NUM_Month_df2_EnrolledHasCodes[,"study_id"]))) #27830
+#analysis_ID2_EnrolledHasCode <- unique(Reduce(intersect, list(All_event_df[,"study_id"],kcr_data[,"study_id"], NUM_Month_df2_EnrolledHasCodes[,"study_id"]))) #27830
 
 ################################################################################ 
 #7. BC codes
@@ -622,6 +629,6 @@ All_cancer_site_date_data <- read.xlsx(paste0(data_dir1,"4_All_cancer_site_date_
 pts_level_char_df1 <- get_pts_level_char_func(analysis_ID1_Allenrolled,ID_Sources_data,NUM_Month_df1_Allenrolled,All_event_df,kcr_data,All_cancer_site_date_data)
 write.xlsx(pts_level_char_df1,paste0(outdir,"8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"))
 
-#1. For using enrollment data with  months has at least one codes
-pts_level_char_df2 <- get_pts_level_char_func(analysis_ID2_EnrolledHasCode,ID_Sources_data,NUM_Month_df2_EnrolledHasCodes,All_event_df,kcr_data,All_cancer_site_date_data)
-write.xlsx(pts_level_char_df2,paste0(outdir,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"))
+# #1. For using enrollment data with  months has at least one codes
+# pts_level_char_df2 <- get_pts_level_char_func(analysis_ID2_EnrolledHasCode,ID_Sources_data,NUM_Month_df2_EnrolledHasCodes,All_event_df,kcr_data,All_cancer_site_date_data)
+# write.xlsx(pts_level_char_df2,paste0(outdir,"8_PatientLevel_char_WithEveryMonthsHasCodes.xlsx"))
