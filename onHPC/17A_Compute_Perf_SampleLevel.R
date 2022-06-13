@@ -15,12 +15,6 @@ get_sample_preds_byNtoPratio <- function(predition_df, samplelabel_col,NEGtoPOS_
 
 
 compute_binaryclass_perf_func2 <- function(prediction_df,predprob_col,samplelabel_col ,thresholdClass_col){
-  #prediction_df <- ds_pred_df
-  #thresholdClass_col <- "Pred_Class_Thres_01"
-  # predprob_col <- "pred_Method_AI"
-  # samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
-  
-  
   predicted_prob  <- prediction_df[,predprob_col]
   predicted_class <- prediction_df[,thresholdClass_col]
   actual_label    <- prediction_df[,samplelabel_col]
@@ -58,17 +52,15 @@ compute_binaryclass_perf_func2 <- function(prediction_df,predprob_col,samplelabe
   return(performance_table)
 }
 
-get_perf_table_func<- function(analysis_df,predprob_col,samplelabel_col,pts_level_char_df){
-  #analysis_df <- pred_df
-  
+get_perf_table_func<- function(analysis_df,predprob_col,samplelabel_col,pts_level_char_df,SBCE_col){
   #Get pre or post numbers
   n_pre               <- length(which(analysis_df[,samplelabel_col]==0))
   n_post              <- length(which(analysis_df[,samplelabel_col]==1))
   
   #Get SBCE or not patient IDs
   analysis_char_df    <- pts_level_char_df[which(pts_level_char_df[,"study_id"] %in% analysis_df[,"study_id"]),]
-  n_nonrecurrent_pt   <- length(which(analysis_char_df[,"SBCE"]==0))
-  n_recurrent_pt      <- length(which(analysis_char_df[,"SBCE"]==1))
+  n_nonrecurrent_pt   <- length(which(analysis_char_df[,SBCE_col]==0))
+  n_recurrent_pt      <- length(which(analysis_char_df[,SBCE_col]==1))
   
   #Get performance for each threshold
   thres_class_cols <- colnames(analysis_df)[which(grepl("Thres",colnames(analysis_df))==T)]
@@ -106,14 +98,12 @@ get_perf_table_func<- function(analysis_df,predprob_col,samplelabel_col,pts_leve
 
 
 #This function gets lists of random sample prediction df for K times
-get_performance_of_random_samples_predictions <- function(K, predition_df,predprob_col, samplelabel_col,NtoP_ratio){
-  #samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
-  
+get_performance_of_random_samples_predictions <- function(K, predition_df,predprob_col, samplelabel_col,NtoP_ratio,SBCE_col){
   perf_list <- list(NA)
-  for (i in 1:K){#random sample K times and compute perforamcne
+  for (i in 1:K){#random sample K times and compute performance
     set.seed(i)
     pred_df <- get_sample_preds_byNtoPratio(predition_df,samplelabel_col,NtoP_ratio)
-    curr_pref <- get_perf_table_func(pred_df,predprob_col,samplelabel_col,pts_level_char_df)
+    curr_pref <- get_perf_table_func(pred_df,predprob_col,samplelabel_col,pts_level_char_df,SBCE_col)
     curr_pref$RANDOM_SAMPLE <- paste0("S",i)
     perf_list[[i]] <- curr_pref
     
@@ -123,16 +113,11 @@ get_performance_of_random_samples_predictions <- function(K, predition_df,predpr
   return(perf_tb)
 }
 
-get_avgPerf_eachThres_overRandSample <-function(predition_df,predprob_col , samplelabel_col,NtoP_ratio,pts_level_char_df,threshold_list){
-  # predition_df <- ds_pred_df
-  # acutal_label_col <- "y_PRE_OR_POST_2ndEvent"
-  # NtoP_ratio <- 1
-  # threshold_list <- seq(1,9,1)
-  
-  #Get perforamnce of 5 random sample on each threhoslds
-  perf_tb <- get_performance_of_random_samples_predictions(5, predition_df,predprob_col, samplelabel_col,NtoP_ratio)
+get_avgPerf_eachThres_overRandSample <-function(predition_df,predprob_col , samplelabel_col,NtoP_ratio,pts_level_char_df,threshold_list,SBCE_col){
+  #Get performance of 5 random sample on each threhoslds
+  perf_tb <- get_performance_of_random_samples_predictions(5, predition_df,predprob_col, samplelabel_col,NtoP_ratio,SBCE_col)
 
-  #Get average perforamnce for each threholds over 5 random samples
+  #Get average performance for each thresholds over 5 random samples
   threholds_names <- gsub("\\.","",paste0("Pred_Class_Thres_0",threshold_list))
   
   avg_perf_list <- list(NA)
@@ -164,12 +149,21 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
+
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/Test_0610/")
-data_dir2        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_col,"/Test/")
+data_dir2 <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
 
-outdir <- paste0(proj_dir, "17_Performance_0610/")
-
+newout <- paste0("17_Performance/",feature_set_name,"/",SBCE_col, "/")
+outdir   <- paste0(proj_dir, newout)
+dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
 ################################################################################ 
 #1. Load patient level char to get SBCE or not 
@@ -183,7 +177,6 @@ pts_level_char_df$study_id <- paste0("ID",pts_level_char_df$study_id)
 model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
 #model_list <- c("AI")
 ths <- seq(1,9,1)
-samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
 
 for (ds_index in 0:10){
   #Create out dir for each ds 
@@ -207,24 +200,24 @@ for (ds_index in 0:10){
     #2. Get performance for each sets
     ######################################################################################################### 
     #2.1.Compute performance for all test samples
-    perf_tb_alltest <- get_perf_table_func(ds_pred_df,pred_prob_col,samplelabel_col,pts_level_char_df)
+    perf_tb_alltest <- get_perf_table_func(ds_pred_df,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
     write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,"_perf_tb_alltest",".csv"),row.names = T)
     
     #2.2 compute performance for all obv neg, obv pos, and obs nonobv seperately
-    perf_tb_alltest_neg <- get_perf_table_func(ds_pred_df_neg,pred_prob_col,samplelabel_col,pts_level_char_df)
+    perf_tb_alltest_neg <- get_perf_table_func(ds_pred_df_neg,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
     write.csv(perf_tb_alltest_neg,paste0(outdir, ds_out, model,"_perf_tb_allneg",".csv"),row.names = T)
     
-    perf_tb_alltest_pos <- get_perf_table_func(ds_pred_df_pos,pred_prob_col,samplelabel_col,pts_level_char_df)
+    perf_tb_alltest_pos <- get_perf_table_func(ds_pred_df_pos,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
     write.csv(perf_tb_alltest_pos,paste0(outdir, ds_out, model,"_perf_tb_allpos",".csv"),row.names = T)
     
-    perf_tb_alltest_nonobv <- get_perf_table_func(ds_pred_df_nonobv,pred_prob_col,samplelabel_col,pts_level_char_df)
+    perf_tb_alltest_nonobv <- get_perf_table_func(ds_pred_df_nonobv,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
     write.csv(perf_tb_alltest_nonobv,paste0(outdir, ds_out, model,"_perf_tb_allnonobv",".csv"),row.names = T)
     
     
-    #2.3 Compute average performance 5 timmes sampling
-    perf_tb_pos1_neg1 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,samplelabel_col, 1,pts_level_char_df,ths)
-    perf_tb_pos1_neg2 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,samplelabel_col, 2,pts_level_char_df,ths)
-    perf_tb_pos1_neg5 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,samplelabel_col, 5,pts_level_char_df,ths)
+    #2.3 Compute average performance 5 times sampling
+    perf_tb_pos1_neg1 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 1,pts_level_char_df,ths,SBCE_col)
+    perf_tb_pos1_neg2 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 2,pts_level_char_df,ths,SBCE_col)
+    perf_tb_pos1_neg5 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 5,pts_level_char_df,ths,SBCE_col)
     
     write.csv(perf_tb_pos1_neg1,paste0(outdir, ds_out, model,"_perf_tb_1vs1",".csv"),row.names = T)
     write.csv(perf_tb_pos1_neg2,paste0(outdir, ds_out, model,"_perf_tb_1vs2",".csv"),row.names = T)
