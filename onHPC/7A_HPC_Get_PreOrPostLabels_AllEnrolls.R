@@ -57,7 +57,7 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
 
       #SBCE label
       curr_SBCE_label <- SBCE_df[which(SBCE_df[,"study_id"] == curr_id),"SBCE"]
-      
+
       if (nrow(curr_perMonth_df) != 0 & length(curr_SBCE_label) !=0){ #only do it if has enrollment month df and has labels
         #event date df
         curr_event_df <- All_event_df[which(All_event_df[,"study_id"] == curr_id),]
@@ -90,7 +90,47 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
         }
   
        curr_monthly_label_df <- curr_perMonth_df[,c("Enrolled_Month","study_id","Month_Start","Month_End","y_PRE_OR_POST_2ndEvent")]
-       write.xlsx(curr_monthly_label_df,paste0(outdir,"ID",curr_id,"_","PreOrPost_MonthlyLabel.xlsx"))
-}
-
+      }
+      
+      #SBCE label2 (Excluded death)
+      curr_SBCE_label2 <- SBCE_df[which(SBCE_df[,"study_id"] == curr_id),"SBCE_Excluded_DeathLabel"]
+      if (nrow(curr_perMonth_df) != 0 & length(curr_SBCE_label2) !=0){ #only do it if has enrollment month df and has labels
+        #event date df
+        curr_event_df <- All_event_df[which(All_event_df[,"study_id"] == curr_id),]
+        curr_date_2ndevent <- curr_event_df[,"Date_2nd_Event"]
+        
+        #Add columns for pre/post 2nd event on per month df
+        curr_perMonth_df[,"y_PRE_OR_POST_2ndEvent_ExcludedDeath"] <- NA
+        curr_perMonth_df <- curr_perMonth_df[order(curr_perMonth_df[,"Enrolled_Month"],decreasing = F),]
+        
+        if (curr_SBCE_label2 == 0 ){ #if no SBCE, all rows assigned to 0
+          curr_perMonth_df[,"y_PRE_OR_POST_2ndEvent_ExcludedDeath"] <- 0
+        }else if (curr_SBCE_label2 == 1){#if SBCE :
+          #determine the record row for 2nd event happening, assigned to 1
+          second_event_month_idx  <- which(ymd(curr_perMonth_df[,"Month_Start"]) <= mdy(curr_date_2ndevent) &
+                                             ymd(curr_perMonth_df[,"Month_End"])   >= mdy(curr_date_2ndevent))
+          if (length(second_event_month_idx)>0){#'@NOTE: it is possible the 2nd event does not happen in the enrollment months (e.g 2nd event = death)
+            curr_perMonth_df[second_event_month_idx,"y_PRE_OR_POST_2ndEvent_ExcludedDeath"] <- 1
+          }
+          
+          #Determine the row after 2nd event, assigned to 1
+          month_indxes_after  <- which(ymd(curr_perMonth_df[,"Month_Start"]) > mdy(curr_date_2ndevent))
+          if(length(month_indxes_after) > 0){
+            curr_perMonth_df[month_indxes_after,"y_PRE_OR_POST_2ndEvent_ExcludedDeath"] <- 1
+          }
+          #Determine the row before 2nd event, assigned to 0
+          month_indxes_before <- which(ymd(curr_perMonth_df[,"Month_End"]) < mdy(curr_date_2ndevent))
+          if(length(month_indxes_before) > 0){
+            curr_perMonth_df[month_indxes_before,"y_PRE_OR_POST_2ndEvent_ExcludedDeath"] <- 0
+          }
+        }
+        
+        curr_monthly_label_df2 <- curr_perMonth_df[,c("Enrolled_Month","study_id","Month_Start","Month_End","y_PRE_OR_POST_2ndEvent_ExcludedDeath")]
+      }
+      
+      #Merge the two SBCE definition table
+      curr_monthly_label_df_comb <-  merge(curr_monthly_label_df,curr_monthly_label_df2,by= c("study_id","Enrolled_Month","study_id","Month_Start","Month_End"))
+      
+      write.xlsx(curr_monthly_label_df_comb,paste0(outdir,"ID",curr_id,"_","PreOrPost_MonthlyLabel.xlsx"))
+      
 }
