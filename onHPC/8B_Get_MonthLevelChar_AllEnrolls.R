@@ -61,20 +61,28 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
     curr_1stevent_date <- mdy(curr_pt_level_df[,"Date_1st_Event"])
     curr_2ndevent_date <- mdy(curr_pt_level_df[,"Date_2nd_Event"])
     
+    curr_SBCE <-  curr_pt_level_df[,"SBCE"]
+    curr_SBCE2 <- curr_pt_level_df[,"SBCE_Excluded_DeathLabel"]
+    
+    
     #date of birth
     curr_dob <-   mdy(curr_pt_level_df[,"date_Birth"])
     
 
     #construct per patient month level data
-    curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(enrolled_month_df) ,ncol = 25))
-    colnames(curr_month_level_char_df) <- c("Enrolled_year","Age","months_since_dx",                                            "has_second_event",
+    curr_month_level_char_df <- as.data.frame(matrix(NA, nrow =nrow(enrolled_month_df) ,ncol = 27))
+    colnames(curr_month_level_char_df) <- c("Enrolled_year","Age","months_since_dx",
+                                            "has_second_event",
+                                            "has_second_event_Excluded_DeathLabel",
                                             "months_to_second_event",
+                                            "months_to_second_event_SBCE_ExcludedDeath",
                                             "Race", "Site", "Stage","Grade","Laterality",
                                             "er_stat","pr_stat","her2_stat",
                                             "surg_prim_site_V1","surg_prim_site_V2",
                                             "DAJCC_T","DAJCC_M","DAJCC_N",
                                             "reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
-                                            "cs_tum_size","cs_tum_ext","cs_tum_nodes","regional")
+                                            "cs_tum_size","cs_tum_ext","cs_tum_nodes",
+                                            "regional")
     curr_month_level_char_df <- cbind(enrolled_month_df,curr_month_level_char_df)
     
     #add features (This are the same across all rows)
@@ -83,8 +91,10 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
                       "DAJCC_T","DAJCC_M","DAJCC_N",
                       "reg_age_at_dx","reg_nodes_exam","reg_nodes_pos",
                       "cs_tum_size","cs_tum_ext","cs_tum_nodes","regional")
-    curr_month_level_char_df[,feature_cols] <- curr_pt_level_df[,feature_cols]
+    curr_month_level_char_df[,feature_cols]       <- curr_pt_level_df[,feature_cols]
     curr_month_level_char_df[,"has_second_event"] <- curr_pt_level_df[,"SBCE"]
+    curr_month_level_char_df[,"has_second_event_Excluded_DeathLabel"] <- curr_pt_level_df[,"SBCE_Excluded_DeathLabel"]
+    
     curr_month_level_char_df[,"Enrolled_year"]    <- year(curr_month_level_char_df$Enrolled_Month)
     
     #for each month row, add feature
@@ -93,12 +103,23 @@ foreach (i = 1: length(analysis_IDs)) %dopar% {
           
           curr_month_level_char_df[j,"Age"] <- as.numeric(difftime(curr_month,curr_dob,units = "days")/365)
           curr_month_level_char_df[j,"months_since_dx"] <- as.numeric(difftime(curr_month,curr_1stevent_date,units = "days"))/30 #converted to month
-          if (is.na(curr_2ndevent_date) == F){
+          
+          #for SBCE = 1
+          if (curr_SBCE == 1){
             curr_month_level_char_df[j,"months_to_second_event"] <- as.numeric(difftime(curr_month,curr_2ndevent_date,units = "days"))/30 #converted to month
             
           }else{
             curr_month_level_char_df[j,"months_to_second_event"] <- NA
           }
+          
+          #For SBCE_EXCLUDEDDeath == 1:
+          if (curr_SBCE2 == 1){
+            curr_month_level_char_df[j,"months_to_second_event_SBCE_ExcludedDeath"] <- as.numeric(difftime(curr_month,curr_2ndevent_date,units = "days"))/30 #converted to month
+            
+          }else{
+            curr_month_level_char_df[j,"months_to_second_event_SBCE_ExcludedDeath"] <- NA
+          }
+          
       
           # #number of claims in each month
           # curr_perday_file <- paste0(perday_dir,"ID",curr_id,"_perDay_Data.xlsx") #    #1.get per day file
