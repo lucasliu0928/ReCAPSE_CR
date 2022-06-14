@@ -1874,7 +1874,7 @@ load_obsSample_IDs <- function(indir, train_or_test_set,sbce_df){
   
   #Add SBCE label to the sample df
   sbce_df <- sbce_df[which(sbce_df[,"study_id"] %in% unique_pt_ids),]
-  all_df <- add_sbce_label_to_sample_func(all_df,sbce_df)
+  all_df <- add_sbce_label_to_sample_func(all_df,sbce_df,SBCE_col)
   
   
   return(list(all_df,unique_pt_ids,unique_sample_ids))
