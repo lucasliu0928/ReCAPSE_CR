@@ -2,11 +2,6 @@ source("Recapse_Ultility.R")
 library(reshape2)
 
 plot_individual_prediction <- function(pt_prediction_df, acutal_pre_post_label_col, pred_prob_col,pred_month, plot_pm = FALSE){
-  # pt_prediction_df <- curr_df
-  # acutal_pre_post_label_col <- "y_PRE_OR_POST_2ndEvent"
-  # pred_prob_col <- sp_predprob_col
-  # pred_month <- curr_pred_month
-  
   plot_data           <- curr_df[,c("month_start",acutal_pre_post_label_col,pred_prob_col)]
   colnames(plot_data) <- c("month_start","Acutal","Predicted")
   
@@ -38,6 +33,24 @@ plot_individual_prediction <- function(pt_prediction_df, acutal_pre_post_label_c
 }
 
 
+################################################################################ 
+#User input
+################################################################################ 
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+
+
+model <- "AI"                            #c("Hybrid","AI","HybridCurveFit","AICurveFit")
+method <- "Persis3Month_GT_Threshold"    #c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
+ths <- seq(1,9,1)
+ds_index <- 1
+
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
+
 ################################################################################
 #Data dir
 ################################################################################
@@ -48,18 +61,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/Test/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_col,"/Test/")
+outdir    <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_col, "/")
 
-outdir <- paste0(proj_dir, "17_Performance/")
-
-################################################################################ 
-#User input
-################################################################################ 
-model <- "AI"                            #c("Hybrid","AI","HybridCurveFit","AICurveFit")
-method <- "Persis3Month_GT_Threshold"    #c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
-ths <- seq(1,9,1)
-samplelabel_col <- "y_PRE_OR_POST_2ndEvent"
-ds_index <- 3
 
 ################################################################################ 
 #2.Get data for plot
@@ -99,14 +103,14 @@ for (i in 1:length(test_ID)){
 
   #get label and predicted month
   curr_indxes <- which(pt_pred_df[,"study_id"] == curr_id)
-  curr_label <- pt_pred_df[curr_indxes,"SBCE"]
+  curr_label <- pt_pred_df[curr_indxes,SBCE_col]
   curr_pred_month <- pt_pred_df[curr_indxes,pt_predmonth_col]
   
   if (curr_label == 1){
-    p <- plot_individual_prediction(curr_df, "y_PRE_OR_POST_2ndEvent", 
+    p <- plot_individual_prediction(curr_df, label_col, 
                                     sp_predprob_col,curr_pred_month, plot_pm = TRUE)
       
-    png(paste0(outdir, ds_out,"SBCE",curr_label,"_",curr_id,".png"),res=150,width = 700,height = 700)
+    png(paste0(outdir, ds_out,SBCE_col,curr_label,"_",curr_id,".png"),res=150,width = 700,height = 700)
     print(p)
     dev.off()
   }
