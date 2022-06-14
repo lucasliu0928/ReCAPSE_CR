@@ -7,13 +7,21 @@ source("Recapse_Ultility.R")
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+feature_set_name <- "CCSandVAL2nd"
+if (SBCE_col == "SBCE"){
+  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+}else{
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+}
 
 #data dir
-data_dir1        <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
-data_dir2        <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/WithPossibleMonthsHasNoCodes/")
+data_dir1  <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+data_dir2  <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
 
-newout <- "18_Discrip_Statistics/"
+newout <- paste0("18_Discrip_Statistics/",feature_set_name,"/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -55,15 +63,15 @@ pt_char_df <- pt_char_df[which(pt_char_df[,"study_id"] %in% all_analysis_pt_ids)
 #G. obvious pos test
 #H. non-obvious test
 ################################################################################ 
-train_num_df1 <- compute_prepost_and_sbcepts_func(all_train_df)
-train_num_df2 <- compute_prepost_and_sbcepts_func(all_train_df[which(all_train_df$OBV_TYPE == "OBV_NEG"),])
-train_num_df3 <- compute_prepost_and_sbcepts_func(all_train_df[which(all_train_df$OBV_TYPE == "OBV_POS"),])
-train_num_df4 <- compute_prepost_and_sbcepts_func(all_train_df[which(all_train_df$OBV_TYPE == "OBV_NON"),])
+train_num_df1 <- compute_prepost_and_sbcepts_func(all_train_df, SBCE_col)
+train_num_df2 <- compute_prepost_and_sbcepts_func(all_train_df[which(all_train_df$OBV_TYPE == "OBV_NEG"),],SBCE_col)
+train_num_df3 <- compute_prepost_and_sbcepts_func(all_train_df[which(all_train_df$OBV_TYPE == "OBV_POS"),],SBCE_col)
+train_num_df4 <- compute_prepost_and_sbcepts_func(all_train_df[which(all_train_df$OBV_TYPE == "OBV_NON"),],SBCE_col)
 
-test_num_df1 <- compute_prepost_and_sbcepts_func(all_test_df)
-test_num_df2 <- compute_prepost_and_sbcepts_func(all_test_df[which(all_test_df$OBV_TYPE == "OBV_NEG"),])
-test_num_df3 <- compute_prepost_and_sbcepts_func(all_test_df[which(all_test_df$OBV_TYPE == "OBV_POS"),])
-test_num_df4 <- compute_prepost_and_sbcepts_func(all_test_df[which(all_test_df$OBV_TYPE == "OBV_NON"),])
+test_num_df1 <- compute_prepost_and_sbcepts_func(all_test_df,SBCE_col)
+test_num_df2 <- compute_prepost_and_sbcepts_func(all_test_df[which(all_test_df$OBV_TYPE == "OBV_NEG"),],SBCE_col)
+test_num_df3 <- compute_prepost_and_sbcepts_func(all_test_df[which(all_test_df$OBV_TYPE == "OBV_POS"),],SBCE_col)
+test_num_df4 <- compute_prepost_and_sbcepts_func(all_test_df[which(all_test_df$OBV_TYPE == "OBV_NON"),],SBCE_col)
 
 all_num_df <- rbind(train_num_df1,train_num_df2,train_num_df3,train_num_df4,
                     test_num_df1,test_num_df2,test_num_df3,test_num_df4)
@@ -72,10 +80,10 @@ rownames(all_num_df) <- c("All_Train","OBV_NEG_Train","OBV_POS_Train","OBV_NON_T
 write.csv(all_num_df,paste0(outdir,"NUM_preOrpostSamples_sbcePatients_TrainTest.csv"))
 
 ################################################################################
-#3.Get SBCE and non-SBCE pts char df  for computate stats seperatly
+#3.Get SBCE and non-SBCE pts char df  for compute stats separately
 ################################################################################
-pt_char_df_SBCE1   <- pt_char_df[which(pt_char_df[,"SBCE"] == 1),]
-pt_char_df_SBCE0   <- pt_char_df[which(pt_char_df[,"SBCE"] == 0),]
+pt_char_df_SBCE1   <- pt_char_df[which(pt_char_df[,SBCE_col] == 1),]
+pt_char_df_SBCE0   <- pt_char_df[which(pt_char_df[,SBCE_col] == 0),]
 
 ################################################################################ 
 #3. Report some stats
@@ -85,11 +93,16 @@ pt_char_df_SBCE0   <- pt_char_df[which(pt_char_df[,"SBCE"] == 0),]
 #Version2 (Quan):  00,19,20 (21-24),30,40,41,42,50,51(53-56),52(57,58,59,63),60,61(64-67),62(68,69,73,74),70,71,72,80,90,99
 #'@Note: These table does not show all features for training (e.g, age at each month, monthes since diagnosis)
 ################################################################################ 
-all_variables <- c("SBCE","Medicaid_OR_Medicare",
+if (SBCE_col == "SBCE"){
+  num_month_vars <- c("Num_Month_before_2ndEvent","Num_Month_AfterOrEqual_2ndEvent")
+}else{
+  num_month_vars <- c("Num_Month_before_2ndEvent_ExcludedDeath", "Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath")
+}
+all_variables <- c(SBCE_col,"Medicaid_OR_Medicare",
                    "DAJCC_M","DAJCC_N","DAJCC_T",
                    "reg_age_at_dx","Diagnosis_Year",
                    "most_recent_enrollment_year",
-                   "Num_Month_before_2ndEvent","Num_Month_AfterOrEqual_2ndEvent",
+                   num_month_vars,
                    "Num_Enrolled_Prediction_Months",
                    "Type_2nd_Event",
                    "Race" , "Site" , "Stage","Grade",
@@ -97,7 +110,8 @@ all_variables <- c("SBCE","Medicaid_OR_Medicare",
                     "reg_nodes_exam", "reg_nodes_pos", "surg_prim_site_V1","surg_prim_site_V2",
                     "cs_tum_size", "cs_tum_ext", 
                     "cs_tum_nodes", "regional")
-n_perc_variables <- c("SBCE", "Medicaid_OR_Medicare", "Race","Site","Stage","Grade","Laterality",
+
+n_perc_variables <- c(SBCE_col, "Medicaid_OR_Medicare", "Race","Site","Stage","Grade","Laterality",
                       "er_stat","pr_stat","her2_stat","surg_prim_site_V1","surg_prim_site_V2","regional",
                       "most_recent_enrollment_year","Diagnosis_Year","Type_2nd_Event",
                       "DAJCC_M","DAJCC_N","DAJCC_T")
@@ -110,7 +124,7 @@ table_comb <- cbind(table_all,table_sbce,table_nonsbce)
 write.csv(table_comb, paste0(outdir,"discrip_table.csv"))
 
 ################################################################################ 
-#Histgram
+#Histogram
 ################################################################################ 
 #Plot Diagnosis_Year:
 output_hist_forSBCEand_nonSBCE(pt_char_df,"Diagnosis_Year","Diagnosis Year",
