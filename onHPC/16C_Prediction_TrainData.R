@@ -16,13 +16,14 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
-if (SBCE_col == "SBCE"){
+if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
   label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
 }
+
 
 #data dir
 data_dir1 <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
@@ -48,6 +49,13 @@ for (ds_index in 0:10){
   train_neg_df[,"OBV_CLASS"] <- "NEG"
   train_pos_df[,"OBV_CLASS"] <- "POS"
   train_nonobv_ds_df[,"OBV_CLASS"] <- "nonOBV"
+  
+  print("# training non-obv Samples:")
+  print(nrow(train_nonobv_ds_df))
+  print("# training neg Samples:")
+  print(nrow(train_neg_df))
+  print("# training pos Samples:")
+  print(nrow(train_pos_df))
   
   ################################################################################
   #1. Load optimal model and features
