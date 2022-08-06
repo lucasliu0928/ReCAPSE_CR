@@ -20,9 +20,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_ID_folder    <- "SBCE_Excluded_DeathPts"#Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
-if (SBCE_col == "SBCE"){
+if (SBCE_ID_folder == "SBCE" | (SBCE_ID_folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
   label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
@@ -32,10 +32,10 @@ if (SBCE_col == "SBCE"){
 #data dir
 
 data_dir  <- paste0(proj_dir,"11E_AllPTs_ModelReadyData/",feature_set_name,"/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_col,"/") 
-data_dir3 <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_ID_folder,"/") 
+data_dir3 <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_ID_folder,"/")
 
-newout <- paste0("12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_col,"/")
+newout <- paste0("12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_ID_folder,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
