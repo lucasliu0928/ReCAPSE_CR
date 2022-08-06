@@ -66,14 +66,16 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 feature_set_name <- "CCSandVAL2nd"  
 code_feature_names <- "CCS|VAL_2ND"
+#'@NOTE: use SBCE ID folder to get IDS, labels are not used for PCA
+SBCE_ID_folder <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 
 #data dir
 data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/SBCE/") #It is the same no matter which SBCE_col we use, since we do not use label for PCA
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_ID_folder,"/") 
 data_dir3 <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 
 
-newout <- paste0("12A_PCA_VarContri_Train/",feature_set_name,"/")
+newout <- paste0("12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_ID_folder,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -90,7 +92,7 @@ train_IDs <- unique(train_ID_df[,"study_id"])
 
 #C.Updated model data for train data only
 model_data <- model_data[model_data[,"study_id"] %in% train_IDs,]
-table(model_data$y_PRE_OR_POST_2ndEvent) #966866  32251
+table(model_data$y_PRE_OR_POST_2ndEvent) #966866  32251 or 963687  32473
 
 ####################################################################################################
 #Prepare Data for PCA 
