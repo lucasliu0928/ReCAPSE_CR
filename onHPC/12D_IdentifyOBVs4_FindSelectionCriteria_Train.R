@@ -57,7 +57,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
 
 #data dir
@@ -78,9 +78,9 @@ compute_sp_label_ratio(model_data_4f)
 
 ######################################################################################################## 
 #2. OBV NEGTIVES
-#Find best combination of thresholds for featrues for NEGs
+#Find best combination of thresholds for features for NEGs
 # Best: 
-#1. good precision of selected negtive samples (Proportion of neg is high)
+#1. good precision of selected negative samples (Proportion of neg is high)
 #2  neg:pos ratio of after exclusion is OK (more balanced)
 ######################################################################################################## 
 #2A. Get threshold list by checking the distribution plot
@@ -150,6 +150,9 @@ if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd")
 }else if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
   turning_pt_x <- 0.9814992 
   turning_pt_y <- 19.80003
+}else if (SBCE_col == "SBCE_Excluded_DeathPts" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.9826699 
+  turning_pt_y <- 19.69092
 }
 
 var_name1 <- "Threshold_PROC202"
@@ -238,6 +241,9 @@ if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd")
 }else if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
   turning_pt_x <- 0.0417920
   turning_pt_y <- 34.18392
+}else if (SBCE_col == "SBCE_Excluded_DeathPts" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.0425793
+  turning_pt_y <- 34.04217
 }
 
 var_name1 <- "Threshold_PROC202"
