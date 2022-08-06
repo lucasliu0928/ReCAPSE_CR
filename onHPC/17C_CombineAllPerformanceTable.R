@@ -16,13 +16,13 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
 
 #data dir
-data_dir1 <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_col, "/")
+data_dir1 <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_ID_Folder, "/")
 
-outdir <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_col, "/")
+outdir <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_ID_Folder, "/")
 
 
 ################################################################# 
