@@ -19,6 +19,7 @@ get_thres_onevar_func <-function(thres_df,thres_name){
 identify_neg_func <-function(in_data , thres_df){
   #1.print Original ratio
   sp_res        <- compute_sp_label_ratio(in_data)
+  print("Original Ratio")
   print(sp_res)
   
   #2.Get threhold
@@ -32,6 +33,7 @@ identify_neg_func <-function(in_data , thres_df){
   
   #3.Print sample ratio
   sp_res        <- compute_sp_label_ratio(sample_data)
+  print("SP Ratio")
   print(sp_res)
   
   #4.Only keep id and label
@@ -96,9 +98,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
-if (SBCE_col == "SBCE"){
+if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
   label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
@@ -107,7 +109,7 @@ if (SBCE_col == "SBCE"){
 #data dir
 data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
 data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_col,"/")
-data_dir3  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/")
+data_dir3  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_col,"/")
 data_dir4  <- paste0(proj_dir, "12D_OBVsSample_Thresholds/",feature_set_name,"/",SBCE_col,"/")
 
 newout <- paste0("12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
@@ -163,16 +165,19 @@ thres_pos_df <- read.csv(paste0(data_dir4,"Threshold_POS.csv"),stringsAsFactors 
 ########################################################################################################
 #Identify sample for train data
 ########################################################################################################
+print("Training NEG:")
 #1.Get obv neg ids
 neg_train_data <- identify_neg_func(train_data,thres_neg_df)
 neg_train_sample_ids <- neg_train_data[,"sample_id"]
 write.csv(neg_train_data,paste0(proj_dir, newout,"ObviousNeg_Samples_Train.csv"))
 
+print("Training POS:")
 #2.Get obv pos ids
 pos_train_data <- identify_pos_func(train_data, thres_pos_df,neg_train_sample_ids)
 pos_train_sample_ids <- pos_train_data[,"sample_id"]
 write.csv(pos_train_data,paste0(proj_dir, newout,"ObviousPos_Samples_Train.csv"))
 
+print("Training non-obv:")
 #3.Get non-obv ids
 non_obvious_train_data <- identify_nonobv_func(train_data,neg_train_sample_ids,pos_train_sample_ids)
 write.csv(non_obvious_train_data,paste0(proj_dir, newout,"NON_Obvious_Samples_Train.csv"))
@@ -181,16 +186,19 @@ write.csv(non_obvious_train_data,paste0(proj_dir, newout,"NON_Obvious_Samples_Tr
 #Identify sample for test data
 ########################################################################################################
 #1.Get obv neg ids
+print("Testing NEG:")
 neg_test_data <- identify_neg_func(test_data,thres_neg_df)
 neg_test_sample_ids <- neg_test_data[,"sample_id"]
 write.csv(neg_test_data,paste0(proj_dir, newout,"ObviousNeg_Samples_Test.csv"))
 
 #2.Get obv pos ids
+print("Testing POS:")
 pos_test_data <- identify_pos_func(test_data, thres_pos_df,neg_test_sample_ids)
 pos_test_sample_ids <- pos_test_data[,"sample_id"]
 write.csv(pos_test_data,paste0(proj_dir, newout,"ObviousPos_Samples_Test.csv"))
 
 #3.Get non-obv ids
+print("Testing non-obv:")
 non_obvious_test_data <- identify_nonobv_func(test_data,neg_test_sample_ids,pos_test_sample_ids)
 write.csv(non_obvious_test_data,paste0(proj_dir, newout,"NON_Obvious_Samples_Test.csv"))
 
