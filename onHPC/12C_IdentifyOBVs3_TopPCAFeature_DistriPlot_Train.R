@@ -19,7 +19,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_col    <- "SBCE_Excluded_DeathPts" ##Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
 features <- c("cumul_ratio_CCS_PROC_202",
               "cumul_ratio_CCS_PROC_227",
