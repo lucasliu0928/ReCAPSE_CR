@@ -63,15 +63,18 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 #User input
 #'@NOTE: ds_index = 1 for SBCE_Excluded_DeathLabel
 #'       ds_index = 3 for SBCE
+#'       ds_index = 5 for SBCE_Excluded_DeathPts
 ################################################################################ 
-SBCE_col    <- "SBCE" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
-if (SBCE_col == "SBCE"){
-  label_col   <- "y_PRE_OR_POST_2ndEvent"  
+if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
+  label_col   <- "y_PRE_OR_POST_2ndEvent" 
 }else{
-  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+  label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath" 
 }
-ds_index <- 3
+
+ds_index <- 5  #DS1 for SBCE_Excluded_DeathLabel, DS5 for SBCE_Excluded_DeathPts
+
 
 ################################################################################
 #Data dir
@@ -83,11 +86,11 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1 <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
-data_dir2 <- paste0(proj_dir,"16B_Trained_ImportantFeatureModel/",feature_set_name,"/",SBCE_col,"/")
+data_dir1 <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_ID_Folder,"/")
+data_dir2 <- paste0(proj_dir,"16B_Trained_ImportantFeatureModel/",feature_set_name,"/",SBCE_ID_Folder,"/")
 data_dir3 <- paste0(proj_dir,"/10G_Counts_UniqueGrp_PtsLevel/WithPossibleMonthsHasNoCodes/")
 
-outdir <- paste0(proj_dir, "17_Performance/",feature_set_name,"/",SBCE_col,"/")
+outdir <- paste0(proj_dir, "17_Performance/",feature_set_name,"/",SBCE_ID_Folder,"/")
 
 #Create directory
 ds_out <- paste0("DS",ds_index,"/SHAP/")
