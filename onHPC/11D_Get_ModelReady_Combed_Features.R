@@ -22,7 +22,7 @@ data_dir2  <- paste0(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHas
 data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFeatures_CCSandVAL2nd/WithPossibleMonthsHasNoCodes/")
 data_dir4  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-newout <- "11D_ModelReady_CombFatures_CCSandVAL2nd/WithPossibleMonthsHasNoCodes/"
+newout <- "11D_ModelReady_CombFatures_CCSandDM3SPE/WithPossibleMonthsHasNoCodes/"
 
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
