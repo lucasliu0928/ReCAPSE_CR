@@ -11,32 +11,46 @@ proj_dir  <- "/recapse/intermediate_data/"
 #data dir
 data_dir1        <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-SBCE_col <- "SBCE_Excluded_DeathLabel"  #Choose SBCE or SBCE_Excluded_DeathLabel
+#'@NOTE: 
+#'SBCE: consider there types of events
+#'SBCE_Excluded_DeathLabel: treat death label as 0
+#'SBCE_Excluded_DeathPts: exclude pts with sole death event 
+SBCE_col <- "SBCE_Excluded_DeathPts"  #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 newout <- paste0("11F_TrainTestIDs/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
-################################################################################ 
-#1. Load analysis ID
-################################################################################ 
-Analysis_df <- read.xlsx(paste0(data_dir1,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,sep.names = " ")
-Final_ID    <- unique(Analysis_df$study_id) #18239
-
+# ################################################################################ 
+# #1. Load analysis ID
+# ################################################################################ 
+# Analysis_df <- read.xlsx(paste0(data_dir1,"9_Final_ID1_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,sep.names = " ")
+# Final_ID    <- unique(Analysis_df$study_id) #18239
 
 ################################################################################ 
 #4. Pts char
 ################################################################################ 
 pts_level_char_df <- read.xlsx(paste0(data_dir1,"9_PtsCharForFinalID_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1,sep.names = " ")
-pts_level_char_df <- pts_level_char_df[which(pts_level_char_df$study_id %in% Final_ID),] #only keep char for final ID
-print("Original non-SBCE vs SBCE : ")
-table(pts_level_char_df[,SBCE_col]) #16917  1322
 
+#'@NOTE: Some patient who died and also get other 2nd event(1st recur), ttey are still kept,
+#'Only exclude patient who has sole event = death
+if (SBCE_col == "SBCE_Excluded_DeathPts"){
+  idxes <- which(pts_level_char_df[,"Type_2nd_Event"] == "Primary1stBC_related_Death") 
+  pts_level_char_df <- pts_level_char_df[-idxes,]
+  SBCE_col <- "SBCE" #Still use the same label column as SBCE
+}
+
+print("Original non-SBCE vs SBCE : ")
+table(pts_level_char_df[,SBCE_col]) #16917  1322 or 17054  1185  or 16917  1185
+
+Final_ID <- unique(pts_level_char_df[,"study_id"])
 ################################################################################ 
 #2. Get SBCE and non-SBCE IDs
 ################################################################################ 
 sbce_pt_Ids <-   unique(pts_level_char_df$study_id[which(pts_level_char_df[,SBCE_col] == 1)])
 nosbce_pt_Ids <- unique(pts_level_char_df$study_id[which(pts_level_char_df[,SBCE_col] == 0)])
 original_noSBCE_toSBCEratio <- round(length(nosbce_pt_Ids)/length(sbce_pt_Ids)) #10: 1
+print("Original non-SBCE vs SBCE Ratio: ")
+print(original_noSBCE_toSBCEratio)
 
 ######################################################################################################## 
 #3. make sure no overlapping in original Ids in train and test
