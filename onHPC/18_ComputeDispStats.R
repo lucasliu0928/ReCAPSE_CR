@@ -9,19 +9,21 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
-if (SBCE_col == "SBCE"){
+if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
+  SBCE_col <- "SBCE"
 }else{
   label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+  SBCE_col <- "SBCE_Excluded_DeathLabel"
 }
 
 #data dir
 data_dir1  <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
-data_dir2  <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
+data_dir2  <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_ID_Folder,"/")
 
-newout <- paste0("18_Discrip_Statistics/",feature_set_name,"/",SBCE_col,"/")
+newout <- paste0("18_Discrip_Statistics/",feature_set_name,"/",SBCE_ID_Folder,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -93,7 +95,7 @@ pt_char_df_SBCE0   <- pt_char_df[which(pt_char_df[,SBCE_col] == 0),]
 #Version2 (Quan):  00,19,20 (21-24),30,40,41,42,50,51(53-56),52(57,58,59,63),60,61(64-67),62(68,69,73,74),70,71,72,80,90,99
 #'@Note: These table does not show all features for training (e.g, age at each month, monthes since diagnosis)
 ################################################################################ 
-if (SBCE_col == "SBCE"){
+if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   num_month_vars <- c("Num_Month_before_2ndEvent","Num_Month_AfterOrEqual_2ndEvent")
 }else{
   num_month_vars <- c("Num_Month_before_2ndEvent_ExcludedDeath", "Num_Month_AfterOrEqual_2ndEvent_ExcludedDeath")
