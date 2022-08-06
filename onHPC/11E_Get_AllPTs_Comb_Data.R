@@ -16,7 +16,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name <- "CCSandDM3SPE"
 data_dir  <- paste0(proj_dir, "11D_ModelReady_CombFatures_",feature_set_name, "/WithPossibleMonthsHasNoCodes/")
 
 newout <- paste0("11E_AllPTs_ModelReadyData/",feature_set_name,"/")
