@@ -16,9 +16,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathLabel" #choose SBCE or SBCE_Excluded_DeathLabel
+SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 feature_set_name <- "CCSandVAL2nd"
-if (SBCE_col == "SBCE"){
+if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
   label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
@@ -39,7 +39,8 @@ for (i in 0:10){#0:10
   ################################################################################
   load(file = paste0(data_dir1, "Train/train_nonobv_DS", i, ".rda"))
   train_data <- train_nonobv_ds_df
-  
+  print("# training non-obv Samples:")
+  print(nrow(train_data))
   ################################################################################
   #Load important features for each DS
   ################################################################################
