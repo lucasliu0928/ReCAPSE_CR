@@ -98,21 +98,28 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+
+feature_set_name  <- "CCSandDM3SPE"         #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_col    <- "SBCE_Excluded_DeathLabel" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+
 if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
   label_col   <- "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
 }
 
-#data dir
-data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_col,"/")
-data_dir3  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_col,"/")
-data_dir4  <- paste0(proj_dir, "12D_OBVsSample_Thresholds/",feature_set_name,"/",SBCE_col,"/")
 
-newout <- paste0("12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
+
+#data dir
+data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/",sample_name, "/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",feature_set_name, "/",sample_name, "/",SBCE_col,"/")
+data_dir3  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",sample_name,"/",SBCE_col,"/")
+data_dir4  <- paste0(proj_dir, "12D_OBVsSample_Thresholds/",feature_set_name,"/", sample_name,"/", SBCE_col,"/")
+
+
+
+newout <- paste0("12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",sample_name,"/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -124,11 +131,14 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ######################################################################################################## 
 #A. Load data
 load(file = paste0(data_dir1, "All_PTS_ModelReadyData.rda"))
+if (grepl("Samples_HasAtLeastOneCodeGrpFeature",data_dir1) == T){
+  model_data <- model_data_excluded
+}
+
 model_data[which(model_data[,label_col] == 0),label_col] <- "Pre"
 model_data[which(model_data[,label_col] == 1),label_col] <- "Post"
 model_data[,label_col] <- factor(model_data[,label_col],levels = c("Pre", "Post")) #Factorize the label col
 colnames(model_data)[which(colnames(model_data) == label_col)] <- "Label" #change column name
-
 
 #B.Load contribution file
 feature_contribution_PCA <- read.csv(paste0(data_dir3,"PCA_Variable_Contribution.csv"),stringsAsFactors = F)
