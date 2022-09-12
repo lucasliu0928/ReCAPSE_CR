@@ -19,9 +19,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
+feature_set_name <- "CCSandDM3SPE" #choose from CCSandDM3SPE , CCSandVAL2nd
+sample_name      <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+SBCE_ID_folder   <- "SBCE_Excluded_DeathPts"#Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 
-SBCE_ID_folder    <- "SBCE_Excluded_DeathPts"#Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
 if (SBCE_ID_folder == "SBCE" | (SBCE_ID_folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
@@ -30,15 +31,13 @@ if (SBCE_ID_folder == "SBCE" | (SBCE_ID_folder == "SBCE_Excluded_DeathPts")){
 }
   
 #data dir
+data_dir  <- paste0(proj_dir,"11E_AllPTs_ModelReadyData/",feature_set_name,"/",sample_name,"/")
+data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",feature_set_name, "/",sample_name, "/",SBCE_ID_folder,"/")
+data_dir3 <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",sample_name,"/",SBCE_ID_folder,"/")
 
-data_dir  <- paste0(proj_dir,"11E_AllPTs_ModelReadyData/",feature_set_name,"/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_ID_folder,"/") 
-data_dir3 <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_ID_folder,"/")
-
-newout <- paste0("12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_ID_folder,"/")
+newout <- paste0("12B_TopPCAFeatureData_Train/",feature_set_name,"/",sample_name,"/",SBCE_ID_folder,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
-
 
 ######################################################################################################## 
 #1.Load PCA feature contribution data
@@ -50,7 +49,9 @@ feature_contribution_PCA <- read.csv(paste0(data_dir3,"PCA_Variable_Contribution
 ######################################################################################################## 
 #1A. Load all pts data
 load(file = paste0(data_dir, "All_PTS_ModelReadyData.rda"))
-
+if (grepl("Samples_HasAtLeastOneCodeGrpFeature",data_dir) == T){
+  model_data <- model_data_excluded
+}
 
 #1B. Change the label value from 0,1 to Pre,Post
 pre_idxes  <- which(model_data[,label_col] == 0)
@@ -89,7 +90,7 @@ save(model_data_4f, file=paste0(outdir, "Top4PCAFeature_ModelReadyData_Train.rda
 
 
 ######################################################################################################## 
-#4.Get normlized top 10 features on dim 1 for computing weighted sum
+#4.Get normalized top 10 features on dim 1 for computing weighted sum
 ######################################################################################################## 
 top10Fs_dim1 <- feature_contribution_PCA[order(feature_contribution_PCA[,"Dim.1"],decreasing = T),"X"][1:10]
 normalise_model_data <- as.data.frame(lapply(model_data[,top10Fs_dim1], norm_minmax))
