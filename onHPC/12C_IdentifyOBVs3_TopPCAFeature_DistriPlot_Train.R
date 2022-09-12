@@ -19,16 +19,19 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
-SBCE_col    <- "SBCE_Excluded_DeathPts" ##Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"           #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+
 features <- c("cumul_ratio_CCS_PROC_202",
               "cumul_ratio_CCS_PROC_227",
               "months_since_dx",
               "Enrolled_year")
 #data dir
-data_dir  <- paste0(proj_dir,"12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_col,"/")
+data_dir  <- paste0(proj_dir,"12B_TopPCAFeatureData_Train/",feature_set_name,"/",sample_name, "/",SBCE_ID_folder,"/")
 
-newout <- paste0("12C_TopPCAFeatureDistributionPlot_Train/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("12C_TopPCAFeatureDistributionPlot_Train/",feature_set_name,"/",sample_name, "/",SBCE_ID_folder,"/")
 newout1 <- paste0(newout, "Box_plot/")
 newout2 <- paste0(newout, "Violin_plot/")
 newout3 <- paste0(newout, "Histogram/")
