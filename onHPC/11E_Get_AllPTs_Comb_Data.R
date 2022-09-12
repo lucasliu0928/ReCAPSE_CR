@@ -16,13 +16,19 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-feature_set_name <- "CCSandDM3SPE"
+feature_set_name <- "CCSandVAL2nd"  #choose from CCSandDM3SPE , CCSandVAL2nd
+drug_feature_colnames <- "VAL_2ND"    #choose from "DM3_SPE","VAL_2ND"
 data_dir  <- paste0(proj_dir, "11D_ModelReady_CombFatures_",feature_set_name, "/WithPossibleMonthsHasNoCodes/")
 
-newout <- paste0("11E_AllPTs_ModelReadyData/",feature_set_name,"/")
+outdir0 <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
+
+newout <- paste0("11E_AllPTs_ModelReadyData/",feature_set_name,"/All_Samples/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
+newout2 <- paste0("11E_AllPTs_ModelReadyData/",feature_set_name,"/Samples_HasAtLeastOneCodeGrpFeature/")
+outdir2   <- paste0(proj_dir, newout2)
+dir.create(file.path(proj_dir, newout2), recursive = TRUE)
 ######################################################################################################## 
 #1. Load and combine all patient model ready data
 ######################################################################################################## 
@@ -35,7 +41,7 @@ model_data$study_id <- sapply(original_IDs, "[[", 1)
 
 #Missingness check
 missing_tb <- get_missing_rate_table(model_data,colnames(model_data))
-write.csv(missing_tb,paste0(outdir, "missing_table_before.csv"))
+write.csv(missing_tb,paste0(outdir0, "missing_table_before.csv"))
           
 #@NOTE The missing for model_data is due to:
 #For surg prim site v1: the version does not cover these values:43,44,45,46,47,48,49, 75 and 76
@@ -51,7 +57,26 @@ for (j in 1:length(surg_prim_site_features_indexes)){
 
 #Check Missing again
 missing_tb <- get_missing_rate_table(model_data,colnames(model_data))
-write.csv(missing_tb,paste0(outdir, "missing_table_after.csv"))
+write.csv(missing_tb,paste0(outdir0, "missing_table_after.csv"))
 
-#Output
+########################################################################
+#'@ADDED091122 Output
+#A.Output all samples
+#B.Output samples if all diag/proc/drug(DM3 or Val2nd) is not 0
+########################################################################
+#A.Output all samples (Some samples has code group feature 0)
 save(model_data, file=paste0(outdir, "All_PTS_ModelReadyData.rda"))
+
+#B.Output samples if all diag/proc/drug(DM3 or Val2nd) is not 0
+drug_grp_count_cols <- colnames(model_data)[grepl(paste0("^", drug_feature_colnames),colnames(model_data))]
+diag_grp_count_cols <- colnames(model_data)[grepl("^CCS_DIAG",colnames(model_data))]
+proc_grp_count_cols <- colnames(model_data)[grepl("^CCS_PROC",colnames(model_data))]
+
+#Exclude samples has no group count feature
+model_data_excluded <- model_data[rowSums(model_data[,c(drug_grp_count_cols,
+                                                        diag_grp_count_cols,
+                                                        proc_grp_count_cols)]) > 0,] #excluded 329802 in DME3
+save(model_data_excluded, file=paste0(outdir2, "All_PTS_ModelReadyData.rda"))
+
+id_df_excluded <- as.data.frame(model_data_excluded[,c("sample_id","study_id")])
+write.csv(id_df_excluded,paste0(outdir2, "SampleIDs_HasAtLeastOneCodeGrpFeature.csv"))
