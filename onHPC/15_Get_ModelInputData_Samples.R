@@ -12,11 +12,6 @@ source("Recapse_Ultility.R")
 #   c)Obvious positive samples
 
 Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,random_perc = 0.8){
-  # upsample_flag <- 0
-  # train_data <- train_data
-  # label_col_name <- "y_PRE_OR_POST_2ndEvent"
-  # seed_num <- 1
-  
   #Get label col index
   label_col_index <- which(colnames(train_data) == label_col_name)
   
@@ -52,27 +47,14 @@ Data_Sampling_Func <- function(upsample_flag,train_data,label_col_name,seed_num,
   return(sampled_train_data)
 }
 
-print_n_prepostsamples_func <- function(in_data, data_name){
+print_n_prepostsamples_func <- function(in_data, data_name,label_col){
   #in_data <- model_data
-  tb      <- table(in_data[,"y_PRE_OR_POST_2ndEvent"])
+  tb      <- table(in_data[,label_col])
   n_pre   <- as.numeric(tb[which(names(tb)==0)])
   n_post  <- as.numeric(tb[which(names(tb)==1)])
   
   print(paste0(data_name, "Pre:" , n_pre, " Post:",n_post, " Total:", nrow(in_data)))
 }
-
-get_SampleIDs_withDSLabels <-function(in_data,downsampled_sampleIDs,ds_index){
-  model_data_IDandLabels <- in_data[,c("study_id","sample_id","y_PRE_OR_POST_2ndEvent")]
-  
-  #Add downsample train flag col
-  model_data_IDandLabels$DownSampled_Train <- NA
-  train_idxes2 <- which(model_data_IDandLabels[,"sample_id"] %in% downsampled_sampleIDs)
-  model_data_IDandLabels[train_idxes2,"DownSampled_Train"] <- ds_index
-  
-  return(model_data_IDandLabels)
-}
-
-
 
 get_data_inCategory_func <- function(in_data, id_dir, id_file){
   id_df  <- read.csv(paste0(id_dir,id_file),stringsAsFactors = F)
@@ -80,7 +62,8 @@ get_data_inCategory_func <- function(in_data, id_dir, id_file){
   sample_df <- in_data[which(in_data[,"sample_id"] %in% sample_IDs),]
   #Print num of pre and post samples 
   cohort_name <- gsub(".csv|_Samples","",id_file)
-  print_n_prepostsamples_func(sample_df,cohort_name)
+  print_n_prepostsamples_func(sample_df,cohort_name,label_col)
+  
   return(sample_df)
 }
 ################################################################################
@@ -99,8 +82,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_col          <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
@@ -108,16 +92,16 @@ if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
 }
 
 #data dir
-data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
-data_dir2  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_col,"/")
-data_dir3  <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",SBCE_col,"/")
+data_dir1  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/",sample_name, "/")
+data_dir2  <- paste0(proj_dir, "12A_PCA_VarContri_Train/",feature_set_name,"/",sample_name,"/",SBCE_col,"/")
+data_dir3  <- paste0(proj_dir,"12E_OBVandNONOBV_SamplesIDs/",feature_set_name,"/",sample_name,"/",SBCE_col,"/")
 
 
-newout1 <- paste0("15_XGB_Input/",feature_set_name,"/",SBCE_col,"/Test/")
+newout1 <- paste0("15_XGB_Input/",feature_set_name,"/",sample_name,"/",SBCE_col,"/Test/")
 outdir   <- paste0(proj_dir, newout1)
 dir.create(file.path(proj_dir, newout1), recursive = TRUE)
 
-newout2 <- paste0("15_XGB_Input/",feature_set_name,"/",SBCE_col,"/Train/")
+newout2 <- paste0("15_XGB_Input/",feature_set_name,"/",sample_name,"/",SBCE_col,"/Train/")
 outdir   <- paste0(proj_dir, newout2)
 dir.create(file.path(proj_dir, newout2), recursive = TRUE)
 
@@ -125,8 +109,11 @@ dir.create(file.path(proj_dir, newout2), recursive = TRUE)
 #1. Load and combine all patient model ready data
 ######################################################################################################## 
 load(file = paste0(data_dir1, "All_PTS_ModelReadyData.rda"))
+if (grepl("Samples_HasAtLeastOneCodeGrpFeature",data_dir1) == T){
+  model_data <- model_data_excluded
+}
 
-#remove the const feature (e.g: DM3_SPE_muscle.relaxant)
+#remove the const feature if there is one
 const_feature_file <- paste0(data_dir2,"ConstFeature_removed_ForPCAandtSNE.csv")
 if (file.exists(const_feature_file)==TRUE){
   const_fs <- read.csv(const_feature_file,stringsAsFactors = F)
@@ -169,11 +156,11 @@ for (i in 1:n_sampling){
   seed_num <- 122 + i 
   
   #Down sampled 
-  train_nonobv_ds_df <- Data_Sampling_Func(0,train_nonobv_df,"y_PRE_OR_POST_2ndEvent",seed_num)
-  train_nonobv_ds_df$y_PRE_OR_POST_2ndEvent <- as.numeric(train_nonobv_ds_df$y_PRE_OR_POST_2ndEvent) -1
+  train_nonobv_ds_df <- Data_Sampling_Func(0,train_nonobv_df,label_col,seed_num)
+  train_nonobv_ds_df[,label_col] <- as.numeric(train_nonobv_ds_df[,label_col]) -1
 
   #Print num of pre and post samples 
-  print_n_prepostsamples_func(train_nonobv_ds_df,"Train: ")
+  print_n_prepostsamples_func(train_nonobv_ds_df,"Train: ", label_col)
   
   #Output model ready binary data
   save(train_nonobv_ds_df, file=paste0(proj_dir, newout2, "train_nonobv","_DS" ,i,".rda"))
