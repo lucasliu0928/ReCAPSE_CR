@@ -16,13 +16,15 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
+
 #data dir
-data_dir1  <- paste0(proj_dir, "11A_ModelReady_GrpFeature_CCSandVAL2nd/WithPossibleMonthsHasNoCodes/")
+feature_set_name <- "CCSandDM3SPE"  #choose from CCSandDM3SPE , CCSandVAL2nd
+data_dir1  <- paste0(proj_dir, "11A_ModelReady_GrpFeature_", feature_set_name,"/WithPossibleMonthsHasNoCodes/")
 data_dir2  <- paste0(proj_dir, "11B_ModelReady_CharFeature/WithPossibleMonthsHasNoCodes/")
-data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFeatures_CCSandVAL2nd/WithPossibleMonthsHasNoCodes/")
+data_dir3  <- paste0(proj_dir, "11C_ModelReady_TransformFeatures_", feature_set_name,"/WithPossibleMonthsHasNoCodes/")
 data_dir4  <- paste0(proj_dir, "9_FinalIDs_And_UpdatedPtsChar/")
 
-newout <- "11D_ModelReady_CombFatures_CCSandDM3SPE/WithPossibleMonthsHasNoCodes/"
+newout <- paste0("11D_ModelReady_CombFatures_",feature_set_name,"/WithPossibleMonthsHasNoCodes/")
 
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
