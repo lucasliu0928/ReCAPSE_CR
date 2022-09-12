@@ -64,18 +64,18 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
-feature_set_name <- "CCSandVAL2nd"  
-code_feature_names <- "CCS|VAL_2ND"
+feature_set_name <- "CCSandDM3SPE"  #choose from CCSandDM3SPE , CCSandVAL2nd
+code_feature_names <- "CCS|DM3_SPE" #choose from "CCS|VAL_2ND" , "CCS|DM3_SPE"
+sample_name <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 #'@NOTE: use SBCE ID folder to get IDS, labels are not used for PCA
-SBCE_ID_folder <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+SBCE_ID_folder <- "SBCE_Excluded_DeathLabel" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 
 #data dir
-data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/")
-data_dir2  <- paste0(proj_dir, "11F_TrainTestIDs/",SBCE_ID_folder,"/") 
+data_dir  <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/",sample_name,"/")
+data_dir2  <-paste0(proj_dir,"11F_TrainTestIDs/",feature_set_name, "/",sample_name, "/",SBCE_ID_folder,"/")
 data_dir3 <- paste0(proj_dir, "0_Codes/Grouped_CleanUniqueCodes/")
 
-
-newout <- paste0("12A_PCA_VarContri_Train/",feature_set_name,"/",SBCE_ID_folder,"/")
+newout <- paste0("12A_PCA_VarContri_Train/",feature_set_name,"/",sample_name,"/",SBCE_ID_folder,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -84,6 +84,10 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ######################################################################################################## 
 #A. Load all pts model data
 load(file = paste0(data_dir, "All_PTS_ModelReadyData.rda")) 
+
+if (grepl("Samples_HasAtLeastOneCodeGrpFeature",data_dir) == T){
+  model_data <- model_data_excluded
+}
 
 #B. Load train patient IDs
 train_ID_df <- read.xlsx(paste0(data_dir2,"train_ID_withLabel.xlsx"),sheet = 1) 
