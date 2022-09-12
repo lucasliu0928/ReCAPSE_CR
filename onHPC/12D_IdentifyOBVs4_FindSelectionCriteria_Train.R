@@ -57,13 +57,15 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
+feature_set_name  <- "CCSandDM3SPE"         #choose from CCSandDM3SPE , CCSandVAL2nd
 SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+sample_name <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 #data dir
-data_dir  <- paste0(proj_dir,"12B_TopPCAFeatureData_Train/",feature_set_name,"/",SBCE_col,"/")
+data_dir  <- paste0(proj_dir,"12B_TopPCAFeatureData_Train/",feature_set_name,"/",sample_name, "/", SBCE_col,"/")
 
-newout <- paste0("12D_OBVsSample_Thresholds/",feature_set_name,"/",SBCE_col,"/")
+
+newout <- paste0("12D_OBVsSample_Thresholds/",feature_set_name,"/",sample_name, "/",SBCE_col,"/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -136,7 +138,7 @@ x_col = "NEG_Percentage_SelectedSamples"
 y_col = "NEGtoPOS_Ratio_AfterExclusion"
 x_lab = "Precision of Negatives (Percentage of Negatives) \n in Selected Samples"
 y_lab = "Negative to Positive Ratio After Exclusion \n (non-obvious cases)"
-ylim_min = 19
+ylim_min = 18
 p <- plot_ratio_vs_perc_func(prec_ratio_tb, x_col,y_col,x_lab,y_lab,ylim_min)
 png(paste0(outdir,"Precision_Ratio_Plot_NEG.png"),res = 150,width = 1000,height = 800)
 print(p)
@@ -144,16 +146,30 @@ dev.off()
 
 
 #2D. Find the best thresholds by checking the figure 
-if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd"){
-  turning_pt_x <-  0.9812913
-  turning_pt_y <-  19.94299
-}else if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
+#'@NOTE: when All_sample, "CCSandVAL2nd" and "CCSandDM3SPE" has the same top features, 
+#'so the pos,neg identification result is the same
+if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
   turning_pt_x <- 0.9814992 
   turning_pt_y <- 19.80003
+}else if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <-  0.9812913
+  turning_pt_y <-  19.94299
 }else if (SBCE_col == "SBCE_Excluded_DeathPts" & feature_set_name == "CCSandVAL2nd"){
   turning_pt_x <- 0.9826699 
   turning_pt_y <- 19.69092
+}else if (SBCE_col == "SBCE" & feature_set_name == "CCSandDM3SPE"){
+  turning_pt_x <- 0.9814992 
+  turning_pt_y <- 19.80003
+}else if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandDM3SPE"){
+  turning_pt_x <-  0.9812913
+  turning_pt_y <-  19.94299
+}else if (SBCE_col == "SBCE_Excluded_DeathPts" & feature_set_name == "CCSandDM3SPE"){
+  turning_pt_x <- 0.9826699 
+  turning_pt_y <- 19.69092
 }
+
+
+
 
 var_name1 <- "Threshold_PROC202"
 var_name2 <- "Threshold_PROC227"
@@ -235,13 +251,22 @@ dev.off()
 
 
 #3D. Find the best thresholds by checking the figure 
-if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd"){
-  turning_pt_x <- 0.0417078
-  turning_pt_y <- 35.81769
-}else if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
+if (SBCE_col == "SBCE" & feature_set_name == "CCSandVAL2nd"){
   turning_pt_x <- 0.0417920
   turning_pt_y <- 34.18392
+}else if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.0417078
+  turning_pt_y <- 35.81769
 }else if (SBCE_col == "SBCE_Excluded_DeathPts" & feature_set_name == "CCSandVAL2nd"){
+  turning_pt_x <- 0.0425793
+  turning_pt_y <- 34.04217
+}else if (SBCE_col == "SBCE" & feature_set_name == "CCSandDM3SPE"){
+  turning_pt_x <- 0.0417920
+  turning_pt_y <- 34.18392
+}else if (SBCE_col == "SBCE_Excluded_DeathLabel" & feature_set_name == "CCSandDM3SPE"){
+  turning_pt_x <- 0.0417078
+  turning_pt_y <- 35.81769
+}else if (SBCE_col == "SBCE_Excluded_DeathPts" & feature_set_name == "CCSandDM3SPE"){
   turning_pt_x <- 0.0425793
   turning_pt_y <- 34.04217
 }
