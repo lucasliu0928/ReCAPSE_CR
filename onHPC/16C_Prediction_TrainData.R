@@ -16,8 +16,9 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_col    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_col          <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent"  
 }else{
@@ -26,10 +27,10 @@ if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
 
 
 #data dir
-data_dir1 <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",SBCE_col,"/")
-data_dir2 <- paste0(proj_dir,"16B_Trained_ImportantFeatureModel/",feature_set_name,"/",SBCE_col,"/")
+data_dir1        <- paste0(proj_dir,"15_XGB_Input/",feature_set_name,"/",sample_name,"/", SBCE_col,"/")
+data_dir2 <- paste0(proj_dir,"16B_Trained_ImportantFeatureModel/",feature_set_name,"/",sample_name,"/",SBCE_col,"/")
 
-newout <- paste0("16C_Predictions/",feature_set_name,"/",SBCE_col,"/Train/")
+newout <- paste0("16C_Predictions/",feature_set_name,"/",sample_name,"/", SBCE_col,"/Train/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
