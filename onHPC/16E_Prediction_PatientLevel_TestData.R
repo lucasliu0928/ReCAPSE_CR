@@ -19,8 +19,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent" 
   SBCE_col <- "SBCE"
@@ -31,19 +33,27 @@ if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
 
 
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_ID_Folder,"/Test/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",sample_name,"/",SBCE_ID_Folder,"/Test/")
 data_dir2 <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+data_dir3 <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/","Samples_HasAtLeastOneCodeGrpFeature/") #To get sample labels who has at least one code
 
 outdir    <- data_dir1
 
 ################################################################################ 
-#3. Load patient level char to get SBCE or not 
+#1. Load patient level char to get SBCE or not 
 ################################################################################ 
 pts_level_char_df <- read.xlsx(paste0(data_dir2,"/8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
 pts_level_char_df$study_id <- paste0("ID",pts_level_char_df$study_id)
 
 ################################################################################ 
-#2. Get predicted SBCE month
+#2. Load sample IDs that has at least one code feaure
+################################################################################ 
+sample_hasonecode_df <- read.csv(paste0(data_dir3,"SampleIDs_HasAtLeastOneCodeGrpFeature.csv"),stringsAsFactors = F)
+sp_id_has_codes <- unique(sample_hasonecode_df$sample_id)
+
+
+################################################################################ 
+#3. Get predicted SBCE month
 ################################################################################ 
 #For each DS and each model
 model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
