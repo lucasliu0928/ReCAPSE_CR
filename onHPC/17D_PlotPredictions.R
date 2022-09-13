@@ -36,17 +36,24 @@ plot_individual_prediction <- function(pt_prediction_df, acutal_pre_post_label_c
 
 ################################################################################ 
 #User input
-#'@NOTE: ds_index = 1 for SBCE_Excluded_DeathLabel
-#'       ds_index = 3 for SBCE
-#'       ds_index = 5 for SBCE_Excluded_DeathPts
+#'@NOTE: 
+#'For CCSandVAL2nd:
+#'ds_index = 3 for SBCE
+#'ds_index = 1 for SBCE_Excluded_DeathLabel
+#'ds_index = 5 for SBCE_Excluded_DeathPts
+
+#'For CCSandDM3SPE:
+#'ds_index = 4 for SBCE
+#'ds_index =   for SBCE_Excluded_DeathPts
 ################################################################################ 
-SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+ds_index          <- 4 
+
 model <- "AI"                            #c("Hybrid","AI","HybridCurveFit","AICurveFit")
 method <- "Persis3Month_GT_Threshold"    #c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
 ths <- seq(1,9,1)
-ds_index <- 5  
-
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent" 
   SBCE_col <- "SBCE"
@@ -66,8 +73,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_ID_Folder,"/Test/")
-outdir    <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_ID_Folder, "/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",sample_name,"/",SBCE_ID_Folder,"/Test/")
+outdir    <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",sample_name,"/",SBCE_ID_Folder, "/")
 
 
 ################################################################################ 
