@@ -149,8 +149,10 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent" 
   SBCE_col <- "SBCE"
@@ -160,10 +162,11 @@ if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
 }
 
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_ID_Folder,"/Test/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",sample_name,"/",SBCE_ID_Folder,"/Test/")
 data_dir2 <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
+data_dir3 <- paste0(proj_dir, "11E_AllPTs_ModelReadyData/",feature_set_name,"/","Samples_HasAtLeastOneCodeGrpFeature/") #To get sample labels who has at least one code
 
-newout <- paste0("17_Performance/",feature_set_name,"/",SBCE_ID_Folder, "/")
+newout <- paste0("17_Performance/",feature_set_name,"/",sample_name,"/", SBCE_ID_Folder, "/")
 outdir   <- paste0(proj_dir, newout)
 dir.create(file.path(proj_dir, newout), recursive = TRUE)
 
@@ -172,6 +175,13 @@ dir.create(file.path(proj_dir, newout), recursive = TRUE)
 ################################################################################ 
 pts_level_char_df <- read.xlsx(paste0(data_dir2,"/8_PatientLevel_char_WithPossibleMonthsHasNoCodes.xlsx"),sheet = 1)
 pts_level_char_df$study_id <- paste0("ID",pts_level_char_df$study_id)
+
+
+################################################################################ 
+#2. Load sample IDs that has at least one code feaure
+################################################################################ 
+sample_hasonecode_df <- read.csv(paste0(data_dir3,"SampleIDs_HasAtLeastOneCodeGrpFeature.csv"),stringsAsFactors = F)
+sp_id_has_codes <- unique(sample_hasonecode_df$sample_id)
 
 ################################################################################ 
 #2. Compute performance
@@ -198,6 +208,11 @@ for (ds_index in 0:10){
     ds_pred_df_pos <- ds_pred_df[ds_pred_df[,"OBV_CLASS"] == "POS",]
     ds_pred_df_nonobv <- ds_pred_df[ds_pred_df[,"OBV_CLASS"] == "nonOBV",]
     
+    #3. Get at least one code/no code samples prediction table
+    has_codes_idxes <- which(ds_pred_df[,"sample_id"] %in% sp_id_has_codes)
+    ds_pred_df_hascodes <- ds_pred_df[has_codes_idxes,]
+    ds_pred_df_nocodes <- ds_pred_df[-has_codes_idxes,]
+    
     ######################################################################################################### 
     #2. Get performance for each sets
     ######################################################################################################### 
@@ -215,8 +230,14 @@ for (ds_index in 0:10){
     perf_tb_alltest_nonobv <- get_perf_table_func(ds_pred_df_nonobv,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
     write.csv(perf_tb_alltest_nonobv,paste0(outdir, ds_out, model,"_perf_tb_allnonobv",".csv"),row.names = T)
     
+    #2.3 Compute performance for at least one code/no code samples
+    perf_tb_alltest_hascodes <- get_perf_table_func(ds_pred_df_hascodes,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
+    write.csv(perf_tb_alltest_hascodes,paste0(outdir, ds_out, model,"_perf_tb_HasCodeFeaure",".csv"),row.names = T)
     
-    #2.3 Compute average performance 5 times sampling
+    perf_tb_alltest_nocodes <- get_perf_table_func(ds_pred_df_nocodes,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
+    write.csv(perf_tb_alltest_hascodes,paste0(outdir, ds_out, model,"_perf_tb_NoCodeFeaure",".csv"),row.names = T)
+    
+    #2.4 Compute average performance 5 times sampling
     perf_tb_pos1_neg1 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 1,pts_level_char_df,ths,SBCE_col)
     perf_tb_pos1_neg2 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 2,pts_level_char_df,ths,SBCE_col)
     perf_tb_pos1_neg5 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 5,pts_level_char_df,ths,SBCE_col)
