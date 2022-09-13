@@ -30,6 +30,8 @@ outdir <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",sample_name,"/"
 
 ################################################################# 
 #Sample Level Combine all performance table
+#'@NOTE: Only combine performance for entire test samples 
+#'(other ones e.g., obvneg,obvpos,hascode,nocode will be found in the performance folder)
 ################################################################# 
 model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
 perf_tb_list <- list()
@@ -53,6 +55,8 @@ write.csv(classification_perf_table, paste0(outdir, "Sample_Level_AllModel_Perf_
 
 ################################################################# 
 #Patient Level Combine all performance table
+#'@NOTE: Only combine performance for entire test samples 
+#'(other ones e.g., hasnocode,hascode will be found in the performance folder)
 ################################################################# 
 model_list <- c("Hybrid","AI","HybridCurveFit","AICurveFit")
 method_list <- c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
@@ -64,7 +68,7 @@ for (ds_index in 0:10){
   for (model in model_list){
     for (method in method_list){
       #Classification perf table
-      cur_perf_f <- paste0(data_dir1,"DS",ds_index,"/Patient_Level/", model,method,"_perf_tb_alltest",".csv")
+      cur_perf_f <- paste0(data_dir1,"DS",ds_index,"/Patient_Level/", model,method,"_AllSAMPLE_perf_tb_alltest",".csv")
       cur_perf_tb <- read.csv(cur_perf_f,stringsAsFactors = F)
       cur_perf_tb[,"MODEL"] <- model
       cur_perf_tb[,"METHOD"] <- method
