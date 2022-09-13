@@ -146,6 +146,25 @@ get_stats_month_diff <- function(analysis_df,thres){
   
 }
 
+get_patient_level_perf <- function(pred_table,method,cohort_name){
+  #Get threshold column surfix
+  if (method == "BinSeg"){
+    thres = c("BinSeg")
+  }else {
+    thres <- seq(1,9,1)
+  }
+  #3. Get classification performance for all test
+  perf_tb_alltest <- get_perf_table_PTLEVEL_func(pred_table,thres,SBCE_col)
+  write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,method,"_",cohort_name"_perf_tb_alltest",".csv"),row.names = T)
+  
+  #3.Get prediction df for SBCE patients only
+  ds_pred_df_SBCE<- pred_table[which(pred_table[,SBCE_col]==1), ]
+  #3.1 compute the difference between predicted SBCE month and actual SBCE month
+  monthdiff_df_SBCE <- compute_month_diff(ds_pred_df_SBCE,thres)
+  #3.2 Compute the performance of month difference
+  perf_tb_monthdiff_SBCE  <- get_stats_month_diff(monthdiff_df_SBCE,thres)
+  write.csv(perf_tb_monthdiff_SBCE,paste0(outdir, ds_out, model,method,"_",cohort_name"_MonthDiff_Perf_SBCE",".csv"),row.names = T)
+}
 
 ################################################################################
 #Set up parallel computing envir
@@ -203,30 +222,27 @@ for (ds_index in 0:10){
   
   for (model in model_list){
     for (method in method_list){
-        model_pred_file <- paste0(model,"_",method,"_patientlevel_pred_tb.csv")
-        
-        #1. Load all patient prediction table
         ds_in <- paste0(data_dir1,"DS",ds_index,"/Patient_Prediction_Table/")
-        ds_pred_df <- read.csv(paste0(ds_in,model_pred_file),stringsAsFactors = F)
         
-        #Get threshold column surfix
-        if (method == "BinSeg"){
-          thres = c("BinSeg")
-        }else {
-          thres <- seq(1,9,1)
-        }
-        #3. Get classification performance for all test
-        perf_tb_alltest <- get_perf_table_PTLEVEL_func(ds_pred_df,thres,SBCE_col)
-        write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,method,"_perf_tb_alltest",".csv"),row.names = T)
+        #1. Get performance for all test
+        cohort_name <- "AllSAMPLE"
+        model_pred_file <- paste0(model,"_",method,"_",cohort_name,"_patientlevel_pred_tb.csv")
+        ds_pred_df <- read.csv(paste0(ds_in,model_pred_file),stringsAsFactors = F)
+        get_patient_level_perf(ds_pred_df,method,cohort_name)
+        
+        #2. Get performance for only included samples has code feature 
+        cohort_name <- "SAMPLEHASCODE"
+        model_pred_file <- paste0(model,"_",method,"_",cohort_name,"_patientlevel_pred_tb.csv")
+        ds_pred_df <- read.csv(paste0(ds_in,model_pred_file),stringsAsFactors = F)
+        get_patient_level_perf(ds_pred_df,method,cohort_name)
+        
+        #3. Get performance for only included samples has no code feature
+        cohort_name <- "SAMPLENOCODE"
+        model_pred_file <- paste0(model,"_",method,"_",cohort_name,"_patientlevel_pred_tb.csv")
+        ds_pred_df <- read.csv(paste0(ds_in,model_pred_file),stringsAsFactors = F)
+        get_patient_level_perf(ds_pred_df,method,cohort_name)
+        
 
-        #3.Get prediction df for SBCE patients only
-        ds_pred_df_SBCE<- ds_pred_df[which(ds_pred_df[,SBCE_col]==1), ]
-        #3.1 compute the difference between predicted SBCE month and actual SBCE month
-        monthdiff_df_SBCE <- compute_month_diff(ds_pred_df_SBCE,thres)
-        #3.2 Compute the performance of month difference
-        perf_tb_monthdiff_SBCE  <- get_stats_month_diff(monthdiff_df_SBCE,thres)
-        write.csv(perf_tb_monthdiff_SBCE,paste0(outdir, ds_out, model,method,"_MonthDiff_Perf_SBCE",".csv"),row.names = T)
-      
       }
   }
   
