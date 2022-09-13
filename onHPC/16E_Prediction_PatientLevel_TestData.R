@@ -1,8 +1,28 @@
 source("Recapse_Ultility.R")
 #this script get patientt level prediction by 3 methods:
-#1:change-point analysis
+#1:change-point analysis (BinSeg)
+#2:OneMonth_GT_Threshold
+#3:Persis3Month_GT_Threshold
 
-
+run_3methods <- function(pred_table,sbce_df,SBCE_col,cohort_name,outdir,ds_out,model){
+  #pred_table <- ds_pred_df_hascodes
+  
+  thres_list <- seq(1,9,1)
+  method_name <- "OneMonth_GT_Threshold"
+  pt_pred_df1 <- get_allpt_level_pred(pred_table,sbce_df,thres_list,method_name,SBCE_col)
+  write.csv(pt_pred_df1,paste0(outdir, ds_out,model,"_",method_name,"_",cohort_name,"_patientlevel_pred_tb.csv"))
+  
+  #4. Get predicted month and predicted label by persisit 3 months
+  thres_list <- seq(1,9,1)
+  method_name <- "Persis3Month_GT_Threshold"
+  pt_pred_df2 <-  get_allpt_level_pred(pred_table,sbce_df,thres_list,method_name,SBCE_col)
+  write.csv(pt_pred_df2,paste0(outdir, ds_out,model,"_",method_name,"_",cohort_name,"_patientlevel_pred_tb.csv"))
+  
+  #5. Get predicted month and predicted label by change point analysis
+  method_name <- "BinSeg"
+  pt_pred_df3 <-  get_allpt_level_pred(pred_table,sbce_df,thres_list,method_name,SBCE_col)
+  write.csv(pt_pred_df3,paste0(outdir, ds_out,model,"_",method_name,"_",cohort_name,"_patientlevel_pred_tb.csv"))
+}
 ################################################################################
 #Set up parallel computing envir
 ################################################################################
@@ -75,23 +95,26 @@ for (ds_index in 0:10){
     sbce_df <- get_pt_actual_sbcelabel_month(ds_pred_df,pts_level_char_df,SBCE_col)
     
     #3. Get  predicted month and label by the first month that the prediction probability is greater or equal to threholds
-    thres_list <- seq(1,9,1)
-    method_name <- "OneMonth_GT_Threshold"
-    pt_pred_df1 <- get_allpt_level_pred(ds_pred_df,sbce_df,thres_list,method_name,SBCE_col)
-    write.csv(pt_pred_df1,paste0(outdir, ds_out,model,"_",method_name,"_patientlevel_pred_tb.csv"))
-    
     #4. Get predicted month and predicted label by persisit 3 months
-    thres_list <- seq(1,9,1)
-    method_name <- "Persis3Month_GT_Threshold"
-    pt_pred_df2 <-  get_allpt_level_pred(ds_pred_df,sbce_df,thres_list,method_name,SBCE_col)
-    write.csv(pt_pred_df2,paste0(outdir, ds_out,model,"_",method_name,"_patientlevel_pred_tb.csv"))
-    
     #5. Get predicted month and predicted label by change point analysis
-    method_name <- "BinSeg"
-    pt_pred_df3 <-  get_allpt_level_pred(ds_pred_df,sbce_df,thres_list,method_name,SBCE_col)
-    write.csv(pt_pred_df3,paste0(outdir, ds_out,model,"_",method_name,"_patientlevel_pred_tb.csv"))
+    cohort_name <- "AllSAMPLE"
+    run_3methods(ds_pred_df,sbce_df,SBCE_col,cohort_name,outdir,ds_out,model)
+ 
+    #6 Get sample pred table with at least one code  vs no code
+    has_codes_idxes <- which(ds_pred_df[,"sample_id"] %in% sp_id_has_codes)
+    ds_pred_df_hascodes <- ds_pred_df[has_codes_idxes,]
+    ds_pred_df_nocodes  <- ds_pred_df[-has_codes_idxes,]
     
-
+    #Re-run 3,4,5 for at least one code and no code
+    #At least one code
+    cohort_name <- "SAMPLEHASCODE"
+    run_3methods(ds_pred_df_hascodes,sbce_df,SBCE_col,cohort_name,outdir,ds_out,model)
+    
+    #no code
+    cohort_name <- "SAMPLENOCODE"
+    run_3methods(ds_pred_df_hascodes,sbce_df,SBCE_col,cohort_name,outdir,ds_out,model)
+    
+    
   }
   
 }
