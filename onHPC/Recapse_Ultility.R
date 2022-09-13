@@ -1790,10 +1790,11 @@ get_onept_pred_func3<- function(onept_sample_pred_df, onept_sbce_df,SBCE_col){
   
   #sort by month
   onept_sample_pred_df <- onept_sample_pred_df[order(onept_sample_pred_df$month_start),]
-  #n_months <- nrow(onept_sample_pred_df)
+  n_months <- nrow(onept_sample_pred_df)
   unique_pred <- unique(onept_sample_pred_df[,pred_col])
-  
-  if (length(unique_pred) >= 2){
+  #print(n_months)
+  #print(onept_sample_pred_df[,pred_col])
+  if (n_months > 4){
       #Change point method 1 BinSeg
       changepoints <- cpt.meanvar(onept_sample_pred_df[,pred_col], Q=1, method="BinSeg", test.stat="Normal")
       changepoint_index <- changepoints@cpts[1]
