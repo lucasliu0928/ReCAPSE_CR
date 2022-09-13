@@ -163,8 +163,11 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
-feature_set_name <- "CCSandVAL2nd"
+feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
+
+
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
   SBCE_col <- "SBCE"
 }else{
@@ -172,10 +175,10 @@ if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
 }
 
 #data dir
-data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",SBCE_ID_Folder,"/Test/")
+data_dir1 <- paste0(proj_dir, "16C_Predictions/",feature_set_name,"/",sample_name,"/",SBCE_ID_Folder,"/Test/")
 data_dir2 <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
 
-outdir <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",SBCE_ID_Folder, "/")
+outdir <- paste0(proj_dir,"17_Performance/",feature_set_name,"/",sample_name,"/", SBCE_ID_Folder, "/")
 
 
 ################################################################################ 
@@ -193,6 +196,7 @@ method_list <- c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
 ths <- seq(1,9,1)
 
 for (ds_index in 0:10){
+  print(ds_index)
   #Create out dir for each ds 
   ds_out <- paste0("DS",ds_index,"/Patient_Level/")
   dir.create(file.path(outdir, ds_out), recursive = TRUE)
@@ -201,7 +205,7 @@ for (ds_index in 0:10){
     for (method in method_list){
         model_pred_file <- paste0(model,"_",method,"_patientlevel_pred_tb.csv")
         
-        #1. Load all pateint prediction table
+        #1. Load all patient prediction table
         ds_in <- paste0(data_dir1,"DS",ds_index,"/Patient_Prediction_Table/")
         ds_pred_df <- read.csv(paste0(ds_in,model_pred_file),stringsAsFactors = F)
         
@@ -211,10 +215,10 @@ for (ds_index in 0:10){
         }else {
           thres <- seq(1,9,1)
         }
-        #2. Get classification performance 
+        #3. Get classification performance for all test
         perf_tb_alltest <- get_perf_table_PTLEVEL_func(ds_pred_df,thres,SBCE_col)
         write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,method,"_perf_tb_alltest",".csv"),row.names = T)
-        
+
         #3.Get prediction df for SBCE patients only
         ds_pred_df_SBCE<- ds_pred_df[which(ds_pred_df[,SBCE_col]==1), ]
         #3.1 compute the difference between predicted SBCE month and actual SBCE month
@@ -222,7 +226,7 @@ for (ds_index in 0:10){
         #3.2 Compute the performance of month difference
         perf_tb_monthdiff_SBCE  <- get_stats_month_diff(monthdiff_df_SBCE,thres)
         write.csv(perf_tb_monthdiff_SBCE,paste0(outdir, ds_out, model,method,"_MonthDiff_Perf_SBCE",".csv"),row.names = T)
-        
+      
       }
   }
   
