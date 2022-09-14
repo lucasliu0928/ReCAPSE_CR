@@ -64,17 +64,18 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 #'@NOTE: 
 #'For CCSandVAL2nd:
 #'ds_index = 3 for SBCE
-#'ds_index = 1 for SBCE_Excluded_DeathLabel
 #'ds_index = 5 for SBCE_Excluded_DeathPts
+#'ds_index = 1 for SBCE_Excluded_DeathLabel
+
 
 #'For CCSandDM3SPE:
 #'ds_index = 4 for SBCE
-#'ds_index =   for SBCE_Excluded_DeathPts
+#'ds_index = 6  for SBCE_Excluded_DeathPts
 ################################################################################ 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
-ds_index          <- 4 
+ds_index          <- 5
 
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
   label_col   <- "y_PRE_OR_POST_2ndEvent" 
