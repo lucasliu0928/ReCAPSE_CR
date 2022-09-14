@@ -83,7 +83,7 @@ compute_month_diff <- function(analysis_df,thres){
       curr_th <- thres[j]
       curr_th_col <- paste0("Pred_SBCEMon_Thres_0", curr_th)
       curr_pred_month <- analysis_df[i,curr_th_col]
-      if (curr_pred_month == "NONE"){
+      if (curr_pred_month == "NONE" | is.na(curr_pred_month) == TRUE){
         curr_diff <- Inf
       }else{
         curr_diff <- as.numeric(difftime(ymd(curr_pred_month),curr_acutal_month, units = "days"))/30
@@ -155,7 +155,7 @@ get_patient_level_perf <- function(pred_table,method,cohort_name){
   }
   #3. Get classification performance for all test
   perf_tb_alltest <- get_perf_table_PTLEVEL_func(pred_table,thres,SBCE_col)
-  write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,method,"_",cohort_name"_perf_tb_alltest",".csv"),row.names = T)
+  write.csv(perf_tb_alltest,paste0(outdir, ds_out, model,method,"_",cohort_name,"_perf_tb_alltest",".csv"),row.names = T)
   
   #3.Get prediction df for SBCE patients only
   ds_pred_df_SBCE<- pred_table[which(pred_table[,SBCE_col]==1), ]
@@ -163,7 +163,7 @@ get_patient_level_perf <- function(pred_table,method,cohort_name){
   monthdiff_df_SBCE <- compute_month_diff(ds_pred_df_SBCE,thres)
   #3.2 Compute the performance of month difference
   perf_tb_monthdiff_SBCE  <- get_stats_month_diff(monthdiff_df_SBCE,thres)
-  write.csv(perf_tb_monthdiff_SBCE,paste0(outdir, ds_out, model,method,"_",cohort_name"_MonthDiff_Perf_SBCE",".csv"),row.names = T)
+  write.csv(perf_tb_monthdiff_SBCE,paste0(outdir, ds_out, model,method,"_",cohort_name,"_MonthDiff_Perf_SBCE",".csv"),row.names = T)
 }
 
 ################################################################################
@@ -182,8 +182,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 
