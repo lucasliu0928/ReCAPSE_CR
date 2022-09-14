@@ -17,8 +17,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 
@@ -75,7 +75,7 @@ for (ds_index in 0:10){
       cur_perf_tb[,"DS_INDEX"] <- paste0("DS",ds_index)
       perf_tb_list1[[ct]] <- cur_perf_tb
       #Month diff perf table
-      cur_perf_f2 <- paste0(data_dir1,"DS",ds_index,"/Patient_Level/", model,method,"_MonthDiff_Perf_SBCE",".csv")
+      cur_perf_f2 <- paste0(data_dir1,"DS",ds_index,"/Patient_Level/", model,method,"_AllSAMPLE_MonthDiff_Perf_SBCE",".csv")
       cur_perf_tb2 <- read.csv(cur_perf_f2,stringsAsFactors = F)
       cur_perf_tb2[,"MODEL"] <- model
       cur_perf_tb2[,"METHOD"] <- method
