@@ -39,7 +39,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
 SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
@@ -112,7 +112,7 @@ for (ds_index in 0:10){
     
     #no code
     cohort_name <- "SAMPLENOCODE"
-    run_3methods(ds_pred_df_hascodes,sbce_df,SBCE_col,cohort_name,outdir,ds_out,model)
+    run_3methods(ds_pred_df_nocodes,sbce_df,SBCE_col,cohort_name,outdir,ds_out,model)
     
     
   }
