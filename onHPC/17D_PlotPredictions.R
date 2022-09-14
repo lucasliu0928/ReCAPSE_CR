@@ -39,17 +39,17 @@ plot_individual_prediction <- function(pt_prediction_df, acutal_pre_post_label_c
 #'@NOTE: 
 #'For CCSandVAL2nd:
 #'ds_index = 3 for SBCE
-#'ds_index = 1 for SBCE_Excluded_DeathLabel
 #'ds_index = 5 for SBCE_Excluded_DeathPts
+#'#'ds_index = 1 for SBCE_Excluded_DeathLabel 
 
 #'For CCSandDM3SPE:
 #'ds_index = 4 for SBCE
-#'ds_index =   for SBCE_Excluded_DeathPts
+#'ds_index = 6 for SBCE_Excluded_DeathPts
 ################################################################################ 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
-ds_index          <- 4 
+ds_index          <- 5 
 
 model <- "AI"                            #c("Hybrid","AI","HybridCurveFit","AICurveFit")
 method <- "Persis3Month_GT_Threshold"    #c("BinSeg","OneMonth_GT_Threshold","Persis3Month_GT_Threshold")
@@ -94,7 +94,7 @@ sp_predprob_col <- paste0("pred_Method_", model)
 
 #2. Load all patient prediction table
 pt_pred_dir  <- paste0(data_dir1,"DS",ds_index,"/Patient_Prediction_Table/")
-pt_pred_file <- paste0(model, "_", method,"_patientlevel_pred_tb.csv")
+pt_pred_file <- paste0(model, "_", method,"_AllSAMPLE_patientlevel_pred_tb.csv")
 pt_pred_df <- read.csv(paste0(pt_pred_dir,pt_pred_file),stringsAsFactors = F)
 pt_predmonth_col <- "Pred_SBCEMon_Thres_05"
 pt_pred_df[,"Acutal_SBCEMonth"] <- ymd(pt_pred_df[,"Acutal_SBCEMonth"])
