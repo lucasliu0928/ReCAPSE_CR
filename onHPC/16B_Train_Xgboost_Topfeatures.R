@@ -18,7 +18,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 
 
 feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_col          <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+SBCE_col          <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 if ((SBCE_col == "SBCE") | (SBCE_col == "SBCE_Excluded_DeathPts")){
