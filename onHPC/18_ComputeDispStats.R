@@ -9,8 +9,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
@@ -132,19 +132,23 @@ write.csv(table_comb, paste0(outdir,"discrip_table.csv"))
 ################################################################################ 
 #Plot Diagnosis_Year:
 output_hist_forSBCEand_nonSBCE(pt_char_df,"Diagnosis_Year","Diagnosis Year",
-                               "Recurrent Patient","non-Recurrent Patient",seq(2004, 2015, 1),1000)
+                               "Recurrent Patient","non-Recurrent Patient",
+                               seq(2004, 2015, 1),1000,SBCE_col)
 
 #Plot most_recent_enrollment_year: #"Both Medicaid Medicare"
 #Medicaid
 Medicaid_PTs_Char_df <- pt_char_df[which(pt_char_df$Medicaid_OR_Medicare== "Medicaid"),]
 output_hist_forSBCEand_nonSBCE(Medicaid_PTs_Char_df,"most_recent_enrollment_year","Most Recent Enrollment Year",
-                               "Recurrent Patient (Medicaid)","non-Recurrent Patient (Medicaid)", seq(2005, 2020, 1),1200)
+                               "Recurrent Patient (Medicaid)","non-Recurrent Patient (Medicaid)",
+                               seq(2005, 2020, 1),1200,SBCE_col)
 
 Medicare_PTs_Char_df <- pt_char_df[which(pt_char_df$Medicaid_OR_Medicare== "Medicare"),]
 output_hist_forSBCEand_nonSBCE(Medicare_PTs_Char_df,"most_recent_enrollment_year","Most Recent Enrollment Year",
-                               "Recurrent Patient (Medicare)","non-Recurrent Patient (Medicare)", seq(2005, 2020, 1),1200)
+                               "Recurrent Patient (Medicare)","non-Recurrent Patient (Medicare)",
+                               seq(2005, 2020, 1),1200,SBCE_col)
 
 Both_PTs_Char_df <- pt_char_df[which(pt_char_df$Medicaid_OR_Medicare== "Both"),]
 output_hist_forSBCEand_nonSBCE(Both_PTs_Char_df,"most_recent_enrollment_year","Most Recent Enrollment Year",
-                               "Recurrent Patient (Medicare & Medicaid)","non-Recurrent Patient (Medicare & Medicaid)", seq(2005, 2020, 1),1200)
+                               "Recurrent Patient (Medicare & Medicaid)","non-Recurrent Patient (Medicare & Medicaid)", 
+                               seq(2005, 2020, 1),1200,SBCE_col)
 
