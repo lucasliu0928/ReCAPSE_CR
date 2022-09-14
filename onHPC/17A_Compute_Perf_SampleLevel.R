@@ -149,8 +149,8 @@ proj_dir  <- "/recapse/intermediate_data/"
 #local
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
-feature_set_name  <- "CCSandDM3SPE"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
+SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
@@ -235,7 +235,7 @@ for (ds_index in 0:10){
     write.csv(perf_tb_alltest_hascodes,paste0(outdir, ds_out, model,"_perf_tb_HasCodeFeaure",".csv"),row.names = T)
     
     perf_tb_alltest_nocodes <- get_perf_table_func(ds_pred_df_nocodes,pred_prob_col,label_col,pts_level_char_df,SBCE_col)
-    write.csv(perf_tb_alltest_hascodes,paste0(outdir, ds_out, model,"_perf_tb_NoCodeFeaure",".csv"),row.names = T)
+    write.csv(perf_tb_alltest_nocodes,paste0(outdir, ds_out, model,"_perf_tb_NoCodeFeaure",".csv"),row.names = T)
     
     #2.4 Compute average performance 5 times sampling
     perf_tb_pos1_neg1 <-  get_avgPerf_eachThres_overRandSample(ds_pred_df,pred_prob_col,label_col, 1,pts_level_char_df,ths,SBCE_col)
