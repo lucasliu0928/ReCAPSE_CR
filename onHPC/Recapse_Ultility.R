@@ -2019,12 +2019,13 @@ plot_hist_onecohort <- function(in_data, x_name, xbreaks,x_label,cohort_name, ba
 }
 
 output_hist_forSBCEand_nonSBCE <- function(in_data,plot_colname,x_lab,cohort_name1,cohort_name0, xbreaks, plotwidth,SBCE_col){
-  # in_data <- Final_PTs_Char_df
+  # in_data <- pt_char_df
   # plot_colname <- "Diagnosis_Year"
   # x_lab <- "Diagnosis Year"
   # cohort_name1 <- "Recurrent Patient"
   # cohort_name0 <- "non-Recurrent Patient"
-  
+  # xbreaks <- seq(2004, 2015, 1)
+
   SBCE_PTs_Char_df <- in_data[which(in_data[,SBCE_col]==1),]
   p <- plot_hist_onecohort(SBCE_PTs_Char_df,plot_colname,xbreaks, x_lab,cohort_name1,"brown4")
   png(paste0(outdir,plot_colname, "_", cohort_name1, ".png"), width = plotwidth, height = 800, res = 120)
