@@ -63,7 +63,7 @@ for (p in 1:length(unique_IDs)){
     primary_df[i,"Type"] <-  paste0(curr_sqeuqence_name,"_Primary")
   }
   
-  #2.Get 1st primary BC recurance if there is one
+  #2.Get 1st primary BC recurrence if there is one
   recur_1stBC_df <- as.data.frame(matrix(NA, nrow = 1, ncol = 3))
   colnames(recur_1stBC_df) <- c("Site","Date","Type")
   curr_res <- get_primary_site_date_func(curr_kcr_df,c(0,1))
