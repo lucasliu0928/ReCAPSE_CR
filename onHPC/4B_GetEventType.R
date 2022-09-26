@@ -122,7 +122,7 @@ for (p in 1:length(analysis_ID)){
   All_event_df[p,"Type_1st_Event"] <- curr_cancer_and_death_df_ordered[first_idx,"Type"]
   
   #'@2ndevent  could be 1st primary bc death OR 
-  #'recur OR secondry primary OR merged both (happened at the same time)
+  #'recur OR secondary primary OR merged both (happened at the same time)
   curr_cancer_and_death_df_ordered <- curr_cancer_and_death_df_ordered[-first_idx,] #remove the first index, due to the case "First and Second" being merged, aslongas it is first, it was the 1st event
   second_idx <- which(grepl("Second_Primary|1Recur|Primary1stBC_related_Death",curr_cancer_and_death_df_ordered[,"Type"]) == T)[1]  # index [1]choose the first one as the 2nd event, then the next one is the 3rd event. (e.g,2nd date <  1Recur)
   
