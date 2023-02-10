@@ -10,7 +10,7 @@ proj_dir  <- "/recapse/intermediate_data/"
 #proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
-SBCE_ID_Folder    <- "SBCE_Excluded_DeathPts" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
+SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
 sample_name       <- "All_Samples"  #choose from "All_Samples" , "Samples_HasAtLeastOneCodeGrpFeature"
 
 if ((SBCE_ID_Folder == "SBCE") | (SBCE_ID_Folder == "SBCE_Excluded_DeathPts")){
@@ -116,7 +116,10 @@ all_variables <- c(SBCE_col,"Medicaid_OR_Medicare",
                     "cs_tum_nodes", "regional")
 
 n_perc_variables <- c(SBCE_col, "Medicaid_OR_Medicare", "Race","Site","Stage","Grade","Laterality",
-                      "er_stat","pr_stat","her2_stat","surg_prim_site_V1","surg_prim_site_V2","regional",
+                      "er_stat","pr_stat","her2_stat","reg_nodes_exam", "reg_nodes_pos",
+                      "surg_prim_site_V1","surg_prim_site_V2","regional",
+                      "cs_tum_ext", 
+                      "cs_tum_nodes",
                       "most_recent_enrollment_year","Diagnosis_Year","Type_2nd_Event",
                       "DAJCC_M","DAJCC_N","DAJCC_T")
 
@@ -125,7 +128,7 @@ table_sbce <- compute_stats_func(pt_char_df_SBCE1,"SBCE",all_variables,n_perc_va
 table_nonsbce <- compute_stats_func(pt_char_df_SBCE0,"non-SBCE",all_variables,n_perc_variables)
 
 table_comb <- cbind(table_all,table_sbce,table_nonsbce)
-write.csv(table_comb, paste0(outdir,"discrip_table.csv"))
+write.csv(table_comb, paste0(outdir,"discrip_table2.csv"))
 
 ################################################################################ 
 #Histogram
