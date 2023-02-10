@@ -23,7 +23,7 @@ enrollment_df <- read.xlsx(paste0(outdir,"5_enrollment_Months.xlsx"),sheet = 1)
 enrolmment_IDs <- unique(enrollment_df$study_id) #37149
 
 #########################################################################################################
-#3. only process Ids in both event type data and enrollemnt 
+#3. only process Ids in both event type data and enrollment 
 #########################################################################################################
 analysis_Ids <- unique(intersect(enrolmment_IDs,event_type_IDs)) #31262
 analysis_Ids <- sort(analysis_Ids)
