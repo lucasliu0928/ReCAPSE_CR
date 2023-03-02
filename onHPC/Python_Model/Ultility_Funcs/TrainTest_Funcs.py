@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier,RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 import pandas as pd
 import numpy as np
-
+import xgboost as xgb
 
 def downsample_func(in_data,out_col,ran_state):
     # data of each class
@@ -39,6 +39,14 @@ def train_model_cv_gridsearch(train_data, train_label, model_name):
         model = RandomForestClassifier(random_state = 0)
         param_grid = {'n_estimators': [200, 500],
                       'max_depth' : [6,7,8]}
+    elif model_name == 'XGB':
+        model = xgb.XGBClassifier(objective="binary:logistic", 
+                                  eval_metric="auc",
+                                  use_label_encoder=False,
+                                  random_state=0)
+        param_grid = {'max_depth': [6,7,8],
+                      'max_leaves': [0,1,2]}
+        
 
 
     #CV 
@@ -54,6 +62,13 @@ def train_model_cv_gridsearch(train_data, train_label, model_name):
         model = RandomForestClassifier(max_depth= best_para['max_depth'], 
                                           n_estimators= best_para['n_estimators'],
                                           random_state=0)
+    elif model_name == 'XGB':
+        model = xgb.XGBClassifier(max_depth = best_para['max_depth'],
+                                  max_leaves = best_para['max_leaves'],
+                                  objective="binary:logistic", 
+                                  eval_metric="auc",
+                                  use_label_encoder=False,
+                                  random_state=0)
         
     model.fit(train_data, train_label)
     
@@ -62,6 +77,8 @@ def train_model_cv_gridsearch(train_data, train_label, model_name):
 
 def get_default_importance_feature(trained_model,feature_names, model_name):        
     if model_name == "RF":
+        feature_import = trained_model.feature_importances_
+    else:
         feature_import = trained_model.feature_importances_
     
     important_df = pd.DataFrame({"Feature" :feature_names, "importances": feature_import})
@@ -75,8 +92,15 @@ def train_topf_model(train_data, train_label, parameters_df, model_name):
         topf_model = RandomForestClassifier(max_depth= parameters_df.loc['max_depth','value'], 
                                           n_estimators= parameters_df.loc['n_estimators','value'],
                                           random_state=0)
+    elif model_name == 'XGB':
+        topf_model = xgb.XGBClassifier(max_depth = parameters_df.loc['max_depth','value'],
+                                       max_leaves = parameters_df.loc['max_leaves','value'],
+                                       objective="binary:logistic", 
+                                       eval_metric="auc",
+                                       use_label_encoder=False,
+                                       random_state=0)
     
-        topf_model.fit(train_data, train_label)
+    topf_model.fit(train_data, train_label)
         
     return topf_model
 
@@ -87,8 +111,12 @@ def train_shap_regressor_model(train_data, train_label, parameters_df, model_nam
         shap_model = RandomForestRegressor(max_depth= parameters_df.loc['max_depth','value'], 
                                           n_estimators= parameters_df.loc['n_estimators','value'],
                                           random_state=0)
+    elif model_name == 'XGB':
+        shap_model = xgb.XGBRegressor(max_depth = parameters_df.loc['max_depth','value'],
+                                       max_leaves = parameters_df.loc['max_leaves','value'],
+                                       random_state=0)
     
-        shap_model.fit(train_data, train_label)
+    shap_model.fit(train_data, train_label)
         
     return shap_model
     
