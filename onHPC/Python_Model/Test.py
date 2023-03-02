@@ -109,9 +109,9 @@ if __name__ == '__main__':
     ################################################################################       
     #Load model 
     if selected_model == "TooF_Model":
-        trained_model = joblib.load(data_dir4 + "RF_TopFeature_model.pkl") #RF_Fullmodel
+        trained_model = joblib.load(data_dir4 + model_name + "_TopFeature_model.pkl") #RF_Fullmodel
     elif selected_model == "Full_Model":
-        trained_model = joblib.load(data_dir4 + "RF_Fullmodel.pkl") #RF_Fullmodel
+        trained_model = joblib.load(data_dir4 + model_name + "_Fullmodel.pkl") #RF_Fullmodel
 
     #Prediction month-level
     pred_df_m = prediction(trained_model,test_X,test_Y,test_ID)
