@@ -17,43 +17,44 @@ import argparse
 
 
 
-#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn RF  -ds 3 -sm Full_Model
+#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB  -ds 5 -sm Full_Model -ps Grid
 
 if __name__ == '__main__':
-    #############################################################################
+    ############################################################################
     #Argments parser
-    #############################################################################
+    ############################################################################
     my_parser = argparse.ArgumentParser(allow_abbrev=False)  #Construct the argument parser
     
     
     my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
     my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
     my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
-    my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF', 'SVM','XGBoost','LR')")
+    my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF','XGB')")
     my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
     my_parser.add_argument("-sm" , type = str ,  required=True, help="Selected Model (e.g.TopF_Model or Full_Model)")
+    my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
 
     
     args = vars(my_parser.parse_args())       # Parse the argument
-    #####################################################################################
+    ####################################################################################
     #Command line input or mannual input
-    #####################################################################################
+    ####################################################################################
     location = args['loc']  
     feature_sets = args['fs']
     SBCE_col = args['sc']
     model_name = args['mn']
     ds_indxes = args['ds']
     selected_model = args['sm']
-
+    search_alg = args['ps']
     
     # #Local
     # location = "Local"
     # feature_sets = "CCSandVAL2nd"
-    # SBCE_col = "SBCE"
-    # model_name = "RF"
-    # ds_indxes = 3
-    # selected_model = "Full_Model" # "TopF_Model or "Full_Model"
-
+    # SBCE_col = "SBCE_Excluded_DeathPts"
+    # model_name = "XGB"
+    # ds_indxes = 5
+    # selected_model = "TopF_Model" # "TopF_Model or "Full_Model"
+    # search_alg = "Grid"
     
     if SBCE_col == "SBCE" or SBCE_col == "SBCE_Excluded_DeathPts":
       label_col   = "y_PRE_OR_POST_2ndEvent"  
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     #Data dir
     data_dir1 = proj_dir +  "15_XGB_Input/" + feature_sets + "/All_Samples/" + SBCE_col + "/Test/"
     data_dir2 = proj_dir +  "8_Characteristics2/Patient_Level/"
-    data_dir3 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/'
+    data_dir3 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + search_alg + '/'
     data_dir4 = data_dir3 + 'Saved_Model/' + selected_model + "/"
 
 
@@ -108,10 +109,13 @@ if __name__ == '__main__':
     #2. Prediction
     ################################################################################       
     #Load model 
-    if selected_model == "TooF_Model":
-        trained_model = joblib.load(data_dir4 + model_name + "_TopFeature_model.pkl") #RF_Fullmodel
+    if selected_model == "TopF_Model":
+        trained_model = joblib.load(data_dir4 + model_name + "_TopFeature_model.pkl") #topFmodel
+        import_features_df = pd.read_csv(data_dir4 + "importance.csv")
+        import_features  = list(import_features_df['Feature'])
+        test_X = test_X[import_features]
     elif selected_model == "Full_Model":
-        trained_model = joblib.load(data_dir4 + model_name + "_Fullmodel.pkl") #RF_Fullmodel
+        trained_model = joblib.load(data_dir4 + model_name + "_Fullmodel.pkl") #Fullmodel
 
     #Prediction month-level
     pred_df_m = prediction(trained_model,test_X,test_Y,test_ID)
@@ -133,7 +137,7 @@ if __name__ == '__main__':
     thres_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
     pred_df_p_list = []
     for thres in thres_list :
-        pred_df_p  = patient_level_prediction(pred_df_m,thres,pts_level_char_df,SBCE_col,pred_method="3month")
+        pred_df_p  = patient_level_prediction(pred_df_m,thres,pts_level_char_df,"SBCE",pred_method="3month")
         sufix_col =  str(thres).replace('.','')
         pred_df_p.rename(columns = {'pred_label': 'pred_label_th' + sufix_col,
                                     'pred_month': 'pred_month_th' + sufix_col,
