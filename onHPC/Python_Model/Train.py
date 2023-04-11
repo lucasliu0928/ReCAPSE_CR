@@ -4,6 +4,14 @@
 Created on Mon Feb 20 19:39:50 2023
 
 @author: lucasliu
+@NOTE: Best perforamnce ds index 
+For CCSandVAL2nd:
+ds_index = 3 for SBCE
+ds_index = 5 for SBCE_Excluded_DeathPts
+
+For CCSandDM3SPE:
+ds_index = 4 for SBCE
+ds_index = 6 for SBCE_Excluded_DeathPts
 """
 
 from Ultility_Funcs.DataLoader import load_rdata
@@ -13,7 +21,7 @@ import os
 import argparse
 
 
-#python3 Train.py -loc Server -fs CCSandVAL2nd -sc SBCE -mn RF -top_n 10 -ds 3
+#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 5 -ps Grid
 
 if __name__ == '__main__':
     #############################################################################
@@ -25,9 +33,10 @@ if __name__ == '__main__':
     my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
     my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
     my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
-    my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF', 'SVM','XGBoost','LR')")
+    my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF','XGB')")
     my_parser.add_argument("-top_n" , type = int ,  required=True, help="Num of top ranked feature (e.g.10,20,...)")
     my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
+    my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
 
     
     args = vars(my_parser.parse_args())       # Parse the argument
@@ -40,20 +49,21 @@ if __name__ == '__main__':
     model_name = args['mn']
     top_f_num = args['top_n']
     ds_indxes = args['ds']
-
+    search_alg = args['ps']
     
     # #Local
     # location = "Local"
     # feature_sets = "CCSandVAL2nd"
-    # SBCE_col = "SBCE"
-    # model_name = "RF"
+    # SBCE_col = "SBCE_Excluded_DeathPts"
+    # model_name = "XGB"
     # top_f_num = 10
-    # ds_indxes = 3
+    # ds_indxes = 5
+    # search_alg = "Grid"
     
     if SBCE_col == "SBCE" or SBCE_col == "SBCE_Excluded_DeathPts":
       label_col   = "y_PRE_OR_POST_2ndEvent"  
     else:
-      label_col   = "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   
+      label_col   = "y_PRE_OR_POST_2ndEvent_ExcludedDeath"   #this treat death pts as label 0, only for SBCE_Exclude_Deathlabel choice
       
      
     if location == 'Server':
@@ -61,10 +71,13 @@ if __name__ == '__main__':
     elif location == 'Local':
         proj_dir = "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
         
+
+
+        
         
     #Data dir
     data_dir1 = proj_dir + "15_XGB_Input/" + feature_sets + "/All_Samples/" + SBCE_col + "/Train/"
-    outdir = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/'
+    outdir = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + search_alg + '/'
     outdir1 = outdir + "Saved_Model/Full_Model/"
     outdir2 = outdir + "Saved_Model/TopF_Model/"
 
@@ -85,7 +98,6 @@ if __name__ == '__main__':
     # train_X_All = pd.concat([train_X1,train_X2,train_X3], axis = 0)
     # train_Y_All = pd.concat([train_Y1,train_Y2,train_Y3], axis = 0)
     # train_comb = pd.concat([train_X_All,train_Y_All], axis = 1)
-          
     
     ################################################################################
     #Train Full RF Model using nonObv sample
@@ -94,7 +106,11 @@ if __name__ == '__main__':
     #Train nonobv
     train_X = train_X2
     train_Y = train_Y2
-    optimal_model, best_para_df = train_model_cv_gridsearch(train_X,train_Y, model_name)
+    
+    if search_alg == 'Grid':
+        optimal_model, best_para_df = train_model_cv_gridsearch(train_X,train_Y, model_name)
+    else:
+        pass
     
     #Output optimal model
     joblib.dump(optimal_model, outdir1 + model_name + '_Fullmodel.pkl')
@@ -104,8 +120,6 @@ if __name__ == '__main__':
     feature_names = train_X.columns
     importance_df = get_default_importance_feature(optimal_model,feature_names,model_name)
     importance_df.to_csv(outdir1 + 'importance.csv', index = False)
-    
-    
     
     
     ################################################################################
