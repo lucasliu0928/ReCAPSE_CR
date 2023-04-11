@@ -14,7 +14,11 @@ def load_rdata(indir,filename,file_keyname,label_column):
     df = df[file_keyname]
     df_Y = df[label_column]
     df_ID = df[["study_id","sample_id"]]    
-    drop_cols  = ["study_id","sample_id",label_column]
-    df_X  = df.drop(columns = drop_cols)
+   
+    #Mkae sure these columns are not in the X part for training
+    df_X = df.drop(columns=["study_id","sample_id","y_PRE_OR_POST_2ndEvent",
+                            "y_PRE_OR_POST_2ndEvent_ExcludedDeath"], 
+                   errors = "ignore") #If ‘ignore’, suppress error and only existing labels are dropped.
+    
     
     return df_X,df_Y,df_ID
