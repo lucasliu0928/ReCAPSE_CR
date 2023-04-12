@@ -27,41 +27,41 @@ import argparse
 
 
 if __name__ == '__main__':
-    #############################################################################
-    #Argments parser
-    #############################################################################
-    my_parser = argparse.ArgumentParser(allow_abbrev=False)  #Construct the argument parser
+    # #############################################################################
+    # #Argments parser
+    # #############################################################################
+    # my_parser = argparse.ArgumentParser(allow_abbrev=False)  #Construct the argument parser
     
     
-    my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
-    my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
-    my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
-    my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF','XGB')")
-    my_parser.add_argument("-top_n" , type = int ,  required=True, help="Num of top ranked feature (e.g.10,20,...)")
-    my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
-    my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
+    # my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
+    # my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
+    # my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
+    # my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF','XGB')")
+    # my_parser.add_argument("-top_n" , type = int ,  required=True, help="Num of top ranked feature (e.g.10,20,...)")
+    # my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
+    # my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
 
     
-    args = vars(my_parser.parse_args())       # Parse the argument
-    #####################################################################################
-    #Command line input or mannual input
-    #####################################################################################
-    location = args['loc']  
-    feature_sets = args['fs']
-    SBCE_col = args['sc']
-    model_name = args['mn']
-    top_f_num = args['top_n']
-    ds_indxes = args['ds']
-    search_alg = args['ps']
+    # args = vars(my_parser.parse_args())       # Parse the argument
+    # #####################################################################################
+    # #Command line input or mannual input
+    # #####################################################################################
+    # location = args['loc']  
+    # feature_sets = args['fs']
+    # SBCE_col = args['sc']
+    # model_name = args['mn']
+    # top_f_num = args['top_n']
+    # ds_indxes = args['ds']
+    # search_alg = args['ps']
     
-    # #Local
-    # location = "Local"
-    # feature_sets = "CCSandVAL2nd"
-    # SBCE_col = "SBCE_Excluded_DeathPts"
-    # model_name = "XGB"
-    # top_f_num = 10
-    # ds_indxes = 5
-    # search_alg = "Grid"
+    #Local
+    location = "Local"
+    feature_sets = "CCSandVAL2nd"
+    SBCE_col = "SBCE_Excluded_DeathPts"
+    model_name = "XGB"
+    top_f_num = 10
+    ds_indxes = 5
+    search_alg = "Bayes"
     
     if SBCE_col == "SBCE" or SBCE_col == "SBCE_Excluded_DeathPts":
       label_col   = "y_PRE_OR_POST_2ndEvent"  
