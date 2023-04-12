@@ -15,13 +15,16 @@ ds_index = 6 for SBCE_Excluded_DeathPts
 """
 
 from Ultility_Funcs.DataLoader import load_rdata
-from Ultility_Funcs.TrainTest_Funcs import train_model_cv_gridsearch,get_default_importance_feature,train_topf_model
+from Ultility_Funcs.TrainTest_Funcs import train_model_cvsearch,get_default_importance_feature,train_topf_model
 import joblib
 import os
 import argparse
 
-
+#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB -top_n 10 -ds 3 -ps Grid
 #python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 5 -ps Grid
+#python3 Train.py -loc Local -fs CCSandDM3SPE -sc SBCE -mn XGB -top_n 10 -ds 4 -ps Grid
+#python3 Train.py -loc Local -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 6 -ps Grid
+
 
 if __name__ == '__main__':
     #############################################################################
@@ -71,8 +74,6 @@ if __name__ == '__main__':
     elif location == 'Local':
         proj_dir = "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
         
-
-
         
         
     #Data dir
@@ -106,11 +107,8 @@ if __name__ == '__main__':
     #Train nonobv
     train_X = train_X2
     train_Y = train_Y2
-    
-    if search_alg == 'Grid':
-        optimal_model, best_para_df = train_model_cv_gridsearch(train_X,train_Y, model_name)
-    else:
-        pass
+    optimal_model, best_para_df = train_model_cvsearch(train_X,train_Y, model_name,search_alg)
+
     
     #Output optimal model
     joblib.dump(optimal_model, outdir1 + model_name + '_Fullmodel.pkl')
