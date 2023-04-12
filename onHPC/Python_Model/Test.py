@@ -17,7 +17,13 @@ import argparse
 
 
 
+#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB  -ds 3 -sm Full_Model -ps Grid
 #python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB  -ds 5 -sm Full_Model -ps Grid
+#python3 Test.py -loc Local -fs CCSandDM3SPE -sc SBCE -mn XGB  -ds 4 -sm Full_Model -ps Grid
+#python3 Test.py -loc Local -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB  -ds 6 -sm Full_Model -ps Grid
+
+
+
 
 if __name__ == '__main__':
     ############################################################################
