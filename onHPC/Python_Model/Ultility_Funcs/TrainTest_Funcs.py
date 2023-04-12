@@ -9,9 +9,11 @@ Created on Mon Feb 20 20:03:35 2023
 
 from sklearn.ensemble import RandomForestClassifier,RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
+from skopt import BayesSearchCV
 import pandas as pd
 import numpy as np
 import xgboost as xgb
+
 
 def downsample_func(in_data,out_col,ran_state):
     # data of each class
@@ -30,7 +32,7 @@ def downsample_func(in_data,out_col,ran_state):
     return in_data_downsampled
 
 
-def train_model_cv_gridsearch(train_data, train_label, model_name):
+def train_model_cvsearch(train_data, train_label, model_name,opt_alg = "Grid"):
     r'''
     This function use CV to get optimal model
     '''
@@ -50,7 +52,11 @@ def train_model_cv_gridsearch(train_data, train_label, model_name):
 
 
     #CV 
-    cv_model = GridSearchCV(model, param_grid, cv = 10)
+    if opt_alg == 'Grid':
+        cv_model = GridSearchCV(model, param_grid, cv = 10)
+    elif opt_alg == "Bayes":
+        cv_model = BayesSearchCV(model, param_grid, cv = 10)
+
     cv_model.fit(train_data, train_label)
     
     #Get best parameters
