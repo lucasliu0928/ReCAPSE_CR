@@ -14,6 +14,14 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 
+def float_dict(d):
+    updated_dict = {}
+    for k,v in d.items():
+        if type(v) == dict:
+            updated_dict[k] = float_dict(v)
+        else:
+            updated_dict[k] = float(v)
+    return updated_dict
 
 def downsample_func(in_data,out_col,ran_state):
     # data of each class
@@ -32,10 +40,10 @@ def downsample_func(in_data,out_col,ran_state):
     return in_data_downsampled
 
 
-def train_model_cvsearch(train_data, train_label, model_name,opt_alg = "Grid"):
+def train_model_cvsearch(train_data, train_label, model_name,opt_alg):
     r'''
     This function use CV to get optimal model
-    '''
+    '''    
     #Instantiation of the model
     if model_name == 'RF':
         model = RandomForestClassifier(random_state = 0)
@@ -47,20 +55,22 @@ def train_model_cvsearch(train_data, train_label, model_name,opt_alg = "Grid"):
                                   use_label_encoder=False,
                                   random_state=0)
         param_grid = {'max_depth': [6,7,8],
-                      'max_leaves': [0,1,2]}
+                      'max_leaves': [0,1,2],
+                      'eta':[0.1,0.3],
+                      'min_child_weight': [1,2]}
         
-
 
     #CV 
     if opt_alg == 'Grid':
         cv_model = GridSearchCV(model, param_grid, cv = 10)
     elif opt_alg == "Bayes":
-        cv_model = BayesSearchCV(model, param_grid, cv = 10)
+        cv_model = BayesSearchCV(model, param_grid, cv = 10) 
 
     cv_model.fit(train_data, train_label)
     
+    
     #Get best parameters
-    best_para = cv_model.best_params_ 
+    best_para = float_dict(cv_model.best_params_)
     best_para_df = pd.DataFrame.from_dict(best_para, orient = 'index', columns = ['value'])
     
     #Re-train with optiaml model
@@ -71,6 +81,8 @@ def train_model_cvsearch(train_data, train_label, model_name,opt_alg = "Grid"):
     elif model_name == 'XGB':
         model = xgb.XGBClassifier(max_depth = best_para['max_depth'],
                                   max_leaves = best_para['max_leaves'],
+                                  eta = best_para['eta'],
+                                  min_child_weight = best_para['min_child_weight'],
                                   objective="binary:logistic", 
                                   eval_metric="auc",
                                   use_label_encoder=False,
