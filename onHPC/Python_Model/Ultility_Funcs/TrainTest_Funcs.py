@@ -14,15 +14,6 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 
-def float_dict(d):
-    updated_dict = {}
-    for k,v in d.items():
-        if type(v) == dict:
-            updated_dict[k] = float_dict(v)
-        else:
-            updated_dict[k] = float(v)
-    return updated_dict
-
 def downsample_func(in_data,out_col,ran_state):
     # data of each class
     in_class0 = in_data[in_data[out_col] == 0]
@@ -44,6 +35,7 @@ def train_model_cvsearch(train_data, train_label, model_name,opt_alg):
     r'''
     This function use CV to get optimal model
     '''    
+    
     #Instantiation of the model
     if model_name == 'RF':
         model = RandomForestClassifier(random_state = 0)
@@ -55,9 +47,7 @@ def train_model_cvsearch(train_data, train_label, model_name,opt_alg):
                                   use_label_encoder=False,
                                   random_state=0)
         param_grid = {'max_depth': [6,7,8],
-                      'max_leaves': [0,1,2],
-                      'eta':[0.1,0.3],
-                      'min_child_weight': [1,2]}
+                      'max_leaves': [0,1,2]}
         
 
     #CV 
@@ -70,19 +60,13 @@ def train_model_cvsearch(train_data, train_label, model_name,opt_alg):
     
     
     #Get best parameters
-    best_para = float_dict(cv_model.best_params_)
-    best_para_df = pd.DataFrame.from_dict(best_para, orient = 'index', columns = ['value'])
+    best_para = cv_model.best_params_
     
     #Re-train with optiaml model
     if model_name == 'RF':
-        model = RandomForestClassifier(max_depth= best_para['max_depth'], 
-                                          n_estimators= best_para['n_estimators'],
-                                          random_state=0)
+        model = RandomForestClassifier(**best_para,random_state=0)
     elif model_name == 'XGB':
-        model = xgb.XGBClassifier(max_depth = best_para['max_depth'],
-                                  max_leaves = best_para['max_leaves'],
-                                  eta = best_para['eta'],
-                                  min_child_weight = best_para['min_child_weight'],
+        model = xgb.XGBClassifier(**best_para,#Use ** to make sure no str value passed
                                   objective="binary:logistic", 
                                   eval_metric="auc",
                                   use_label_encoder=False,
@@ -91,7 +75,7 @@ def train_model_cvsearch(train_data, train_label, model_name,opt_alg):
     model.fit(train_data, train_label)
     
     
-    return model,best_para_df
+    return model,best_para
 
 def get_default_importance_feature(trained_model,feature_names, model_name):        
     if model_name == "RF":
@@ -104,15 +88,13 @@ def get_default_importance_feature(trained_model,feature_names, model_name):
 
     return important_df
     
-def train_topf_model(train_data, train_label, parameters_df, model_name):
+def train_topf_model(train_data, train_label, parameters, model_name):
     #Train 
     if model_name == 'RF':
-        topf_model = RandomForestClassifier(max_depth= parameters_df.loc['max_depth','value'], 
-                                          n_estimators= parameters_df.loc['n_estimators','value'],
-                                          random_state=0)
+        topf_model = RandomForestClassifier(**parameters,random_state=0)
+        
     elif model_name == 'XGB':
-        topf_model = xgb.XGBClassifier(max_depth = parameters_df.loc['max_depth','value'],
-                                       max_leaves = parameters_df.loc['max_leaves','value'],
+        topf_model = xgb.XGBClassifier(**parameters,
                                        objective="binary:logistic", 
                                        eval_metric="auc",
                                        use_label_encoder=False,
@@ -123,16 +105,13 @@ def train_topf_model(train_data, train_label, parameters_df, model_name):
     return topf_model
 
 
-def train_shap_regressor_model(train_data, train_label, parameters_df, model_name):
+def train_shap_regressor_model(train_data, train_label, parameters, model_name):
     #Train 
     if model_name == 'RF':
-        shap_model = RandomForestRegressor(max_depth= parameters_df.loc['max_depth','value'], 
-                                          n_estimators= parameters_df.loc['n_estimators','value'],
+        shap_model = RandomForestRegressor(**parameters,
                                           random_state=0)
     elif model_name == 'XGB':
-        shap_model = xgb.XGBRegressor(max_depth = parameters_df.loc['max_depth','value'],
-                                       max_leaves = parameters_df.loc['max_leaves','value'],
-                                       random_state=0)
+        shap_model = xgb.XGBRegressor(**parameters,random_state=0)
     
     shap_model.fit(train_data, train_label)
         
