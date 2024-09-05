@@ -21,11 +21,14 @@ import os
 import argparse
 import pandas as pd
 
-#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB -top_n 10 -ds 3 -ps Grid
-#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 5 -ps Grid
-#python3 Train.py -loc Local -fs CCSandDM3SPE -sc SBCE -mn XGB -top_n 10 -ds 4 -ps Grid
-#python3 Train.py -loc Local -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 6 -ps Grid
+#Train with nonobv
+#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB -top_n 10 -ds 3 -ps Grid -ts nonobv
+#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 5 -ps Grid -ts nonobv
+#python3 Train.py -loc Local -fs CCSandDM3SPE -sc SBCE -mn XGB -top_n 10 -ds 4 -ps Grid -ts nonobv
+#python3 Train.py -loc Local -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 6 -ps Grid -ts nonobv
 
+#Train with all samples with ds on nonobvs samples
+#python3 Train.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB -top_n 10 -ds 3 -ps Grid -ts all
 
 if __name__ == '__main__':
     #############################################################################
@@ -41,6 +44,7 @@ if __name__ == '__main__':
     my_parser.add_argument("-top_n" , type = int ,  required=True, help="Num of top ranked feature (e.g.10,20,...)")
     my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
     my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
+    my_parser.add_argument("-ts" , type = str ,  required=True, help="Traning Sample data (e.g nonobv, all)")
 
     
     args = vars(my_parser.parse_args())       # Parse the argument
@@ -54,7 +58,7 @@ if __name__ == '__main__':
     top_f_num = args['top_n']
     ds_indxes = args['ds']
     search_alg = args['ps']
-    
+    train_sample_type = args['ts']
     # #Local
     # location = "Local"
     # feature_sets = "CCSandVAL2nd"
@@ -63,6 +67,7 @@ if __name__ == '__main__':
     # top_f_num = 10
     # ds_indxes = 5
     # search_alg = "Bayes"
+    # train_sample_type = 'nonobv'
     
     if SBCE_col == "SBCE" or SBCE_col == "SBCE_Excluded_DeathPts":
       label_col   = "y_PRE_OR_POST_2ndEvent"  
@@ -79,7 +84,7 @@ if __name__ == '__main__':
         
     #Data dir
     data_dir1 = proj_dir + "15_XGB_Input/" + feature_sets + "/All_Samples/" + SBCE_col + "/Train/"
-    outdir = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + search_alg + '/'
+    outdir = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + train_sample_type + '/' + search_alg + '/'
     outdir1 = outdir + "Saved_Model/Full_Model/"
     outdir2 = outdir + "Saved_Model/TopF_Model/"
 
@@ -94,20 +99,21 @@ if __name__ == '__main__':
     #1. Load data 
     ####################################################################################################    
     #Load train data
-    #train_X1, train_Y1, _ =load_rdata(data_dir1,'train_neg_data.rda','train_neg_df',label_col)
-    train_X2, train_Y2, _ =load_rdata(data_dir1,'train_nonobv_DS'+ str(ds_indxes) + '.rda','train_nonobv_ds_df',label_col)
-    #train_X3, train_Y3, _ =load_rdata(data_dir1,'train_pos_data.rda','train_pos_df',label_col)
-    # train_X_All = pd.concat([train_X1,train_X2,train_X3], axis = 0)
-    # train_Y_All = pd.concat([train_Y1,train_Y2,train_Y3], axis = 0)
-    # train_comb = pd.concat([train_X_All,train_Y_All], axis = 1)
+    if train_sample_type == 'nonobv':
+        train_X, train_Y, _ =load_rdata(data_dir1,'train_nonobv_DS'+ str(ds_indxes) + '.rda','train_nonobv_ds_df',label_col)
+    elif train_sample_type == 'all': 
+        train_X1, train_Y1, _ =load_rdata(data_dir1,'train_neg_data.rda','train_neg_df',label_col)
+        train_X2, train_Y2, _ =load_rdata(data_dir1,'train_nonobv_DS'+ str(ds_indxes) + '.rda','train_nonobv_ds_df',label_col)
+        train_X3, train_Y3, _ =load_rdata(data_dir1,'train_pos_data.rda','train_pos_df',label_col)
+        train_X = pd.concat([train_X1,train_X2,train_X3], axis = 0)
+        train_Y = pd.concat([train_Y1,train_Y2,train_Y3], axis = 0)
+        #train_comb = pd.concat([train_X_All,train_Y_All], axis = 1)
     
     ################################################################################
     #Train Full RF Model using nonObv sample
     #using CV with grid search to get optimal model
     ################################################################################
     #Train nonobv
-    train_X = train_X2
-    train_Y = train_Y2
     optimal_model, best_para = train_model_cvsearch(train_X,train_Y, model_name,search_alg)
     best_para_df = pd.DataFrame.from_dict(best_para, orient = 'index', columns = ['value'])
 
