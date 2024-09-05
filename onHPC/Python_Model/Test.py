@@ -17,10 +17,11 @@ import argparse
 
 
 
-#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB  -ds 3 -sm Full_Model -ps Grid
-#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB  -ds 5 -sm Full_Model -ps Grid
-#python3 Test.py -loc Local -fs CCSandDM3SPE -sc SBCE -mn XGB  -ds 4 -sm Full_Model -ps Grid
-#python3 Test.py -loc Local -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB  -ds 6 -sm Full_Model -ps Grid
+#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE -mn XGB  -ds 3 -sm Full_Model -ps Grid -ts nonobv
+#python3 Test.py -loc Local -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB  -ds 5 -sm Full_Model -ps Grid -ts nonobv
+#python3 Test.py -loc Local -fs CCSandDM3SPE -sc SBCE -mn XGB  -ds 4 -sm Full_Model -ps Grid -ts nonobv
+#python3 Test.py -loc Local -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB  -ds 6 -sm Full_Model -ps Grid -ts nonobv
+
 
 
 
@@ -29,38 +30,40 @@ if __name__ == '__main__':
     ############################################################################
     #Argments parser
     ############################################################################
-    my_parser = argparse.ArgumentParser(allow_abbrev=False)  #Construct the argument parser
+    # my_parser = argparse.ArgumentParser(allow_abbrev=False)  #Construct the argument parser
     
     
-    my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
-    my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
-    my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
-    my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF','XGB')")
-    my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
-    my_parser.add_argument("-sm" , type = str ,  required=True, help="Selected Model (e.g.TopF_Model or Full_Model)")
-    my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
-
+    # my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
+    # my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
+    # my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
+    # my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF','XGB')")
+    # my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
+    # my_parser.add_argument("-sm" , type = str ,  required=True, help="Selected Model (e.g.TopF_Model or Full_Model)")
+    # my_parser.add_argument("-ps" , type = str ,  required=True, help="Hyperparameter Search Algorithm (e.g Grid, Bayes)")
+    # my_parser.add_argument("-ts" , type = str ,  required=True, help="Traning Sample data (e.g nonobv, all)")
     
-    args = vars(my_parser.parse_args())       # Parse the argument
+    # args = vars(my_parser.parse_args())       # Parse the argument
     ####################################################################################
     #Command line input or mannual input
     ####################################################################################
-    location = args['loc']  
-    feature_sets = args['fs']
-    SBCE_col = args['sc']
-    model_name = args['mn']
-    ds_indxes = args['ds']
-    selected_model = args['sm']
-    search_alg = args['ps']
+    # location = args['loc']  
+    # feature_sets = args['fs']
+    # SBCE_col = args['sc']
+    # model_name = args['mn']
+    # ds_indxes = args['ds']
+    # selected_model = args['sm']
+    # search_alg = args['ps']
+    # train_sample_type = args['ts']
     
     # #Local
-    # location = "Local"
-    # feature_sets = "CCSandVAL2nd"
-    # SBCE_col = "SBCE_Excluded_DeathPts"
-    # model_name = "XGB"
-    # ds_indxes = 5
-    # selected_model = "TopF_Model" # "TopF_Model or "Full_Model"
-    # search_alg = "Grid"
+    location = "Local"
+    feature_sets = "CCSandVAL2nd"
+    SBCE_col = "SBCE" #SBCE_Excluded_DeathPts or "SBCE"
+    model_name = "XGB"
+    ds_indxes = 3
+    selected_model = "TopF_Model" # "TopF_Model or "Full_Model"
+    search_alg = "Grid"
+    train_sample_type = 'nonobv'
     
     if SBCE_col == "SBCE" or SBCE_col == "SBCE_Excluded_DeathPts":
       label_col   = "y_PRE_OR_POST_2ndEvent"  
@@ -77,11 +80,11 @@ if __name__ == '__main__':
     #Data dir
     data_dir1 = proj_dir +  "15_XGB_Input/" + feature_sets + "/All_Samples/" + SBCE_col + "/Test/"
     data_dir2 = proj_dir +  "8_Characteristics2/Patient_Level/"
-    data_dir3 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + search_alg + '/'
+    data_dir3 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + train_sample_type + '/' +  search_alg + '/'
     data_dir4 = data_dir3 + 'Saved_Model/' + selected_model + "/"
 
 
-    outdir = data_dir3 + "Prediction/" + selected_model + "/"
+    outdir = data_dir3 + "Prediction0715/" + selected_model + "/"
 
 
     if not os.path.exists(outdir):
