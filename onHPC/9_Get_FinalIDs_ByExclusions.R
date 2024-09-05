@@ -29,7 +29,7 @@ registerDoParallel(numCores)  # use multicore, set to the number of our cores
 proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 #data dir
 data_dir1  <- paste0(proj_dir, "8_Characteristics2/Patient_Level/")
@@ -54,7 +54,7 @@ analysis_ID1 <- unique(patient_level_char_df1$study_id)
 #Exclusion 1: Has_ValidClaims_inRange == 0 
 #Exclusion 2: Stage 0 (0-2), Stage IV [70-80) ,Unknown (88,99) (Stage(BestStageGrp) )
 #Exclusion 3 : non- local or regional stage for 1st priamry bc (SEERSummStg2000 stages  != 1,2,3,4,5) #In-situ 0; Localized 1; Regional 2-5; Distant 7
-#Exclusion 4: diagnoise of first primary BC not in 2004 to 2015
+#Exclusion 4: diagnose of first primary BC not in 2004 to 2015
 ################################################################################ 
 #1.For enrollment moths record that allow no codes in the months
 patient_level_char_df1 <- exclusion_func(patient_level_char_df1)
