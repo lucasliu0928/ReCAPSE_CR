@@ -19,8 +19,10 @@
 #python3 Train.py -loc Server -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 5 -ps Bayes
 #python3 Train.py -loc Server -fs CCSandDM3SPE -sc SBCE -mn XGB -top_n 10 -ds 4 -ps Bayes
 #python3 Train.py -loc Server -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB -top_n 10 -ds 6 -ps Bayes
+#python3 Train.py -loc Server -fs CCSandVAL2nd -sc SBCE -mn XGB -top_n 10 -ds 3 -ps Grid -ts all
 
-python3 Test.py -loc Server -fs CCSandVAL2nd -sc SBCE -mn XGB  -ds 3 -sm Full_Model -ps Grid
+#python3 Test.py -loc Server -fs CCSandVAL2nd -sc SBCE -mn XGB  -ds 3 -sm Full_Model -ps Grid
 #python3 Test.py -loc Server -fs CCSandVAL2nd -sc SBCE_Excluded_DeathPts -mn XGB  -ds 5 -sm Full_Model -ps Bayes
 #python3 Test.py -loc Server -fs CCSandDM3SPE -sc SBCE -mn XGB  -ds 4 -sm Full_Model -ps Bayes
 #python3 Test.py -loc Server -fs CCSandDM3SPE -sc SBCE_Excluded_DeathPts -mn XGB  -ds 6 -sm Full_Model -ps Bayes
+python3 Test.py -loc Server -fs CCSandVAL2nd -sc SBCE -mn XGB  -ds 3 -sm Full_Model -ps Grid -ts all
