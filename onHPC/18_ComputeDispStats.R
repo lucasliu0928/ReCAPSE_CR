@@ -4,10 +4,10 @@ source("Recapse_Ultility.R")
 #Data dir
 ################################################################################
 #onHPC
-proj_dir  <- "/recapse/intermediate_data/"
+#proj_dir  <- "/recapse/intermediate_data/"
 
 #local
-#proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+proj_dir  <- "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
 
 feature_set_name  <- "CCSandVAL2nd"     #choose from CCSandDM3SPE , CCSandVAL2nd
 SBCE_ID_Folder    <- "SBCE" #Choose SBCE or SBCE_Excluded_DeathLabel or SBCE_Excluded_DeathPts
