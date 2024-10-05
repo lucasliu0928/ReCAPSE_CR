@@ -58,9 +58,9 @@ if __name__ == '__main__':
     # #Local
     location = "Local"
     feature_sets = "CCSandDM3SPE"
-    SBCE_col = "SBCE" #SBCE_Excluded_DeathPts or "SBCE"
+    SBCE_col = "SBCE_Excluded_DeathPts" #SBCE_Excluded_DeathPts or "SBCE"
     model_name = "XGB"
-    ds_indxes = 4
+    ds_indxes = 6
     selected_model = "Full_Model" # "TopF_Model or "Full_Model"
     search_alg = "Grid"
     train_sample_type = 'nonobv'
