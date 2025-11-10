@@ -32,7 +32,6 @@ if __name__ == '__main__':
     ############################################################################
     # my_parser = argparse.ArgumentParser(allow_abbrev=False)  #Construct the argument parser
     
-    
     # my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
     # my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
     # my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
@@ -46,6 +45,7 @@ if __name__ == '__main__':
     ####################################################################################
     #Command line input or mannual input
     ####################################################################################
+<<<<<<< HEAD
     # location = args['loc']  
     # feature_sets = args['fs']
     # SBCE_col = args['sc']

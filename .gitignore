@@ -1,2 +1,16 @@
 
+# R-related files
+.Rhistory
 .RData
+.RDataTmp
+.Ruserdata
+.Rproj.user/
+
+
+# Python cache and compiled files
+__pycache__
+.DS_Store
+.Rhistory
+
+*.pyc.DS_Store
+**/.DS_Store
