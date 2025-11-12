@@ -39,7 +39,7 @@ def change_feature_name(df,new_feature_maps):
             elif 'time_until_' in cur_col:
                 new_trans_type = 'Time Until '
             elif 'cumul_ratio_' in cur_col:
-                new_trans_type = 'Cumulative occurrence of '
+                new_trans_type = 'Cumulative occurrence rate of '
             else:
                 new_trans_type = 'Monthly Count of'
             
@@ -87,7 +87,7 @@ def change_feature_name_importance_df(df,new_feature_maps):
             elif 'time_until_' in cur_col:
                 new_trans_type = 'Time Until '
             elif 'cumul_ratio_' in cur_col:
-                new_trans_type = 'Cumulative occurrence of '
+                new_trans_type = 'Cumulative occurrence rate of '
             else:
                 new_trans_type = 'Monthly Count of'
             
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     # my_parser.add_argument("-loc" , type = str , required=True, help="Data Location (e.g., 'Server', 'Local')")
     # my_parser.add_argument("-fs" , type = str ,  required=True, help="Feature set (e.g., 'CCSandVAL2nd', 'CCSandDM3SPE')")
     # my_parser.add_argument("-sc" , type = str ,  required=True, help="SBCE column (e.g., 'SBCE', 'SBCE_Excluded_DeathPts','SBCE_Excluded_DeathLabel')")
-    # my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF', 'SVM','XGBoost','LR')")
+    # my_parser.add_argument("-mn" , type = str ,  required=True, help="Model name (e.g., 'RF', 'SVM','XGB','LR')")
     # my_parser.add_argument("-ds" , type = int ,  required=True, help="Index of Down Sampled non-obv sample (e.g.0,1,2,...10, DS0 is the original non-obv without any ds)")
     # my_parser.add_argument("-sm" , type = str ,  required=True, help="Selected Model (e.g.TopF_Model or Full_Model)")
     # my_parser.add_argument("-top_n" , type = int ,  required=True, help="Num of top ranked feature (e.g.10,20,...)")
@@ -150,10 +150,11 @@ if __name__ == '__main__':
     location = "Local"
     feature_sets = "CCSandVAL2nd"
     SBCE_col = "SBCE"
-    model_name = "RF"
+    model_name = "XGB"
     ds_indxes = 3
     selected_model = "Full_Model" # "TopF_Model or "Full_Model"
     top_f_num = 10
+    train_inst = "nonobv" #"nonobv" or "all"
     
     if SBCE_col == "SBCE" or SBCE_col == "SBCE_Excluded_DeathPts":
       label_col   = "y_PRE_OR_POST_2ndEvent"  
@@ -164,19 +165,19 @@ if __name__ == '__main__':
     if location == 'Server':
         proj_dir = "/users/recapse/intermediate_data/"
     elif location == 'Local':
-        proj_dir = "/Users/lucasliu/Desktop/DrChen_Projects/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
+        proj_dir = "/Users/jliu6/Library/CloudStorage/OneDrive-FredHutchCancerCenter/Projects/ReCAPSE/ReCAPSE_Project/ReCAPSE_Intermediate_Data/0610_21/"
         
         
     #Data dir
     data_dir1 = proj_dir + "15_XGB_Input/" + feature_sets + "/All_Samples/" + SBCE_col + "/Train/"
     data_dir2 = proj_dir +  "15_XGB_Input/" + feature_sets + "/All_Samples/" + SBCE_col + "/Test/"
     data_dir3 = proj_dir +  "8_Characteristics2/Patient_Level/"
-    data_dir4 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + 'Saved_Model/' + selected_model + "/"
-    data_dir5 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + "/Prediction/" + selected_model + "/"
+    data_dir4 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + train_inst + '/Grid/Saved_Model/' + selected_model + "/"
+    data_dir5 = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' + train_inst + "/Grid/Prediction/" + selected_model + "/"
     data_dir6 = proj_dir + "/10G_Counts_UniqueGrp_PtsLevel/WithPossibleMonthsHasNoCodes/"
 
-    outdir = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/'
-    outdir = outdir + "Shap/" + selected_model + "/"
+    outdir = proj_dir + "20_Python_Results/" + feature_sets + "/" +  SBCE_col + "/" + model_name + "/" + "DS" + str(ds_indxes) + '/' +  train_inst + '/Grid/' 
+    outdir = outdir + "Shap_11112025/" + selected_model + "/" 
 
 
     if not os.path.exists(outdir):
@@ -189,12 +190,14 @@ if __name__ == '__main__':
     #1. Load data 
     ####################################################################################################
     #Load train data
-    #train_X1, train_Y1, _ =load_rdata(data_dir1,'train_neg_data.rda','train_neg_df',label_col)
-    train_X2, train_Y2, _ =load_rdata(data_dir1,'train_nonobv_DS'+ str(ds_indxes) + '.rda','train_nonobv_ds_df',label_col)
-    #train_X3, train_Y3, _ =load_rdata(data_dir1,'train_pos_data.rda','train_pos_df',label_col)
-    # train_X_All = pd.concat([train_X1,train_X2,train_X3], axis = 0)
-    # train_Y_All = pd.concat([train_Y1,train_Y2,train_Y3], axis = 0)
-    # train_comb = pd.concat([train_X_All,train_Y_All], axis = 1)
+    if train_inst  == "nonobv":
+        train_X2, train_Y2, _ =load_rdata(data_dir1,'train_nonobv_DS'+ str(ds_indxes) + '.rda','train_nonobv_ds_df',label_col)
+    elif train_inst == 'all':
+        train_X1, train_Y1, _ =load_rdata(data_dir1,'train_neg_data.rda','train_neg_df',label_col)
+        train_X3, train_Y3, _ =load_rdata(data_dir1,'train_pos_data.rda','train_pos_df',label_col)
+        train_X_All = pd.concat([train_X1,train_X2,train_X3], axis = 0)
+        train_Y_All = pd.concat([train_Y1,train_Y2,train_Y3], axis = 0)
+        train_comb = pd.concat([train_X_All,train_Y_All], axis = 1)
     
     #Load test data
     test_X1, test_Y1, test_ID1 =load_rdata(data_dir2,'test_neg_data.rda','test_neg_df',label_col)
@@ -252,8 +255,7 @@ if __name__ == '__main__':
     
     #Output shap model
     joblib.dump(shap_model, outdir + model_name  + '_shapmodel.pkl')
-    
-    
+
     #Shap explainer
     explainer = shap.TreeExplainer(shap_model) 
     
@@ -345,6 +347,9 @@ if __name__ == '__main__':
         # output_dir = outdir
         
         shap_value = explainer.shap_values(Sample_X)
+        shap_value_df = pd.DataFrame(shap_value)
+        shap_value_df.columns = Sample_X.columns
+        
         #Using logit will change log-odds numbers into probabilities, the defualt shows the the log-odds
         #We do not have to chaknge link to "logit", because we use RF_regressor classfier, the y_pred is alreayd in proabily form
         #shap.force_plot(explainer.expected_value, shap_value, Sample_X,contribution_threshold= value_threshold,show = False,matplotlib=True).savefig(output_dir + outfile,bbox_inches='tight',dpi = 500)
@@ -355,14 +360,16 @@ if __name__ == '__main__':
         plt.savefig(output_dir + outfile + '.png',bbox_inches='tight',dpi = 500)
         
         plt.close()
+        
+        return shap_value_df.transpose()
             
-    sample_id = 'ID16745@2010-11-01' #ID16745@2010-11-01 (RF), 'ID24266@2011-02-01' (XGB)
+    sample_id = 'ID24266@2011-02-01' #ID16745@2010-11-01 (RF), 'ID24266@2011-02-01' (XGB)
     patient_id = sample_id.split('@')[0]
     sample_idx = list(test_ID['sample_id']).index(sample_id)
-    plot_individual_shap(explainer,pd.DataFrame(test_X.iloc[sample_idx,]).transpose(),
+    shap_ind_df = plot_individual_shap(explainer,pd.DataFrame(test_X.iloc[sample_idx,]).transpose(),
                          0.1,outdir,sample_id)
 
-        
+
     #Plot Prediction trajoetory
     #Load prediction
     pred_df_m = pd.read_csv(data_dir5 + "samplelevel_prediction.csv")
@@ -390,26 +397,111 @@ if __name__ == '__main__':
     plot_data = sample_pred_df[['month_start','pred_prob']].copy()
     plot_data['month_start'] = pd.to_datetime(plot_data['month_start'])
     plot_data['type'] = 'Prediction'
-    plot_data = sample_primary_month_df.append(plot_data, ignore_index=True)
-    
+    #plot_data = sample_primary_month_df.append(plot_data, ignore_index=True)
+    plot_data = pd.concat([sample_primary_month_df, plot_data], ignore_index=True)
     
     event1_date = sample_primary_month
     event2_date = sample_acutal_month
     evet2_pred_date = sample_pred_month
     anote_y_pos_pred = plot_data.loc[plot_data['month_start'] == sample_pred_month,'pred_prob']
-    ax = plot_data.plot('month_start','pred_prob', style = '-', color = 'steelblue', lw = 3)
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Predicted Probability")
-    ax.set_ylim(0,1)
-    ax.set_xlim(min(plot_data['month_start']) - pd.DateOffset(months=3),max(plot_data['month_start']))
-    ax.get_legend().remove()
-    ax.annotate('1st primary \n diagnosis', xy=(event1_date, -0), xytext=(event1_date, 0.2),
-                arrowprops=dict(facecolor='black', edgecolor = 'black'))
-    ax.annotate('Observaed SBCE', xy=(event2_date, -0), xytext=(event2_date, 0.1),
-                arrowprops=dict(facecolor='crimson', edgecolor = 'crimson'))
-    ax.annotate('Predicted SBCE', xy=(evet2_pred_date, anote_y_pos_pred), xytext=(evet2_pred_date, anote_y_pos_pred + 0.2),
-                arrowprops=dict(facecolor='darkcyan', edgecolor = 'darkcyan'))
     
-    ax.figure.savefig(outdir + sample_id + "_Pred_Traj.png", bbox_inches='tight',dpi=200)
     
-            
+    
+    #2nd way
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    import matplotlib.dates as mdates
+    import pandas as pd
+    
+    # --- sensible, journal-friendly defaults ---
+    mpl.rcParams.update({
+        "font.family": "sans-serif",
+        "font.size": 12,
+        "axes.labelsize": 14,
+        "axes.titlesize": 15,
+        "axes.linewidth": 1.2,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "figure.dpi": 300,
+        "savefig.dpi": 300,
+    })
+    
+    fig, ax = plt.subplots(figsize=(7.0, 4.2))
+    
+    # main line
+    plot_data.plot(
+        x="month_start",
+        y="pred_prob",
+        ax=ax,
+        color="#4d4d4d",
+        lw=1.5,
+        style="--",
+        legend=False,
+    )
+    
+    ax.scatter(plot_data['month_start'], plot_data['pred_prob'],
+           color='steelblue', s=30, edgecolor='steelblue', zorder=3)
+    # axes labels/range
+    ax.set_xlabel("Time", labelpad=8)
+    ax.set_ylabel("Predicted Probability", labelpad=8)
+    ax.set_ylim(-0.01, 1.01)
+    ax.set_yticks([0, .2, .4, .6, .8, 1.0])
+    
+    # add a small left pad and a 3-month pre-window on x
+    xmin = plot_data["month_start"].min() - pd.DateOffset(months=4)
+    xmax = plot_data["month_start"].max() + pd.DateOffset(months=3)
+    ax.set_xlim(xmin, xmax)
+    
+    # polished date formatting
+    # --- polished date formatting ---
+    ax.xaxis.set_major_locator(mdates.YearLocator())             # one tick per year
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))     # format as 4-digit year
+    
+    # Optional: rotate or center tick labels
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(0)
+        tick.set_ha("center")
+    
+    # subtle grid for readability
+    ax.grid(True, linestyle="--", alpha=0.35, axis="y")
+    
+
+    # 1st primary
+    ax.annotate(
+        "1st primary\ndiagnosis",
+        xy=(event1_date, 0.00),     # tip  pos
+        xytext=(event1_date, 0.1),  # text pos
+        arrowprops=dict(arrowstyle="-|>,head_width=0.3,head_length=0.4", lw=1.5, color="black"),
+        fontsize=12,
+        #ha="left",
+        ha="center", 
+        va="bottom",
+        bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.8)
+    )
+    
+    # Observed SBCE 
+    ax.annotate(
+        "Observed SBCE",
+        xy=(event2_date, 0.00),
+        xytext=(event2_date, 0.1),
+        arrowprops=dict(arrowstyle="-|>,head_width=0.3,head_length=0.4", lw=1.5, color="crimson"),
+        fontsize=12, ha="center", va="bottom",
+        bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.8),
+    )
+    
+    # Predicted SBCE 
+    ax.annotate(
+        "Predicted SBCE",
+        xy=(evet2_pred_date, anote_y_pos_pred),
+        xytext=(evet2_pred_date, anote_y_pos_pred + 0.1),
+        arrowprops=dict(arrowstyle="-|>,head_width=0.3,head_length=0.4", lw=1.5, color="teal"),
+        fontsize=12, ha="left", va="bottom",
+        bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="none", alpha=0.8),
+    )
+    
+    fig.tight_layout()
+    
+    # save vector + raster
+    fig.savefig(outdir + sample_id + "_Pred_Traj.png", bbox_inches="tight")  # for slides
+
+
